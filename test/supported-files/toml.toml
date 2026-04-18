@@ -1,0 +1,86 @@
+# Cargo.toml - Rust Web Application
+# A realistic Cargo configuration example
+
+[package]
+name = "web-service"
+version = "0.5.2"
+edition = "2021"
+authors = ["Public Test Maintainers"]
+description = "A high-performance async web service"
+license = "CC0-1.0"
+repository = "https://example.com/public-test-fixtures"
+readme = "README.md"
+keywords = ["web", "async", "http", "api"]
+categories = ["web-programming::http-server"]
+rust-version = "1.75"
+
+[features]
+default = ["tls", "compression"]
+tls = ["rustls", "tokio-rustls"]
+compression = ["tower-http/compression-full"]
+tracing = ["tracing-subscriber", "tracing-opentelemetry"]
+full = ["tls", "compression", "tracing"]
+
+[dependencies]
+tokio = { version = "1.36", features = ["full"] }
+axum = { version = "0.7", features = ["macros", "multipart"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "uuid", "chrono"] }
+uuid = { version = "1.7", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout"] }
+tracing = "0.1"
+anyhow = "1.0"
+thiserror = "1.0"
+dotenvy = "0.15"
+jsonwebtoken = "9.2"
+argon2 = "0.5"
+validator = { version = "0.17", features = ["derive"] }
+
+# Optional dependencies
+rustls = { version = "0.22", optional = true }
+tokio-rustls = { version = "0.25", optional = true }
+tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter", "json"] }
+tracing-opentelemetry = { version = "0.22", optional = true }
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+mockall = "0.12"
+fake = { version = "2.9", features = ["derive"] }
+criterion = { version = "0.5", features = ["async_tokio"] }
+testcontainers = "0.15"
+
+[profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = "symbols"
+codegen-units = 1
+panic = "abort"
+
+[profile.bench]
+inherits = "release"
+debug = true
+
+[[bin]]
+name = "server"
+path = "src/main.rs"
+
+[[bench]]
+name = "api_benchmarks"
+harness = false
+
+[workspace.metadata.release]
+pre-release-commit-message = "chore: release v{{version}}"
+tag-prefix = "v"
+tag-message = "Release {{tag_name}}"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

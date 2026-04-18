@@ -1,0 +1,20 @@
+gantt
+    title Project Plan
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+    excludes weekends
+
+    section Design
+        Requirements     :done, a1, 2024-01-08, 5d
+        Prototype        :active, a2, after a1, 7d
+        Review           :a3, after a2, 3d
+
+    section Development
+        Backend API      :b1, after a3, 10d
+        Frontend UI      :b2, after a3, 12d
+        Integration      :b3, after b1, 5d
+
+    section Testing
+        Unit tests       :c1, after b3, 5d
+        E2E tests        :c2, after c1, 4d
+        Release          :milestone, c3, after c2, 0d

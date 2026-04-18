@@ -1,0 +1,128 @@
+classDiagram
+    class EventEmitter {
+        <<abstract>>
+        -Map~string, Function[]~ listeners
+        +on(event: string, callback: Function) void
+        +off(event: string, callback: Function) void
+        +emit(event: string, ...args: any[]) void
+        #getListeners(event: string) Function[]
+    }
+
+    class HttpClient {
+        <<interface>>
+        +get(url: string, options?: RequestOptions) Promise~Response~
+        +post(url: string, body: any, options?: RequestOptions) Promise~Response~
+        +put(url: string, body: any, options?: RequestOptions) Promise~Response~
+        +delete(url: string, options?: RequestOptions) Promise~Response~
+    }
+
+    class BaseRepository~T~ {
+        <<abstract>>
+        #db: DatabaseConnection
+        #tableName: string
+        +findById(id: string) Promise~T~
+        +findAll(filter?: Filter) Promise~T[]~
+        +create(entity: T) Promise~T~
+        +update(id: string, entity: Partial~T~) Promise~T~
+        +delete(id: string) Promise~boolean~
+        #buildQuery(filter: Filter) QueryBuilder
+    }
+
+    class UserRepository {
+        +findByEmail(email: string) Promise~User~
+        +findByRole(role: Role) Promise~User[]~
+        +updateLastLogin(id: string) Promise~void~
+    }
+
+    class OrderRepository {
+        +findByUser(userId: string) Promise~Order[]~
+        +findByStatus(status: OrderStatus) Promise~Order[]~
+        +calculateTotal(orderId: string) Promise~number~
+    }
+
+    class User {
+        +string id
+        +string email
+        +string name
+        +Role role
+        +Date createdAt
+        +Date lastLoginAt
+        +validateEmail() boolean
+        +toJSON() object
+    }
+
+    class Order {
+        +string id
+        +string userId
+        +OrderItem[] items
+        +OrderStatus status
+        +number total
+        +Date createdAt
+        +addItem(item: OrderItem) void
+        +removeItem(itemId: string) void
+        +calculateTotal() number
+    }
+
+    class OrderItem {
+        +string id
+        +string productId
+        +string name
+        +number quantity
+        +number unitPrice
+        +getSubtotal() number
+    }
+
+    class CacheService~T~ {
+        -Map~string, CacheEntry~T~~ store
+        -number defaultTTL
+        +get(key: string) T?
+        +set(key: string, value: T, ttl?: number) void
+        +invalidate(key: string) void
+        +clear() void
+        -isExpired(entry: CacheEntry~T~) boolean
+    }
+
+    class Logger {
+        <<singleton>>
+        -static Logger instance
+        -LogLevel level
+        -Transport[] transports
+        +static getInstance() Logger
+        +info(message: string, meta?: object) void
+        +warn(message: string, meta?: object) void
+        +error(message: string, error?: Error) void
+        +debug(message: string, meta?: object) void
+        -format(level: LogLevel, message: string) string
+    }
+
+    class Role {
+        <<enumeration>>
+        ADMIN
+        USER
+        MODERATOR
+        GUEST
+    }
+
+    class OrderStatus {
+        <<enumeration>>
+        PENDING
+        CONFIRMED
+        SHIPPED
+        DELIVERED
+        CANCELLED
+    }
+
+    EventEmitter <|-- BaseRepository
+    BaseRepository~User~ <|-- UserRepository
+    BaseRepository~Order~ <|-- OrderRepository
+    HttpClient <|.. BaseRepository : uses
+    User "*" --> "1" Role
+    Order "*" --> "1" OrderStatus
+    Order "1" *-- "*" OrderItem
+    User "1" --> "*" Order
+    UserRepository --> User : manages
+    OrderRepository --> Order : manages
+    CacheService <.. UserRepository : uses
+    CacheService <.. OrderRepository : uses
+    Logger <.. BaseRepository : logs
+    Logger <.. CacheService : logs

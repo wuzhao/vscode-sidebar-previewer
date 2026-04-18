@@ -1,0 +1,30 @@
+flowchart TD
+    Start([Start]) --> Input[/User Request/]
+    Input --> Auth{Authenticated?}
+    Auth -->|No| Login[Login Page]
+    Login --> Validate{Valid Credentials?}
+    Validate -->|No| Error[Show Error]
+    Error --> Login
+    Validate -->|Yes| Auth
+    Auth -->|Yes| Route{Route Type}
+    Route -->|API| RateLimit{Rate Limited?}
+    RateLimit -->|Yes| TooMany[429 Too Many Requests]
+    RateLimit -->|No| Process[Process Request]
+    Route -->|Static| Cache{In Cache?}
+    Cache -->|Yes| Serve[Serve from Cache]
+    Cache -->|No| Generate[Generate Response]
+    Generate --> Store[(Store in Cache)]
+    Store --> Serve
+    Process --> DB[(Database)]
+    DB --> Transform[Transform Data]
+    Transform --> Response[/JSON Response/]
+    Serve --> Response
+    Response --> Log[Log Request]
+    Log --> End([End])
+    TooMany --> Log
+
+    style Start fill:#4CAF50,color:#fff
+    style End fill:#4CAF50,color:#fff
+    style Error fill:#f44336,color:#fff
+    style TooMany fill:#ff9800,color:#fff
+    style DB fill:#2196F3,color:#fff

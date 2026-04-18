@@ -1,0 +1,110 @@
+import * as vscode from 'vscode';
+
+interface I18nStrings {
+    emptyStateTitle: string;
+    emptyStateText: string;
+    zoomStatus: string;
+    webviewTitle: string;
+    copySuccess: string;
+    copyCode: string;
+    viewCode: string;
+    viewPreview: string;
+    previewError: string;
+}
+
+const supportedExtensions = [
+    'Markdown (.md)',
+    'LaTeX (.tex)',
+    'Mermaid (.mmd / .mermaid)',
+    'JSON (.json)',
+    'YAML (.yaml / .yml)',
+    'TOML (.toml)'
+];
+
+const supportedList = supportedExtensions.map(ext => `<li>${ext}</li>`).join('');
+
+const strings: Record<string, I18nStrings> = {
+    'en_US': {
+        emptyStateTitle: 'Sidebar Previewer',
+        emptyStateText: `Preview not supported for this file type.<br />Supported formats:<ul>${supportedList}</ul>`,
+        zoomStatus: 'Sidebar Previewer Zoom: {0}%',
+        webviewTitle: 'Sidebar Previewer',
+        copySuccess: 'COPIED!',
+        copyCode: 'Copy',
+        viewCode: 'Code',
+        viewPreview: 'Preview',
+        previewError: 'Preview Failed'
+    },
+    'zh_CN': {
+        emptyStateTitle: '文件预览',
+        emptyStateText: `当前文件类型不支持预览，仅支持以下格式：<ul>${supportedList}</ul>`,
+        zoomStatus: '预览缩放: {0}%',
+        webviewTitle: '文件预览',
+        copySuccess: '已复制',
+        copyCode: '复制',
+        viewCode: '代码',
+        viewPreview: '预览',
+        previewError: '预览失败'
+    }
+};
+
+let currentLocale: string = 'en_US';
+
+export function initI18n(context: vscode.ExtensionContext): void {
+    // 获取 VS Code 当前的显示语言
+    const vscodeLanguage = vscode.env.language.replace('-', '_');
+
+    // 检查是否支持该语言
+    if (strings[vscodeLanguage]) {
+        currentLocale = vscodeLanguage;
+    } else {
+        // 尝试匹配语言前缀 (如 zh 匹配 zh_CN)
+        const languagePrefix = vscodeLanguage.split('_')[0];
+        const matchedLocale = Object.keys(strings).find(
+            locale => locale.startsWith(languagePrefix)
+        );
+        currentLocale = matchedLocale || 'en_US';
+    }
+
+    void context;
+}
+
+function getString(key: keyof I18nStrings): string {
+    return strings[currentLocale]?.[key] ?? strings['en_US'][key];
+}
+
+export const i18n = {
+    get emptyStateTitle(): string {
+        return getString('emptyStateTitle');
+    },
+    get emptyStateText(): string {
+        return getString('emptyStateText');
+    },
+    get zoomStatus(): string {
+        return getString('zoomStatus');
+    },
+    get webviewTitle(): string {
+        return getString('webviewTitle');
+    },
+    get copySuccess(): string {
+        return getString('copySuccess');
+    },
+    get copyCode(): string {
+        return getString('copyCode');
+    },
+    get viewCode(): string {
+        return getString('viewCode');
+    },
+    get viewPreview(): string {
+        return getString('viewPreview');
+    },
+    get previewError(): string {
+        return getString('previewError');
+    },
+
+    format(template: string, ...args: string[]): string {
+        return template.replace(/{(\d+)}/g, (match, index) => {
+            return args[index] ?? match;
+        });
+    }
+};

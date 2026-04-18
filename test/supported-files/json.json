@@ -1,0 +1,161 @@
+{
+  "project": {
+    "name": "Public Preview Fixture",
+    "version": "0.0.1-test",
+    "description": "Public JSON fixture used for parser and tree-view testing",
+    "license": "CC0-1.0",
+    "repository": {
+      "type": "git",
+      "url": "https://example.com/public-test-fixtures"
+    }
+  },
+  "configuration": {
+    "zoom": {
+      "min": 50,
+      "max": 200,
+      "default": 100,
+      "step": 10
+    },
+    "locale": "auto",
+    "theme": "auto",
+    "exportOptions": {
+      "format": "png",
+      "scale": 2,
+      "background": "#ffffff"
+    }
+  },
+  "supportedFileTypes": [
+    {
+      "name": "Markdown",
+      "extensions": [".md", ".markdown"],
+      "features": {
+        "scrollSync": true,
+        "codeHighlighting": true,
+        "taskListToggle": true,
+        "copyButtons": true
+      },
+      "parser": "marked",
+      "priority": 1
+    },
+    {
+      "name": "LaTeX",
+      "extensions": [".tex"],
+      "features": {
+        "scrollSync": true,
+        "mathRendering": true,
+        "exportImage": true
+      },
+      "parser": "katex",
+      "priority": 2
+    },
+    {
+      "name": "Mermaid",
+      "extensions": [".mmd", ".mermaid"],
+      "features": {
+        "diagramRendering": true,
+        "exportImage": true,
+        "diagramTypes": [
+          "flowchart",
+          "sequenceDiagram",
+          "classDiagram",
+          "stateDiagram",
+          "gantt",
+          "erDiagram",
+          "pie",
+          "mindmap",
+          "timeline",
+          "gitgraph"
+        ]
+      },
+      "parser": "mermaid",
+      "priority": 3
+    },
+    {
+      "name": "JSON",
+      "extensions": [".json"],
+      "features": {
+        "treeView": true,
+        "expandCollapse": true,
+        "clickToNavigate": true
+      },
+      "parser": "native",
+      "priority": 4
+    },
+    {
+      "name": "YAML",
+      "extensions": [".yaml", ".yml"],
+      "features": {
+        "treeView": true,
+        "expandCollapse": true,
+        "clickToNavigate": true
+      },
+      "parser": "js-yaml",
+      "priority": 5
+    },
+    {
+      "name": "TOML",
+      "extensions": [".toml"],
+      "features": {
+        "treeView": true,
+        "expandCollapse": true,
+        "clickToNavigate": true
+      },
+      "parser": "toml",
+      "priority": 6
+    }
+  ],
+  "commands": {
+    "zoomIn": {
+      "id": "sidebarPreviewer.zoomIn",
+      "title": "Zoom In",
+      "icon": "$(add)",
+      "keybinding": null
+    },
+    "zoomOut": {
+      "id": "sidebarPreviewer.zoomOut",
+      "title": "Zoom Out",
+      "icon": "$(remove)",
+      "keybinding": null
+    },
+    "zoomReset": {
+      "id": "sidebarPreviewer.zoomReset",
+      "title": "Reset Zoom",
+      "icon": "$(refresh)",
+      "keybinding": null
+    },
+    "exportImage": {
+      "id": "sidebarPreviewer.exportImage",
+      "title": "Export as Image",
+      "icon": "$(desktop-download)",
+      "supportedTypes": ["mermaid", "latex"]
+    },
+    "expandAll": {
+      "id": "sidebarPreviewer.expandAll",
+      "title": "Expand All",
+      "icon": "$(expand-all)",
+      "supportedTypes": ["json", "yaml", "toml"]
+    },
+    "collapseAll": {
+      "id": "sidebarPreviewer.collapseAll",
+      "title": "Collapse All",
+      "icon": "$(collapse-all)",
+      "supportedTypes": ["json", "yaml", "toml"]
+    }
+  },
+  "statistics": {
+    "totalFileTypes": 6,
+    "totalCommands": 8,
+    "dependencies": {
+      "runtime": ["marked", "highlight.js", "katex", "mermaid", "js-yaml", "toml"],
+      "devOnly": ["typescript", "@types/node", "@types/vscode", "@types/js-yaml"]
+    },
+    "releaseDate": "2026-04-11",
+    "isStable": true,
+    "downloads": null,
+    "ratings": {
+      "average": 0,
+      "count": 0,
+      "distribution": [0, 0, 0, 0, 0]
+    }
+  }
+}

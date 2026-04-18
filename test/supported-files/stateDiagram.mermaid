@@ -1,0 +1,80 @@
+stateDiagram-v2
+    [*] --> Idle
+
+    state Idle {
+        [*] --> WaitingForInput
+        WaitingForInput --> Validating : Submit Form
+        Validating --> WaitingForInput : Validation Failed
+        Validating --> Ready : Validation Passed
+    }
+
+    Idle --> Connecting : Initialize
+    
+    state Connecting {
+        [*] --> DNSLookup
+        DNSLookup --> TCPHandshake
+        TCPHandshake --> TLSNegotiation
+        TLSNegotiation --> Connected
+    }
+
+    Connecting --> Active : Connection Established
+    Connecting --> RetryQueue : Connection Failed
+
+    state RetryQueue {
+        [*] --> Waiting
+        Waiting --> Retrying : Timer Expired
+        Retrying --> Waiting : Retry Failed
+        note right of Waiting
+            Max retries: 3
+            Backoff: exponential
+        end note
+    }
+
+    RetryQueue --> Connecting : Retry Attempt
+    RetryQueue --> Failed : Max Retries Exceeded
+
+    state Active {
+        [*] --> Processing
+
+        state Processing {
+            [*] --> Receiving
+            Receiving --> Parsing : Data Received
+            Parsing --> Transforming : Parse Success
+            Parsing --> ErrorHandling : Parse Error
+            Transforming --> Dispatching
+            Dispatching --> Receiving : Next Message
+        }
+
+        Processing --> Heartbeat : Ping
+        Heartbeat --> Processing : Pong
+
+        state Heartbeat {
+            [*] --> SendPing
+            SendPing --> WaitPong
+            WaitPong --> PongReceived : Pong
+            WaitPong --> Timeout : No Response
+        }
+    }
+
+    Active --> Reconnecting : Connection Lost
+    Active --> Draining : Graceful Shutdown
+
+    state Draining {
+        [*] --> FlushBuffer
+        FlushBuffer --> SendClose
+        SendClose --> WaitAck
+        WaitAck --> Drained
+    }
+
+    Reconnecting --> Connecting : Auto Reconnect
+
+    state ErrorHandling {
+        [*] --> LogError
+        LogError --> NotifyMonitoring
+        NotifyMonitoring --> RecoverOrAbort
+    }
+
+    Draining --> Disconnected : Drain Complete
+    Failed --> Disconnected : Give Up
+    Active --> Disconnected : Force Close
+    Disconnected --> [*]

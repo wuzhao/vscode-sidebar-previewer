@@ -1,0 +1,114 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+\title{Mathematical Analysis and Physics}
+\author{Test Maintainers}
+
+\begin{document}
+
+\maketitle
+
+\section{Calculus}
+
+The fundamental theorem of calculus connects differentiation and integration:
+
+$$\int_a^b f'(x)\,dx = f(b) - f(a)$$
+
+\subsection{Limits and Continuity}
+
+The epsilon-delta definition of a limit:
+
+$\forall \varepsilon > 0,\;\exists \delta > 0$ such that $|x - c| < \delta \implies |f(x) - L| < \varepsilon$
+
+L'Hôpital's rule for indeterminate forms:
+
+$$\lim_{x \to c} \frac{f(x)}{g(x)} = \lim_{x \to c} \frac{f'(x)}{g'(x)}$$
+
+\subsection{Taylor Series}
+
+The Taylor expansion of $e^x$ around $x=0$:
+
+$$e^x = \sum_{n=0}^{\infty} \frac{x^n}{n!} = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \cdots$$
+
+Euler's identity emerges when $x = i\pi$:
+
+$$e^{i\pi} + 1 = 0$$
+
+\subsection{Multivariable Calculus}
+
+The gradient of a scalar field $f(x, y, z)$:
+
+$$\nabla f = \frac{\partial f}{\partial x}\hat{i} + \frac{\partial f}{\partial y}\hat{j} + \frac{\partial f}{\partial z}\hat{k}$$
+
+The divergence theorem (Gauss's theorem):
+
+$$\oint_S \mathbf{F} \cdot d\mathbf{A} = \int_V (\nabla \cdot \mathbf{F})\,dV$$
+
+\section{Linear Algebra}
+
+\subsection{Matrix Operations}
+
+Matrix multiplication and determinant:
+
+$$\begin{pmatrix} a & b \\ c & d \end{pmatrix}^{-1} = \frac{1}{ad - bc} \begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$$
+
+\subsection{Eigenvalues}
+
+The characteristic equation $\det(A - \lambda I) = 0$ yields eigenvalues. For a $2 \times 2$ matrix:
+
+$$\lambda_{1,2} = \frac{\text{tr}(A) \pm \sqrt{\text{tr}(A)^2 - 4\det(A)}}{2}$$
+
+\section{Physics}
+
+\subsection{Maxwell's Equations}
+
+The four Maxwell's equations in differential form:
+
+\begin{align}
+\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+\nabla \cdot \mathbf{B} &= 0 \\
+\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
+\nabla \times \mathbf{B} &= \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}
+\end{align}
+
+\subsection{Quantum Mechanics}
+
+The time-dependent Schrödinger equation:
+
+$$i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r}, t) = \hat{H} \Psi(\mathbf{r}, t)$$
+
+The uncertainty principle:
+
+$$\Delta x \cdot \Delta p \geq \frac{\hbar}{2}$$
+
+\subsection{Special Relativity}
+
+The Lorentz factor: $\gamma = \frac{1}{\sqrt{1 - v^2/c^2}}$
+
+Mass-energy equivalence: $E = mc^2$
+
+The spacetime interval:
+
+$$ds^2 = -c^2\,dt^2 + dx^2 + dy^2 + dz^2$$
+
+\section{Probability and Statistics}
+
+\subsection{Distributions}
+
+The normal (Gaussian) distribution:
+
+$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)$$
+
+Bayes' theorem:
+
+$$P(A|B) = \frac{P(B|A)\,P(A)}{P(B)}$$
+
+\subsection{Entropy}
+
+Shannon entropy: $H(X) = -\sum_{i} p_i \log_2 p_i$
+
+% End of mathematical content
+
+\end{document}

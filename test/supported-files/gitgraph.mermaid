@@ -1,0 +1,78 @@
+gitGraph
+    commit id: "init" tag: "v0.1.0"
+    commit id: "add-readme"
+    commit id: "project-structure"
+
+    branch develop
+    checkout develop
+    commit id: "setup-ci"
+    commit id: "add-linting"
+
+    branch feature/auth
+    checkout feature/auth
+    commit id: "auth-models"
+    commit id: "jwt-middleware"
+    commit id: "login-endpoint"
+    commit id: "signup-endpoint"
+    commit id: "password-reset"
+
+    checkout develop
+    branch feature/database
+    checkout feature/database
+    commit id: "orm-setup"
+    commit id: "migrations"
+    commit id: "seed-data"
+
+    checkout develop
+    merge feature/database id: "merge-db" tag: "db-ready"
+    merge feature/auth id: "merge-auth"
+
+    branch feature/api
+    checkout feature/api
+    commit id: "rest-routes"
+    commit id: "validation"
+    commit id: "error-handling"
+    commit id: "pagination"
+    commit id: "rate-limiting"
+
+    checkout develop
+    merge feature/api id: "merge-api"
+    commit id: "integration-tests"
+
+    checkout main
+    merge develop id: "release-prep" tag: "v1.0.0-rc1"
+
+    branch hotfix/security
+    checkout hotfix/security
+    commit id: "fix-sql-injection" type: REVERSE
+    commit id: "add-csrf-token"
+
+    checkout main
+    merge hotfix/security id: "security-fix" tag: "v1.0.1"
+
+    checkout develop
+    merge hotfix/security id: "backport-fix"
+
+    branch feature/websocket
+    checkout feature/websocket
+    commit id: "ws-server"
+    commit id: "ws-auth"
+    commit id: "real-time-events"
+    commit id: "reconnection"
+
+    checkout develop
+    branch feature/monitoring
+    checkout feature/monitoring
+    commit id: "health-checks"
+    commit id: "prometheus-metrics"
+    commit id: "grafana-dashboards"
+
+    checkout develop
+    merge feature/websocket id: "merge-ws"
+    merge feature/monitoring id: "merge-monitoring"
+    commit id: "e2e-tests"
+    commit id: "perf-optimization"
+
+    checkout main
+    merge develop id: "v1.1-release" tag: "v1.1.0"
+    commit id: "update-changelog"

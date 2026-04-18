@@ -1,0 +1,55 @@
+sequenceDiagram
+    actor User
+    participant Browser
+    participant CDN
+    participant Gateway as API Gateway
+    participant Auth as Auth Service
+    participant API as REST API
+    participant Cache as Redis Cache
+    participant DB as PostgreSQL
+
+    User->>Browser: Click Login
+    Browser->>Gateway: POST /api/auth/login
+    Gateway->>Auth: Validate credentials
+    Auth->>DB: SELECT user WHERE email = ?
+    DB-->>Auth: User record
+    alt Invalid credentials
+        Auth-->>Gateway: 401 Unauthorized
+        Gateway-->>Browser: Error response
+        Browser-->>User: Show error message
+    else Valid credentials
+        Auth->>Auth: Generate JWT + Refresh Token
+        Auth->>Cache: Store refresh token (TTL: 7d)
+        Auth-->>Gateway: 200 OK {token, refreshToken}
+        Gateway-->>Browser: Set-Cookie + JSON
+        Browser-->>User: Redirect to Dashboard
+    end
+
+    Note over User,DB: User is now authenticated
+
+    User->>Browser: View Profile
+    Browser->>CDN: GET /static/profile.js
+    CDN-->>Browser: JavaScript bundle
+    Browser->>Gateway: GET /api/user/profile
+    Gateway->>Gateway: Verify JWT
+    Gateway->>Cache: Check cached profile
+    alt Cache Hit
+        Cache-->>Gateway: Cached profile data
+    else Cache Miss
+        Gateway->>API: Forward request
+        API->>DB: SELECT * FROM profiles
+        DB-->>API: Profile data
+        API->>Cache: SET profile (TTL: 5min)
+        API-->>Gateway: Profile JSON
+    end
+    Gateway-->>Browser: Profile response
+    Browser-->>User: Render profile page
+
+    loop Every 30 minutes
+        Browser->>Gateway: POST /api/auth/refresh
+        Gateway->>Auth: Validate refresh token
+        Auth->>Cache: Check token exists
+        Cache-->>Auth: Token valid
+        Auth-->>Gateway: New JWT
+        Gateway-->>Browser: Updated token
+    end
