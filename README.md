@@ -7,7 +7,7 @@ A VS Code extension that provides a preview panel in the Activity Bar sidebar.
 ## Supported Files
 
 | Type | Extensions |
-|------|------------|
+| ---- | ---------- |
 | Markdown | `.md`, `.markdown` |
 | LaTeX | `.tex` |
 | Mermaid | `.mmd`, `.mermaid` |

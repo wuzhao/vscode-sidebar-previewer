@@ -5,7 +5,7 @@
 ## 支持的文件类型
 
 | 文件类型 | 扩展名 |
-|---------|--------|
+| ------- | ------ |
 | Markdown | `.md`、`.markdown` |
 | LaTeX | `.tex` |
 | Mermaid | `.mmd`、`.mermaid` |
