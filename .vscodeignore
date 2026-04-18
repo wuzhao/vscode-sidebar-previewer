@@ -8,4 +8,5 @@ test/**
 out/**/*.map
 *.vsix
 
+TASKS.md
 REVIEW.md

@@ -6,4 +6,5 @@ out/
 .vscode-test/
 *.vsix
 
+TASKS.md
 REVIEW.md
