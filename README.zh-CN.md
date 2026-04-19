@@ -1,10 +1,10 @@
 # Sidebar Previewer
 
-一个 VS Code 扩展，在 Activity Bar 侧边栏提供文件预览面板，支持多种文件格式，提供滚动同步、树形视图、代码高亮和缩放控制。
+VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支持包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
 
-## 为什么需要？
+## 为什么需要它？
 
-在 AI 和 CLI 的时代，文档越来越常以「本地化处理 + 直接入仓」的方式成为交付流程的一部分。与此同时，AI Coding 工作流让编辑器的第二侧边栏逐步成为主流工作区。这个插件的目标就是让这类工作流更顺畅：一边编辑一边快速看到渲染效果，或者在需要时切换到更适合全屏讲稿、阅读的展示方式。
+当 AI 改变了我们写代码的方式，文档也进化到了 **本地处理 + 源码共生** 的新阶段。现在的编辑器里，第二侧边栏才是 AI 时代的主战场。与其在标签页间局促跳转，不如让 **Sidebar Previewer** 为你化繁为简：文档在侧边栏实时呈现，代码与预览并肩而行。无论是埋头构建还是全屏演示，你的工作流从此告别割裂，尽享无缝切换。
 
 ## 支持的文件类型
 
@@ -75,12 +75,12 @@
 
 ## 致谢
 
-- [marked](https://github.com/markedjs/marked)：将 Markdown 解析为 HTML，用于预览渲染。
-- [mermaid](https://github.com/mermaid-js/mermaid)：渲染 Markdown 代码块及 `.mmd/.mermaid` 文件中的流程图与图表。
-- [katex](https://github.com/KaTeX/KaTeX)：渲染 Markdown 和 LaTeX 预览中的数学公式。
-- [highlight.js](https://github.com/highlightjs/highlight.js)：提供代码块语法高亮能力。
-- [js-yaml](https://github.com/nodeca/js-yaml)：解析 YAML 数据并生成结构化预览。
-- [toml](https://github.com/BinaryMuse/toml-node)：解析 TOML 数据并生成结构化预览。
+- [marked](https://github.com/markedjs/marked): parses Markdown into HTML for preview rendering.
+- [mermaid](https://github.com/mermaid-js/mermaid): renders Mermaid diagram blocks in Markdown and `.mmd/.mermaid` files.
+- [katex](https://github.com/KaTeX/KaTeX): renders math formulas for Markdown and LaTeX preview.
+- [highlight.js](https://github.com/highlightjs/highlight.js): provides syntax highlighting for code blocks.
+- [js-yaml](https://github.com/nodeca/js-yaml): parses YAML data for structured preview.
+- [toml](https://github.com/BinaryMuse/toml-node): parses TOML data for structured preview.
 
 ## 许可证
 

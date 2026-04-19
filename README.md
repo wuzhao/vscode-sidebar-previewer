@@ -2,11 +2,11 @@
 
 ![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
 
-A VS Code extension that provides a preview panel in the Activity Bar sidebar.
+Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, and TOML.
 
 ## Why do you need it?
 
-In the era of AI and CLI, documentation is increasingly created, localized, and versioned directly inside source repositories as a first-class part of delivery. At the same time, AI Coding workflows have made the second sidebar a mainstream working area in editors. This extension exists to make that workflow smoother: you can edit and instantly see rendered output, or switch to full-screen style reading, presentation when needed.
+In the age of AI-driven development, documentation is now a first-class citizen, **processed locally and versioned directly in-repo**. With the secondary sidebar becoming a mainstream hub for AI workflows, conventional previewing feels cramped and clunky. Enter **Sidebar Previewer**: it delivers real-time rendering in your sidebar, allowing you to fluidly switch between coding and previewing, with an added presentation mode to cover your entire workflow.
 
 ## Supported Files
 
@@ -70,10 +70,10 @@ In the era of AI and CLI, documentation is increasingly created, localized, and 
 
 | Type | Screenshot |
 | ---- | ---------- |
-| Markdown | ![Markdown Preview Screenshot](./screenshots/markdown.png) |
-| LaTeX | ![Latex Preview Screenshot](./screenshots/latex.png) |
-| Mermaid | ![Mermaid Preview Screenshot](./screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](./screenshots/yaml.png) |
+| Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
+| LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
+| Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
+| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 ## Acknowledgements
 
