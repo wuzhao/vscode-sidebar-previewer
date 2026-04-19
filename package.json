@@ -4,11 +4,14 @@
   "description": "A file preview extension with Activity Bar entry supporting Markdown, LaTeX, Mermaid, JSON, YAML, TOML and more",
   "version": "0.3.0",
   "publisher": "MG12",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wuzhao/vscode-sidebar-previewer.git"
+  },
   "icon": "resources/icon.png",
   "license": "MIT",
   "author": {
-    "name": "MG12",
-    "url": "https://www.neoease.com"
+    "name": "MG12"
   },
   "keywords": [
     "sidebar",
@@ -48,14 +51,14 @@
         "enablement": "sidebarPreviewer.canZoomReset"
       },
       {
-        "command": "sidebarPreviewer.locatePreview",
-        "title": "Sidebar Previewer: Locate in Preview",
-        "icon": "$(file-code)"
-      },
-      {
         "command": "sidebarPreviewer.locateEditor",
         "title": "Sidebar Previewer: Locate in Editor",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "sidebarPreviewer.locatePreview",
+        "title": "Sidebar Previewer: Locate in Preview",
+        "icon": "$(file-code)"
       },
       {
         "command": "sidebarPreviewer.disableFollowScroll",
@@ -98,12 +101,12 @@
         {
           "command": "sidebarPreviewer.locatePreview",
           "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate",
-          "group": "navigation@4"
+          "group": "navigation@5"
         },
         {
           "command": "sidebarPreviewer.locateEditor",
           "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate",
-          "group": "navigation@5"
+          "group": "navigation@4"
         },
         {
           "command": "sidebarPreviewer.disableFollowScroll",

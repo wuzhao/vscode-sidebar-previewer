@@ -35,14 +35,14 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.locatePreview', () => {
-            previewProvider.locatePreview();
+        vscode.commands.registerCommand('sidebarPreviewer.locateEditor', () => {
+            previewProvider.locateEditor();
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.locateEditor', () => {
-            previewProvider.locateEditor();
+        vscode.commands.registerCommand('sidebarPreviewer.locatePreview', () => {
+            previewProvider.locatePreview();
         })
     );
 

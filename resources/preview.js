@@ -104,6 +104,17 @@ function updateContent(data) {
     teardownMermaidPan();
     content.classList.remove('is-mermaid-preview');
     content.classList.remove('is-loading');
+    
+    // 如果后端传来 baseUri，则在 head 中设置 <base>，使相对路径（如 screenshots/xxx.png）能被解析为 webview 资源
+    if (data.baseUri) {
+        let base = document.querySelector('base');
+        if (!base) {
+            base = document.createElement('base');
+            document.head.appendChild(base);
+        }
+        base.setAttribute('href', data.baseUri.endsWith('/') ? data.baseUri : data.baseUri + '/');
+    }
+
     content.innerHTML = data.content;
     currentHeadings = data.headings || [];
     currentFileType = data.fileType || null;

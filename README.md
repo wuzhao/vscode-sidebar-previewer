@@ -4,9 +4,9 @@
 
 A VS Code extension that provides a preview panel in the Activity Bar sidebar.
 
-## Motivation
+## Why do you need it?
 
-In the AI + CLI era, documentation is increasingly created, localized, and versioned directly inside source repositories as a first-class part of delivery. At the same time, AI Coding workflows have made the second sidebar a mainstream working area in editors. This extension exists to make that workflow smoother: you can edit and instantly see rendered output, or switch to full-screen style reading/presentation when needed.
+In the era of AI and CLI, documentation is increasingly created, localized, and versioned directly inside source repositories as a first-class part of delivery. At the same time, AI Coding workflows have made the second sidebar a mainstream working area in editors. This extension exists to make that workflow smoother: you can edit and instantly see rendered output, or switch to full-screen style reading, presentation when needed.
 
 ## Supported Files
 
@@ -48,6 +48,12 @@ In the AI + CLI era, documentation is increasingly created, localized, and versi
 - Expand all / collapse all
 - Click key to jump to source line
 
+## Screenshots
+
+| ![Markdown Preview Screenshot](./screenshots/markdown.png) | ![TAML Preview Screenshot](./screenshots/yaml.png) |
+| -- | -- |
+| ![Latex Preview Screenshot](./screenshots/latex.png) | ![Mermaid Preview Screenshot](./screenshots/mermaid.png) |
+
 ## Installation
 
 ### Install from VSIX
@@ -66,21 +72,15 @@ In the AI + CLI era, documentation is increasingly created, localized, and versi
 5. In Mermaid preview, drag the diagram to pan
 6. In JSON/YAML/TOML preview, click keys to locate source lines
 
-## License
-
-MIT
-
 ## Acknowledgements
 
-- [Visual Studio Code Extension API](https://code.visualstudio.com/api): provides extension runtime APIs, commands, webview integration, and sidebar container integration.
 - [marked](https://github.com/markedjs/marked): parses Markdown into HTML for preview rendering.
 - [mermaid](https://github.com/mermaid-js/mermaid): renders Mermaid diagram blocks in Markdown and `.mmd/.mermaid` files.
-- [katex](https://github.com/KaTeX/KaTeX): renders math formulas for Markdown/LaTeX preview.
+- [katex](https://github.com/KaTeX/KaTeX): renders math formulas for Markdown and LaTeX preview.
 - [highlight.js](https://github.com/highlightjs/highlight.js): provides syntax highlighting for code blocks.
 - [js-yaml](https://github.com/nodeca/js-yaml): parses YAML data for structured preview.
 - [toml](https://github.com/BinaryMuse/toml-node): parses TOML data for structured preview.
-- [@vscode/codicons](https://github.com/microsoft/vscode-codicons): supplies icon assets used in the extension UI.
-- [TypeScript](https://www.typescriptlang.org/): compiles and type-checks extension source code.
-- [@types/vscode](https://www.npmjs.com/package/@types/vscode): provides TypeScript typings for VS Code APIs.
-- [@types/node](https://www.npmjs.com/package/@types/node): provides TypeScript typings for Node.js runtime APIs.
-- [@types/js-yaml](https://www.npmjs.com/package/@types/js-yaml): provides TypeScript typings for `js-yaml`.
+
+## License
+
+MIT

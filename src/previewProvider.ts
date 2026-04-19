@@ -47,14 +47,23 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         this._updateZoomContext();
         this._updateFollowScrollContext();
 
+        // 构建可访问的本地资源根（包含扩展内资源与工作区根）
+        const roots: vscode.Uri[] = [
+            vscode.Uri.file(path.dirname(this._previewCssPath)),
+            vscode.Uri.file(path.dirname(this._codiconCssPath)),
+            vscode.Uri.file(path.dirname(this._katexCssPath)),
+            vscode.Uri.file(path.dirname(this._mermaidJsPath))
+        ];
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders && workspaceFolders.length > 0) {
+            for (const wf of workspaceFolders) {
+                roots.push(wf.uri);
+            }
+        }
+
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [
-                vscode.Uri.file(path.dirname(this._previewCssPath)),
-                vscode.Uri.file(path.dirname(this._codiconCssPath)),
-                vscode.Uri.file(path.dirname(this._katexCssPath)),
-                vscode.Uri.file(path.dirname(this._mermaidJsPath))
-            ]
+            localResourceRoots: roots
         };
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -378,6 +387,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
                 editedLine: number | null;
                 preserveScrollPosition: boolean;
                 scrollToHeadingId?: string | null;
+                baseUri?: string | null;
             } = {
                 type: 'update',
                 content: result.html,
@@ -390,6 +400,17 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
 
             if (scrollTargetHeadingId !== undefined) {
                 message.scrollToHeadingId = scrollTargetHeadingId;
+            }
+
+            // 把当前文档所在目录转为 webview 可访问的 baseUri，前端会用它设置 <base>
+            try {
+                const docDir = path.dirname(document.uri.fsPath || '');
+                if (docDir && this._view) {
+                    const base = this._view.webview.asWebviewUri(vscode.Uri.file(docDir)).toString();
+                    message.baseUri = base.endsWith('/') ? base : base + '/';
+                }
+            } catch (_e) {
+                // ignore
             }
 
             this._view.webview.postMessage(message);

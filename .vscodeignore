@@ -3,10 +3,21 @@
 
 .vscode/**
 .vscode-test/**
+out/**/*.map
+.gitignore
+.gitattributes
+tsconfig.json
+package-lock.json
+vsc-extension-quickstart.md
+scripts/**
+**/*.map
+**/*.ts
+
+screenshots/**
 src/**
 test/**
-out/**/*.map
 *.vsix
 
+CHANGELOG.md
 TASKS.md
 REVIEW.md
