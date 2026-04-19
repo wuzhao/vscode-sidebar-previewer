@@ -48,12 +48,6 @@ In the era of AI and CLI, documentation is increasingly created, localized, and 
 - Expand all / collapse all
 - Click key to jump to source line
 
-## Screenshots
-
-| ![Markdown Preview Screenshot](./screenshots/markdown.png) | ![TAML Preview Screenshot](./screenshots/yaml.png) |
-| -- | -- |
-| ![Latex Preview Screenshot](./screenshots/latex.png) | ![Mermaid Preview Screenshot](./screenshots/mermaid.png) |
-
 ## Installation
 
 ### Install from VSIX
@@ -71,6 +65,15 @@ In the era of AI and CLI, documentation is increasingly created, localized, and 
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
 6. In JSON/YAML/TOML preview, click keys to locate source lines
+
+## Screenshots
+
+| Type | Screenshot |
+| ---- | ---------- |
+| Markdown | ![Markdown Preview Screenshot](./screenshots/markdown.png) |
+| LaTeX | ![Latex Preview Screenshot](./screenshots/latex.png) |
+| Mermaid | ![Mermaid Preview Screenshot](./screenshots/mermaid.png) |
+| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](./screenshots/yaml.png) |
 
 ## Acknowledgements
 

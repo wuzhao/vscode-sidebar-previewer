@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { MarkdownProvider } from './markdownProvider';
 import { getFileType, FileType, HeadingInfo, isDataTreeType, PreviewResult } from './fileTypes';
 import { CodePreviewProvider } from './codePreviewProvider';
@@ -29,13 +30,36 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         const resourcesPath = path.join(_extensionContext.extensionPath, 'resources');
         this._previewCssPath = path.join(resourcesPath, 'preview.css');
         this._previewJsPath = path.join(resourcesPath, 'preview.js');
-        // codicon CSS 路径
-        this._codiconCssPath = path.join(_extensionContext.extensionPath, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css');
-        // KaTeX 路径
-        this._katexCssPath = path.join(_extensionContext.extensionPath, 'node_modules', 'katex', 'dist', 'katex.min.css');
-        this._katexJsPath = path.join(_extensionContext.extensionPath, 'node_modules', 'katex', 'dist', 'katex.min.js');
-        // Mermaid 路径
-        this._mermaidJsPath = path.join(_extensionContext.extensionPath, 'node_modules', 'mermaid', 'dist', 'mermaid.min.js');
+
+        const vendorPath = path.join(resourcesPath, 'vendor');
+
+        // 优先使用打包复制到 resources/vendor 的静态资源；开发模式下回退到 node_modules
+        this._codiconCssPath = this._resolveAssetPath(
+            path.join(vendorPath, 'codicons', 'codicon.css'),
+            path.join(_extensionContext.extensionPath, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css')
+        );
+
+        this._katexCssPath = this._resolveAssetPath(
+            path.join(vendorPath, 'katex', 'katex.min.css'),
+            path.join(_extensionContext.extensionPath, 'node_modules', 'katex', 'dist', 'katex.min.css')
+        );
+
+        this._katexJsPath = this._resolveAssetPath(
+            path.join(vendorPath, 'katex', 'katex.min.js'),
+            path.join(_extensionContext.extensionPath, 'node_modules', 'katex', 'dist', 'katex.min.js')
+        );
+
+        this._mermaidJsPath = this._resolveAssetPath(
+            path.join(vendorPath, 'mermaid', 'mermaid.min.js'),
+            path.join(_extensionContext.extensionPath, 'node_modules', 'mermaid', 'dist', 'mermaid.min.js')
+        );
+    }
+
+    private _resolveAssetPath(preferredPath: string, fallbackPath: string): string {
+        if (fs.existsSync(preferredPath)) {
+            return preferredPath;
+        }
+        return fallbackPath;
     }
 
     public resolveWebviewView(

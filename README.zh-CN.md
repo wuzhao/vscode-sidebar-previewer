@@ -46,12 +46,6 @@
 - 全部展开 / 全部折叠
 - 点击键名跳转源码行
 
-## 功能截图
-
-| ![Markdown Preview Screenshot](./screenshots/markdown.png) | ![TAML Preview Screenshot](./screenshots/yaml.png) |
-| -- | -- |
-| ![Latex Preview Screenshot](./screenshots/latex.png) | ![Mermaid Preview Screenshot](./screenshots/mermaid.png) |
-
 ## 安装方法
 
 ### 通过 VSIX 安装
@@ -69,6 +63,15 @@
 4. 使用工具栏或 `Cmd/Ctrl` + 鼠标滚轮进行缩放
 5. Mermaid 预览支持拖拽查看放大区域
 6. JSON / YAML / TOML 可点击键名跳转到源码对应行
+
+## 功能截图
+
+| Type | Screenshot |
+| ---- | ---------- |
+| Markdown | ![Markdown Preview Screenshot](./screenshots/markdown.png) |
+| LaTeX | ![Latex Preview Screenshot](./screenshots/latex.png) |
+| Mermaid | ![Mermaid Preview Screenshot](./screenshots/mermaid.png) |
+| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](./screenshots/yaml.png) |
 
 ## 致谢
 

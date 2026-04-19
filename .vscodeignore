@@ -3,7 +3,9 @@
 
 .vscode/**
 .vscode-test/**
-out/**/*.map
+node_modules/**
+out/**
+!out/extension.js
 .gitignore
 .gitattributes
 tsconfig.json

@@ -151,8 +151,11 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run package:vsix",
     "clean": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\"",
+    "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=out/extension.js",
+    "prepare:vendor": "node scripts/prepare-vendor.mjs",
+    "package:vsix": "npm run clean && npm run bundle && npm run prepare:vendor",
     "compile": "npm run clean && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
@@ -163,6 +166,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.10.0",
     "@types/vscode": "^1.85.0",
+    "esbuild": "^0.25.11",
     "typescript": "^5.3.0"
   },
   "dependencies": {
