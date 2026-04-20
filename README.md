@@ -2,11 +2,17 @@
 
 ![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
 
+Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md)
+
 Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, and TOML.
 
 ## Why do you need it?
 
 In the age of AI-driven development, documentation is now a first-class citizen, **processed locally and versioned directly in-repo**. With the secondary sidebar becoming a mainstream hub for AI workflows, conventional previewing feels cramped and clunky. Enter **Sidebar Previewer**: it delivers real-time rendering in your sidebar, allowing you to fluidly switch between coding and previewing, with an added presentation mode to cover your entire workflow.
+
+## Project Repository
+
+- GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
 
 ## Supported Files
 
@@ -38,7 +44,6 @@ In the age of AI-driven development, documentation is now a first-class citizen,
 
 ### Mermaid
 
-- Diagram rendering for `.mmd` and `.mermaid`
 - Basic syntax precheck with clear error feedback
 - Drag-to-pan interaction when zoomed
 
@@ -57,6 +62,15 @@ In the age of AI-driven development, documentation is now a first-class citizen,
 3. Run `Extensions: Install from VSIX`
 4. Select the provided `.vsix` package
 
+### Build and install from source
+
+1. Clone the repository: `git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
+2. Enter the project folder: `cd vscode-sidebar-previewer`
+3. Install dependencies: `npm install`
+4. Build extension output and bundled assets: `npm run package:vsix`
+5. Package the VSIX: `npx @vscode/vsce package`
+6. In VS Code, run `Extensions: Install from VSIX` and select the generated `sidebar-previewer-<version>.vsix`
+
 ## Usage
 
 1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.yaml`, `.yml`, `.toml`)
@@ -65,6 +79,12 @@ In the age of AI-driven development, documentation is now a first-class citizen,
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
 6. In JSON/YAML/TOML preview, click keys to locate source lines
+
+## How to show the VS Code Secondary Side Bar?
+
+1. Open the Command Palette and run `View: Toggle Secondary Side Bar`
+2. Or use menu path `View > Appearance > Secondary Side Bar`
+3. If needed, drag the Sidebar Previewer view into the Secondary Side Bar area
 
 ## Screenshots
 

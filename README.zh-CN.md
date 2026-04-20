@@ -1,10 +1,16 @@
 # Sidebar Previewer
 
+语言: [English](https://github.com/wuzhao/vscode-sidebar-previewer) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md)
+
 VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支持包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
 
 ## 为什么需要它？
 
 当 AI 改变了我们写代码的方式，文档也进化到了 **本地处理 + 源码共生** 的新阶段。现在的编辑器里，第二侧边栏才是 AI 时代的主战场。与其在标签页间局促跳转，不如让 **Sidebar Previewer** 为你化繁为简：文档在侧边栏实时呈现，代码与预览并肩而行。无论是埋头构建还是全屏演示，你的工作流从此告别割裂，尽享无缝切换。
+
+## 项目地址
+
+- GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
 
 ## 支持的文件类型
 
@@ -36,7 +42,6 @@ VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图
 
 ### Mermaid
 
-- `.mmd` 和 `.mermaid` 图表渲染
 - 基础语法预检查与错误提示
 - 放大后支持拖拽平移
 
@@ -55,6 +60,15 @@ VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图
 3. 执行 `Extensions: Install from VSIX`
 4. 选择提供的 `.vsix` 安装包
 
+### 从源码编译并安装
+
+1. 克隆仓库：`git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
+2. 进入目录：`cd vscode-sidebar-previewer`
+3. 安装依赖：`npm install`
+4. 构建扩展产物和静态资源：`npm run package:vsix`
+5. 打包 VSIX：`npx @vscode/vsce package`
+6. 在 VS Code 中执行 `Extensions: Install from VSIX`，选择生成的 `sidebar-previewer-<version>.vsix`
+
 ## 使用方法
 
 1. 打开任意支持的文件（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.yaml`、`.yml`、`.toml`）
@@ -64,14 +78,20 @@ VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图
 5. Mermaid 预览支持拖拽查看放大区域
 6. JSON / YAML / TOML 可点击键名跳转到源码对应行
 
+## 如何显示 VS Code 第二侧边栏？
+
+1. 打开命令面板，执行 `View: Toggle Secondary Side Bar`
+2. 或通过菜单 `View > Appearance > Secondary Side Bar`
+3. 如有需要，把 Sidebar Previewer 视图拖到第二侧边栏区域
+
 ## 功能截图
 
 | Type | Screenshot |
 | ---- | ---------- |
-| Markdown | ![Markdown Preview Screenshot](./screenshots/markdown.png) |
-| LaTeX | ![Latex Preview Screenshot](./screenshots/latex.png) |
-| Mermaid | ![Mermaid Preview Screenshot](./screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](./screenshots/yaml.png) |
+| Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
+| LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
+| Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
+| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 ## 致谢
 

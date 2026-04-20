@@ -187,6 +187,19 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             })
         );
 
+        // 监听选区变化：在数据树预览中高亮当前行或选区对应的键
+        this._extensionContext.subscriptions.push(
+            vscode.window.onDidChangeTextEditorSelection((e) => {
+                if (!this._view || !webviewView.visible) {
+                    return;
+                }
+                if (e.textEditor !== vscode.window.activeTextEditor) {
+                    return;
+                }
+                this._postDataTreeSelectionRange(e.textEditor);
+            })
+        );
+
         // 初始化预览（延迟执行确保 webview 已准备好）
         setTimeout(() => {
             this._updateVisibleRangesListener();
@@ -402,12 +415,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', dataTree);
 
             const scrollTargetHeadingId = options?.suppressAutoScroll ? undefined : this._getScrollTargetHeadingId(document);
+            const selectionRange = dataTree ? this._getEditorSelectionRange(document) : null;
             const message: {
                 type: 'update';
                 content: string;
                 headings: HeadingInfo[];
                 fileType: FileType;
                 clientRender: PreviewResult['clientRender'] | null;
+                selectionStartLine: number | null;
+                selectionEndLine: number | null;
                 editedLine: number | null;
                 preserveScrollPosition: boolean;
                 scrollToHeadingId?: string | null;
@@ -418,6 +434,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
                 headings: result.headings || [],
                 fileType: result.fileType,
                 clientRender: result.clientRender || null,
+                selectionStartLine: selectionRange ? selectionRange.startLine : null,
+                selectionEndLine: selectionRange ? selectionRange.endLine : null,
                 editedLine: editedLine !== undefined ? editedLine : null,
                 preserveScrollPosition: options?.preserveScrollPosition === true,
             };
@@ -442,6 +460,36 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             console.error('Sidebar Previewer: Error in _updatePreview', error);
             this._showError(error instanceof Error ? error.message : String(error));
         }
+    }
+
+    private _getEditorSelectionRange(document: vscode.TextDocument): { startLine: number; endLine: number } | null {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || editor.document !== document || editor.selections.length === 0) {
+            return null;
+        }
+
+        const selection = editor.selections[0];
+        const startLine = Math.min(selection.start.line, selection.end.line);
+        const endLine = Math.max(selection.start.line, selection.end.line);
+        return { startLine, endLine };
+    }
+
+    private _postDataTreeSelectionRange(editor: vscode.TextEditor | undefined): void {
+        if (!this._view || !editor) {
+            return;
+        }
+
+        const fileType = this._getSupportedFileType(editor.document);
+        if (!fileType || !isDataTreeType(fileType)) {
+            return;
+        }
+
+        const selectionRange = this._getEditorSelectionRange(editor.document);
+        this._view.webview.postMessage({
+            type: 'highlightDataTreeRange',
+            startLine: selectionRange ? selectionRange.startLine : null,
+            endLine: selectionRange ? selectionRange.endLine : null,
+        });
     }
 
     /**

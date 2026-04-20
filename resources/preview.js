@@ -47,6 +47,9 @@ window.addEventListener('message', event => {
         case 'collapseAll':
             collapseAllNodes();
             break;
+        case 'highlightDataTreeRange':
+            highlightTreeRange(message.startLine, message.endLine);
+            break;
     }
 });
 
@@ -140,6 +143,8 @@ function updateContent(data) {
     // 数据树类型：绑定 key 点击定位
     if (currentFileType === 'json' || currentFileType === 'yaml' || currentFileType === 'toml') {
         bindTreeKeyClicks();
+        highlightTreeRange(data.selectionStartLine, data.selectionEndLine);
+
         // 编辑时自动展开到修改行
         if (data.editedLine !== null && data.editedLine !== undefined) {
             expandToLine(data.editedLine);
@@ -627,6 +632,73 @@ function expandToLine(targetLine) {
 
     // 滚动到目标节点
     best.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function clearTreeHighlights() {
+    const highlightedKeys = document.querySelectorAll('.data-tree .tree-key.is-highlight');
+    highlightedKeys.forEach(key => key.classList.remove('is-highlight'));
+}
+
+function normalizeLineRange(startLine, endLine) {
+    if (startLine === null || startLine === undefined) {
+        return null;
+    }
+
+    const start = parseInt(startLine, 10);
+    const end = endLine === null || endLine === undefined ? start : parseInt(endLine, 10);
+    if (isNaN(start) || isNaN(end)) {
+        return null;
+    }
+
+    return {
+        from: Math.min(start, end),
+        to: Math.max(start, end)
+    };
+}
+
+function highlightTreeRange(startLine, endLine) {
+    clearTreeHighlights();
+
+    const range = normalizeLineRange(startLine, endLine);
+    if (!range) {
+        return;
+    }
+
+    const keys = Array.from(document.querySelectorAll('.data-tree .tree-key[data-line]'));
+    if (keys.length === 0) {
+        return;
+    }
+
+    const inRange = [];
+    for (const key of keys) {
+        const line = parseInt(key.getAttribute('data-line'), 10);
+        if (!isNaN(line) && line >= range.from && line <= range.to) {
+            inRange.push(key);
+        }
+    }
+
+    if (inRange.length > 0) {
+        inRange.forEach(key => key.classList.add('is-highlight'));
+        return;
+    }
+
+    let closestKey = null;
+    let closestDist = Number.POSITIVE_INFINITY;
+    for (const key of keys) {
+        const line = parseInt(key.getAttribute('data-line'), 10);
+        if (isNaN(line)) {
+            continue;
+        }
+        const dist = line < range.from ? range.from - line : line - range.to;
+        if (dist < closestDist) {
+            closestDist = dist;
+            closestKey = key;
+        }
+    }
+
+    if (closestKey) {
+        closestKey.classList.add('is-highlight');
+    }
 }
 
 // 绑定树形视图 key 点击事件

@@ -5,7 +5,7 @@ import { initI18n } from './i18n';
 export function activate(context: vscode.ExtensionContext) {
     // 初始化国际化
     initI18n(context);
-
+    const feedbackIssuesUrl = vscode.Uri.parse('https://github.com/wuzhao/vscode-sidebar-previewer/issues/new');
     const previewProvider = new PreviewProvider(context);
 
     context.subscriptions.push(
@@ -49,6 +49,12 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('sidebarPreviewer.enableFollowScroll', () => {
             previewProvider.enableFollowScroll();
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sidebarPreviewer.feedback', async () => {
+            await vscode.env.openExternal(feedbackIssuesUrl);
         })
     );
 

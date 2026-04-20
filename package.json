@@ -79,6 +79,11 @@
         "command": "sidebarPreviewer.collapseAll",
         "title": "Sidebar Previewer: Collapse All",
         "icon": "$(collapse-all)"
+      },
+      {
+        "command": "sidebarPreviewer.feedback",
+        "title": "Sidebar Previewer: Feedback",
+        "icon": "$(comment-discussion)"
       }
     ],
     "menus": {
@@ -127,6 +132,11 @@
           "command": "sidebarPreviewer.collapseAll",
           "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.isDataTree",
           "group": "navigation@5"
+        },
+        {
+          "command": "sidebarPreviewer.feedback",
+          "when": "view == sidebar-previewer",
+          "group": "feedback@6"
         }
       ]
     },
