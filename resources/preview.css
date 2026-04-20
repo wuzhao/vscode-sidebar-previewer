@@ -833,7 +833,7 @@ pre:hover .copy-btn {
     text-decoration: underline;
 }
 
-.data-tree .tree-item:has(.tree-key.is-highlight) {
+.data-tree .tree-item.is-highlight {
     background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 55%, transparent 45%);
     text-decoration: none;
 }

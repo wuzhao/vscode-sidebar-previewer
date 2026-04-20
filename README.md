@@ -12,7 +12,7 @@ In the age of AI-driven development, documentation is now a first-class citizen,
 
 ## Project Repository
 
-- GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
+GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
 
 ## Supported Files
 

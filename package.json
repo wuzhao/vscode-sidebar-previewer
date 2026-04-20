@@ -34,56 +34,56 @@
     "commands": [
       {
         "command": "sidebarPreviewer.zoomIn",
-        "title": "Sidebar Previewer: Zoom In",
+        "title": "Zoom In",
         "icon": "$(add)",
         "enablement": "sidebarPreviewer.canZoomIn"
       },
       {
         "command": "sidebarPreviewer.zoomOut",
-        "title": "Sidebar Previewer: Zoom Out",
+        "title": "Zoom Out",
         "icon": "$(remove)",
         "enablement": "sidebarPreviewer.canZoomOut"
       },
       {
         "command": "sidebarPreviewer.zoomReset",
-        "title": "Sidebar Previewer: Reset Zoom",
+        "title": "Reset Zoom",
         "icon": "$(refresh)",
         "enablement": "sidebarPreviewer.canZoomReset"
       },
       {
         "command": "sidebarPreviewer.locateEditor",
-        "title": "Sidebar Previewer: Locate in Editor",
+        "title": "Locate in Editor",
         "icon": "$(go-to-file)"
       },
       {
         "command": "sidebarPreviewer.locatePreview",
-        "title": "Sidebar Previewer: Locate in Preview",
+        "title": "Locate in Preview",
         "icon": "$(file-code)"
       },
       {
         "command": "sidebarPreviewer.disableFollowScroll",
-        "title": "Sidebar Previewer: Disable Follow Scroll",
+        "title": "Disable Follow Scroll",
         "icon": "$(unlock)"
       },
       {
         "command": "sidebarPreviewer.enableFollowScroll",
-        "title": "Sidebar Previewer: Enable Follow Scroll",
+        "title": "Enable Follow Scroll",
         "icon": "$(lock)"
       },
       {
         "command": "sidebarPreviewer.expandAll",
-        "title": "Sidebar Previewer: Expand All",
+        "title": "Expand All",
         "icon": "$(expand-all)"
       },
       {
         "command": "sidebarPreviewer.collapseAll",
-        "title": "Sidebar Previewer: Collapse All",
+        "title": "Collapse All",
         "icon": "$(collapse-all)"
       },
       {
         "command": "sidebarPreviewer.feedback",
-        "title": "Sidebar Previewer: Feedback",
-        "icon": "$(comment-discussion)"
+        "title": "Feedback",
+        "icon": "$(feedback)"
       }
     ],
     "menus": {
@@ -114,16 +114,6 @@
           "group": "navigation@4"
         },
         {
-          "command": "sidebarPreviewer.disableFollowScroll",
-          "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate && sidebarPreviewer.followScrollEnabled",
-          "group": "navigation@9"
-        },
-        {
-          "command": "sidebarPreviewer.enableFollowScroll",
-          "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate && !sidebarPreviewer.followScrollEnabled",
-          "group": "navigation@9"
-        },
-        {
           "command": "sidebarPreviewer.expandAll",
           "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.isDataTree",
           "group": "navigation@4"
@@ -134,9 +124,19 @@
           "group": "navigation@5"
         },
         {
+          "command": "sidebarPreviewer.disableFollowScroll",
+          "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate && sidebarPreviewer.followScrollEnabled",
+          "group": "navigation@6"
+        },
+        {
+          "command": "sidebarPreviewer.enableFollowScroll",
+          "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate && !sidebarPreviewer.followScrollEnabled",
+          "group": "navigation@6"
+        },
+        {
           "command": "sidebarPreviewer.feedback",
           "when": "view == sidebar-previewer",
-          "group": "feedback@6"
+          "group": "navigation@9"
         }
       ]
     },

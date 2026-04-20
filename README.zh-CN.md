@@ -10,7 +10,7 @@ VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图
 
 ## 项目地址
 
-- GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
+GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
 
 ## 支持的文件类型
 

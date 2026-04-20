@@ -635,8 +635,19 @@ function expandToLine(targetLine) {
 }
 
 function clearTreeHighlights() {
-    const highlightedKeys = document.querySelectorAll('.data-tree .tree-key.is-highlight');
-    highlightedKeys.forEach(key => key.classList.remove('is-highlight'));
+    const highlightedItems = document.querySelectorAll('.data-tree .tree-item.is-highlight');
+    highlightedItems.forEach(item => item.classList.remove('is-highlight'));
+}
+
+function collectNearestTreeItems(elements) {
+    const uniqueItems = new Set();
+    elements.forEach(element => {
+        const item = element.closest('.tree-item');
+        if (item) {
+            uniqueItems.add(item);
+        }
+    });
+    return Array.from(uniqueItems);
 }
 
 function normalizeLineRange(startLine, endLine) {
@@ -678,7 +689,8 @@ function highlightTreeRange(startLine, endLine) {
     }
 
     if (inRange.length > 0) {
-        inRange.forEach(key => key.classList.add('is-highlight'));
+        const matchedItems = collectNearestTreeItems(inRange);
+        matchedItems.forEach(item => item.classList.add('is-highlight'));
         return;
     }
 
@@ -697,7 +709,10 @@ function highlightTreeRange(startLine, endLine) {
     }
 
     if (closestKey) {
-        closestKey.classList.add('is-highlight');
+        const closestItem = closestKey.closest('.tree-item');
+        if (closestItem) {
+            closestItem.classList.add('is-highlight');
+        }
     }
 }
 
