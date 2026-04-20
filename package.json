@@ -1,8 +1,8 @@
 {
   "name": "sidebar-previewer",
-  "displayName": "Sidebar Previewer",
-  "description": "A file preview extension with Activity Bar entry supporting Markdown, LaTeX, Mermaid, JSON, YAML, TOML and more",
-  "version": "0.3.0",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.3.1",
   "publisher": "MG12",
   "repository": {
     "type": "git",
@@ -34,55 +34,55 @@
     "commands": [
       {
         "command": "sidebarPreviewer.zoomIn",
-        "title": "Zoom In",
+        "title": "%command.zoomIn.title%",
         "icon": "$(add)",
         "enablement": "sidebarPreviewer.canZoomIn"
       },
       {
         "command": "sidebarPreviewer.zoomOut",
-        "title": "Zoom Out",
+        "title": "%command.zoomOut.title%",
         "icon": "$(remove)",
         "enablement": "sidebarPreviewer.canZoomOut"
       },
       {
         "command": "sidebarPreviewer.zoomReset",
-        "title": "Reset Zoom",
+        "title": "%command.zoomReset.title%",
         "icon": "$(refresh)",
         "enablement": "sidebarPreviewer.canZoomReset"
       },
       {
         "command": "sidebarPreviewer.locateEditor",
-        "title": "Locate in Editor",
+        "title": "%command.locateEditor.title%",
         "icon": "$(go-to-file)"
       },
       {
         "command": "sidebarPreviewer.locatePreview",
-        "title": "Locate in Preview",
+        "title": "%command.locatePreview.title%",
         "icon": "$(file-code)"
       },
       {
         "command": "sidebarPreviewer.disableFollowScroll",
-        "title": "Disable Follow Scroll",
+        "title": "%command.disableFollowScroll.title%",
         "icon": "$(unlock)"
       },
       {
         "command": "sidebarPreviewer.enableFollowScroll",
-        "title": "Enable Follow Scroll",
+        "title": "%command.enableFollowScroll.title%",
         "icon": "$(lock)"
       },
       {
         "command": "sidebarPreviewer.expandAll",
-        "title": "Expand All",
+        "title": "%command.expandAll.title%",
         "icon": "$(expand-all)"
       },
       {
         "command": "sidebarPreviewer.collapseAll",
-        "title": "Collapse All",
+        "title": "%command.collapseAll.title%",
         "icon": "$(collapse-all)"
       },
       {
         "command": "sidebarPreviewer.feedback",
-        "title": "Feedback",
+        "title": "%command.feedback.title%",
         "icon": "$(feedback)"
       }
     ],
@@ -144,7 +144,7 @@
       "activitybar": [
         {
           "id": "sidebar-previewer",
-          "title": "Preview",
+          "title": "%viewsContainer.activitybar.title%",
           "icon": "resources/icon.svg"
         }
       ]
