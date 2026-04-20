@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md)
 

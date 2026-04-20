@@ -1,5 +1,7 @@
 # Sidebar Previewer
 
+![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)
+
 语言: [English](https://github.com/wuzhao/vscode-sidebar-previewer) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md)
 
 VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支持包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
