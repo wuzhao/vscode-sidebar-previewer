@@ -99,13 +99,13 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 致谢
 
-- [marked](https://github.com/markedjs/marked): parses Markdown into HTML for preview rendering.
-- [mermaid](https://github.com/mermaid-js/mermaid): renders Mermaid diagram blocks in Markdown and `.mmd/.mermaid` files.
-- [katex](https://github.com/KaTeX/KaTeX): renders math formulas for Markdown and LaTeX preview.
-- [highlight.js](https://github.com/highlightjs/highlight.js): provides syntax highlighting for code blocks.
-- [js-yaml](https://github.com/nodeca/js-yaml): parses YAML data for structured preview.
-- [toml](https://github.com/BinaryMuse/toml-node): parses TOML data for structured preview.
+- [marked](https://github.com/markedjs/marked)：将 Markdown 解析为 HTML，用于预览渲染。
+- [mermaid](https://github.com/mermaid-js/mermaid)：渲染 Markdown 及 `.mmd/.mermaid` 文件中的 Mermaid 图表块。
+- [katex](https://github.com/KaTeX/KaTeX)：渲染 Markdown 和 LaTeX 预览中的数学公式。
+- [highlight.js](https://github.com/highlightjs/highlight.js)：为代码块提供语法高亮。
+- [js-yaml](https://github.com/nodeca/js-yaml)：解析 YAML 数据，用于结构化预览。
+- [toml](https://github.com/BinaryMuse/toml-node)：解析 TOML 数据，用于结构化预览。
 
 ## 许可证
 
-Licensed under the [MIT License](./LICENSE).
+MIT

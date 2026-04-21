@@ -8,7 +8,7 @@ VS Code のアクティビティバーで、リアルタイム描画・スクロ
 
 ## なぜ必要ですか？
 
-In the age of AI-driven development, documentation is now a first-class citizen, **processed locally and versioned directly in-repo**. With the secondary sidebar becoming a mainstream hub for AI workflows, conventional previewing feels cramped and clunky. Enter **Sidebar Previewer**: it delivers real-time rendering in your sidebar, allowing you to fluidly switch between coding and previewing, with an added presentation mode to cover your entire workflow.
+AI 主導の開発時代において、ドキュメンテーションは今や主要な要素となり、ローカルで処理され、リポジトリ内で直接バージョン管理されるようになりました。セカンダリー・サイドバーがAIワークフローの主流ハブへと進化する中、従来のプレビュー手法は窮屈で扱いにくく感じられます。そこで登場したのが **Sidebar Previewer** です。サイドバー内でのリアルタイム・レンダリングを実現し、コーディングとプレビューの流れるような切り替えを可能にするほか、ワークフロー全体をカバーするプレゼンテーションモードも備えています。
 
 ## プロジェクトリポジトリ
 
@@ -38,74 +38,74 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ### Markdown
 
-- Front matter table
-- GitHub alert block rendering
-- Task list checkbox toggle-writeback
-- Code highlighting and copy button
-- KaTeX and Mermaid block rendering
-- Follow-scroll and locate between editor and preview
+- フロントマター（Front matter）のテーブル表示
+- GitHub Alert ブロックのレンダリング
+- タスクリストのチェックボックス操作（トグル）とファイルへの書き戻し
+- コードハイライトおよびコピーボタン
+- KaTeX および Mermaid ブロックのレンダリング
+- エディタとプレビュー間の同期スクロールおよび位置特定（双方向スクロール）
 
 ### LaTeX
 
-- KaTeX rendering for inline formulas and common math environments
-- Follow-scroll and locate between editor and preview
-- Zoom support
+- インライン数式および主要な数学環境の KaTeX レンダリング
+- エディタとプレビュー間の同期スクロールおよび位置特定
+- ズーム表示対応
 
 ### Mermaid
 
-- Basic syntax precheck with clear error feedback
-- Drag-to-pan interaction when zoomed
+- 基本的な構文の事前チェックと、分かりやすいエラーフィードバック
+- ズーム時のドラッグによるパン（移動）操作
 
 ### JSON / YAML / TOML
 
-- Collapsible tree view
-- Expand all / collapse all
-- Click key to jump to source line
+- 折りたたみ可能なツリー表示
+- すべて展開 / すべて折りたたむ
+- キー（項目）をクリックしてソース行へジャンプ
 
 ## インストール
 
 ### VS Code Marketplace からインストール
 
 1. VS Code を開きます
-2. 拡張機能ビューを開きます（Mac: `Cmd+Shift+X` / Windows・Linux: `Ctrl+Shift+X`）
+2. 拡張機能ビューを開きます（Mac：`Cmd+Shift+X` / Windows・Linux：`Ctrl+Shift+X`）
 3. `Sidebar Previewer` を検索します
 4. `Sidebar Previewer` の「Install」をクリックします
 
-> または拡張機能ページからインストールします: [Sidebar Previewer on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=MG12.sidebar-previewer)
+> または拡張機能ページからインストールします：[Sidebar Previewer on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=MG12.sidebar-previewer)
 
 ### ソースからビルドしてインストール
 
-1. Clone the repository: `git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
-2. Enter the project folder: `cd vscode-sidebar-previewer`
-3. Install dependencies: `npm install`
-4. Build extension output and bundled assets: `npm run package:vsix`
-5. Package the VSIX: `npx @vscode/vsce package`
-6. In VS Code, run `Extensions: Install from VSIX` and select the generated `sidebar-previewer-<version>.vsix`
+- リポジトリをクローンする：`git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
+- プロジェクトフォルダに移動する：`cd vscode-sidebar-previewer`
+- 依存関係をインストールする：`npm install`
+- 拡張機能の出力とアセットをビルド（バンドル）する：`npm run package:vsix`
+- VSIX ファイルをパッケージ化する：`npx @vscode/vsce package`
+- VS Code で `Extensions: Install from VSIX` を実行し、生成された `sidebar-previewer-<version>.vsix` を選択する
 
 ## 使い方
 
-1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.yaml`, `.yml`, `.toml`)
-2. Click the Sidebar Previewer icon in the Activity Bar
-3. The preview panel automatically renders the current file
-4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
-5. In Mermaid preview, drag the diagram to pan
-6. In JSON/YAML/TOML preview, click keys to locate source lines
+1. サポートされているファイルを開く（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.yaml`、`.yml`、`.toml`）
+2. アクティビティバーにある Sidebar Previewer アイコンをクリックする
+3. プレビューパネルに現在のファイルが自動的に表示（レンダリング）される
+4. ツールバーのボタン、または `Cmd/Ctrl` + マウスホイールでズーム操作を行う
+5. Mermaid のプレビューでは、図をドラッグしてパン（移動）させる
+6. JSON/YAML/TOML のプレビューでは、キーをクリックしてソース行へジャンプする
 
 ## VS Code のセカンダリサイドバーを表示するには？
 
-1. Open the Command Palette and run `View: Toggle Secondary Side Bar`
-2. Or use menu path `View > Appearance > Secondary Side Bar`
-3. If needed, drag the Sidebar Previewer view into the Secondary Side Bar area
+1. コマンドパレットを開き、`View: Toggle Secondary Side Bar` を実行する
+2. または、メニューの `View > Appearance > Secondary Side Bar` から選択する
+3. 必要に応じて、Sidebar Previewer のビューをセカンダリー サイドバー領域へドラッグする
 
 ## 謝辞
 
-- [marked](https://github.com/markedjs/marked): parses Markdown into HTML for preview rendering.
-- [mermaid](https://github.com/mermaid-js/mermaid): renders Mermaid diagram blocks in Markdown and `.mmd/.mermaid` files.
-- [katex](https://github.com/KaTeX/KaTeX): renders math formulas for Markdown and LaTeX preview.
-- [highlight.js](https://github.com/highlightjs/highlight.js): provides syntax highlighting for code blocks.
-- [js-yaml](https://github.com/nodeca/js-yaml): parses YAML data for structured preview.
-- [toml](https://github.com/BinaryMuse/toml-node): parses TOML data for structured preview.
+- [marked](https://github.com/markedjs/marked)：Markdown をHTMLに解析し、プレビュー表示を実現しています。
+- [mermaid](https://github.com/mermaid-js/mermaid)：Markdown 内の Mermaid ダイアグラム、および `.mmd/.mermaid` ファイルのレンダリングに使用しています。
+- [katex](https://github.com/KaTeX/KaTeX)：Markdown およびLaTeXプレビューにおける数式のレンダリングに使用しています。
+- [highlight.js](https://github.com/highlightjs/highlight.js)：コードブロックの構文ハイライト（シンタックスハイライト）を提供しています。
+- [js-yaml](https://github.com/nodeca/js-yaml)：YAMLデータを解析し、構造化プレビューを表示します。
+- [toml](https://github.com/BinaryMuse/toml-node)：TOMLデータを解析し、構造化プレビューを表示します。
 
 ## ライセンス
 
-Licensed under the [MIT License](./LICENSE).
+MIT
