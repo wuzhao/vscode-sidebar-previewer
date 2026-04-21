@@ -2,13 +2,13 @@
 
 ![Version](https://img.shields.io/badge/version-0.3.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-Language: [English](./README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文（台灣）](./README.zh-TW.md) | [繁體中文（香港）](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
+Language: [English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文（台灣）](./README.zh-TW.md) | [繁體中文（香港）](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
-VS Code 的側邊欄預覽器，支援实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支援包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
+VS Code 的側邊欄預覽器，支持實時渲染、滾動同步、樹形視圖、縮放控制等功能，多文件格式支持包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
 
 ## 為什麼需要它？
 
-当 AI 改变了我们写代码的方式，文档也进化到了 **本地处理 + 源码共生** 的新阶段。现在的编辑器里，第二側邊欄才是 AI 时代的主战场。与其在标签页间局促跳转，不如让 **Sidebar Previewer** 为你化繁为简：文档在側邊欄实时呈现，代码与預覽并肩而行。无论是埋头构建还是全屏演示，你的工作流从此告别割裂，尽享无缝切换。
+當 AI 改變了我們寫代碼的方式，文檔也進化到了 **本地處理 + 源碼共生** 的新階段。現在的編輯器裏，第二側邊欄才是 AI 時代的主戰場。與其在標籤頁間侷促跳轉，不如讓 **Sidebar Previewer** 為你化繁為簡：文檔在側邊欄實時呈現，代碼與預覽並肩而行。無論是埋頭構建還是全屏演示，你的工作流從此告別割裂，盡享無縫切換。
 
 ## 項目地址
 
@@ -24,9 +24,9 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 
-## 支援的文件类型
+## 支持的文件類型
 
-| 文件类型 | 扩展名 |
+| 文件類型 | 擴展名 |
 | ------- | ------ |
 | Markdown | `.md`、`.markdown` |
 | LaTeX | `.tex` |
@@ -39,62 +39,62 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ### Markdown
 
-- Front Matter 属性表格
-- GitHub Alert 提示块渲染
-- 任务列表勾选回写
-- 代码高亮与复制按钮
-- KaTeX 和 Mermaid 代码块渲染
-- 编辑器与預覽之间滚动同步、互相定位
+- Front Matter 屬性表格
+- GitHub Alert 提示塊渲染
+- 任務列表勾選回寫
+- 代碼高亮與複製按鈕
+- KaTeX 和 Mermaid 代碼塊渲染
+- 編輯器與預覽之間滾動同步、互相定位
 
 ### LaTeX
 
-- 行内公式与常见数学环境的 KaTeX 渲染
-- 编辑器与預覽之间滚动同步、互相定位
-- 支援缩放
+- 行內公式與常見數學環境的 KaTeX 渲染
+- 編輯器與預覽之間滾動同步、互相定位
+- 支持縮放
 
 ### Mermaid
 
-- 基础语法预检查与错误提示
-- 放大后支援拖拽平移
+- 基礎語法預檢查與錯誤提示
+- 放大後支持拖拽平移
 
 ### JSON / YAML / TOML
 
-- 可折叠树形视图
-- 全部展开 / 全部折叠
-- 点击键名跳转源码行
+- 可摺疊樹形視圖
+- 全部展開 / 全部摺疊
+- 點擊鍵名跳轉源碼行
 
-## 安裝方式
+## 安裝方法
 
-### 通过 VSIX 安装
+### 通過 VSIX 安裝
 
-1. 打开 VS Code
+1. 打開 VS Code
 2. 按 `Cmd+Shift+P`（Mac）或 `Ctrl+Shift+P`（Windows/Linux）
-3. 执行 `Extensions: Install from VSIX`
-4. 选择提供的 `.vsix` 安装包
+3. 執行 `Extensions: Install from VSIX`
+4. 選擇提供的 `.vsix` 安裝包
 
-### 从源码编译并安装
+### 從源碼編譯並安裝
 
-1. 克隆仓库：`git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
-2. 进入目录：`cd vscode-sidebar-previewer`
-3. 安装依赖：`npm install`
-4. 构建扩展产物和静态资源：`npm run package:vsix`
+1. 克隆倉庫：`git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
+2. 進入目錄：`cd vscode-sidebar-previewer`
+3. 安裝依賴：`npm install`
+4. 構建擴展產物和靜態資源：`npm run package:vsix`
 5. 打包 VSIX：`npx @vscode/vsce package`
-6. 在 VS Code 中执行 `Extensions: Install from VSIX`，选择生成的 `sidebar-previewer-<version>.vsix`
+6. 在 VS Code 中執行 `Extensions: Install from VSIX`，選擇生成的 `sidebar-previewer-<version>.vsix`
 
-## 使用方式
+## 使用方法
 
-1. 打开任意支援的文件（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.yaml`、`.yml`、`.toml`）
-2. 点击左侧 Activity Bar 中的 Sidebar Previewer 图标
-3. 預覽面板会自动显示当前文件的渲染结果
-4. 使用工具栏或 `Cmd/Ctrl` + 鼠标滚轮进行缩放
-5. Mermaid 預覽支援拖拽查看放大区域
-6. JSON / YAML / TOML 可点击键名跳转到源码对应行
+1. 打開任意支持的文件（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.yaml`、`.yml`、`.toml`）
+2. 點擊左側 Activity Bar 中的 Sidebar Previewer 圖標
+3. 預覽面板會自動顯示當前文件的渲染結果
+4. 使用工具欄或 `Cmd/Ctrl` + 鼠標滾輪進行縮放
+5. Mermaid 預覽支持拖拽查看放大區域
+6. JSON / YAML / TOML 可點擊鍵名跳轉到源碼對應行
 
-## 如何显示 VS Code 第二側邊欄？
+## 如何顯示 VS Code 第二側邊欄？
 
-1. 打开命令面板，执行 `View: Toggle Secondary Side Bar`
-2. 或通过菜单 `View > Appearance > Secondary Side Bar`
-3. 如有需要，把 Sidebar Previewer 视图拖到第二側邊欄区域
+1. 打開命令面板，執行 `View: Toggle Secondary Side Bar`
+2. 或通過菜單 `View > Appearance > Secondary Side Bar`
+3. 如有需要，把 Sidebar Previewer 視圖拖到第二側邊欄區域
 
 ## 致謝
 
@@ -105,6 +105,6 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - [js-yaml](https://github.com/nodeca/js-yaml): parses YAML data for structured preview.
 - [toml](https://github.com/BinaryMuse/toml-node): parses TOML data for structured preview.
 
-## 授權條款
+## 許可證
 
 Licensed under the [MIT License](./license.md).
