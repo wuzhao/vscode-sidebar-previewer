@@ -53,6 +53,8 @@ window.addEventListener('message', event => {
     }
 });
 
+vscode.postMessage({ type: 'webviewReady' });
+
 // 监听滚轮事件，支持 cmd/ctrl + 轮缩放
 document.addEventListener('wheel', (e) => {
     // macOS 使用 metaKey (cmd)，Windows/Linux 使用 ctrlKey

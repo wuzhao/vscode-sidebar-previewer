@@ -2,19 +2,19 @@
 
 ![Version](https://img.shields.io/badge/version-0.3.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md) | [繁體中文（台灣）](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-TW.md) | [繁體中文（香港）](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.ja-JP.md)
+Language: [English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文（台灣）](./README.zh-TW.md) | [繁體中文（香港）](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
-Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, and TOML.
+VS Code のアクティビティバーで、リアルタイム描画・スクロール同期・ズーム操作を実現します。Markdown、LaTeX、Mermaid、JSON、YAML、TOML に対応しています。
 
-## Why do you need it?
+## なぜ必要ですか？
 
 In the age of AI-driven development, documentation is now a first-class citizen, **processed locally and versioned directly in-repo**. With the secondary sidebar becoming a mainstream hub for AI workflows, conventional previewing feels cramped and clunky. Enter **Sidebar Previewer**: it delivers real-time rendering in your sidebar, allowing you to fluidly switch between coding and previewing, with an added presentation mode to cover your entire workflow.
 
-## Project Repository
+## プロジェクトリポジトリ
 
 GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
 
-## Screenshots
+## スクリーンショット
 
 | Type | Screenshot |
 | ---- | ---------- |
@@ -24,7 +24,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 
-## Supported Files
+## 対応ファイル
 
 | Type | Extensions |
 | ---- | ---------- |
@@ -35,7 +35,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | YAML | `.yaml`, `.yml` |
 | TOML | `.toml` |
 
-## Feature Overview
+## 機能概要
 
 ### Markdown
 
@@ -63,16 +63,16 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Expand all / collapse all
 - Click key to jump to source line
 
-## Installation
+## インストール
 
-### Install from VSIX
+### VSIX からインストール
 
 1. Open VS Code
 2. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
 3. Run `Extensions: Install from VSIX`
 4. Select the provided `.vsix` package
 
-### Build and install from source
+### ソースからビルドしてインストール
 
 1. Clone the repository: `git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
 2. Enter the project folder: `cd vscode-sidebar-previewer`
@@ -81,7 +81,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 5. Package the VSIX: `npx @vscode/vsce package`
 6. In VS Code, run `Extensions: Install from VSIX` and select the generated `sidebar-previewer-<version>.vsix`
 
-## Usage
+## 使い方
 
 1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.yaml`, `.yml`, `.toml`)
 2. Click the Sidebar Previewer icon in the Activity Bar
@@ -90,13 +90,13 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 5. In Mermaid preview, drag the diagram to pan
 6. In JSON/YAML/TOML preview, click keys to locate source lines
 
-## How to show the VS Code Secondary Side Bar?
+## VS Code のセカンダリサイドバーを表示するには？
 
 1. Open the Command Palette and run `View: Toggle Secondary Side Bar`
 2. Or use menu path `View > Appearance > Secondary Side Bar`
 3. If needed, drag the Sidebar Previewer view into the Secondary Side Bar area
 
-## Acknowledgements
+## 謝辞
 
 - [marked](https://github.com/markedjs/marked): parses Markdown into HTML for preview rendering.
 - [mermaid](https://github.com/mermaid-js/mermaid): renders Mermaid diagram blocks in Markdown and `.mmd/.mermaid` files.
@@ -105,6 +105,6 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - [js-yaml](https://github.com/nodeca/js-yaml): parses YAML data for structured preview.
 - [toml](https://github.com/BinaryMuse/toml-node): parses TOML data for structured preview.
 
-## License
+## ライセンス
 
 Licensed under the [MIT License](./license.md).

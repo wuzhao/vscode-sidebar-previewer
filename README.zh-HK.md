@@ -2,19 +2,19 @@
 
 ![Version](https://img.shields.io/badge/version-0.3.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-Language: [English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文（台灣）](./README.zh-TW.md) | [繁體中文（香港）](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
+Language: [English](./README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文（台灣）](./README.zh-TW.md) | [繁體中文（香港）](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
-VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支持包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
+VS Code 的側邊欄預覽器，支援实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支援包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
 
-## 为什么需要它？
+## 為什麼需要它？
 
-当 AI 改变了我们写代码的方式，文档也进化到了 **本地处理 + 源码共生** 的新阶段。现在的编辑器里，第二侧边栏才是 AI 时代的主战场。与其在标签页间局促跳转，不如让 **Sidebar Previewer** 为你化繁为简：文档在侧边栏实时呈现，代码与预览并肩而行。无论是埋头构建还是全屏演示，你的工作流从此告别割裂，尽享无缝切换。
+当 AI 改变了我们写代码的方式，文档也进化到了 **本地处理 + 源码共生** 的新阶段。现在的编辑器里，第二側邊欄才是 AI 时代的主战场。与其在标签页间局促跳转，不如让 **Sidebar Previewer** 为你化繁为简：文档在側邊欄实时呈现，代码与預覽并肩而行。无论是埋头构建还是全屏演示，你的工作流从此告别割裂，尽享无缝切换。
 
-## 项目地址
+## 項目地址
 
 GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/wuzhao/vscode-sidebar-previewer)
 
-## 功能截图
+## 功能截圖
 
 | Type | Screenshot |
 | ---- | ---------- |
@@ -24,7 +24,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 
-## 支持的文件类型
+## 支援的文件类型
 
 | 文件类型 | 扩展名 |
 | ------- | ------ |
@@ -35,7 +35,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | YAML | `.yaml`、`.yml` |
 | TOML | `.toml` |
 
-## 功能介绍
+## 功能介紹
 
 ### Markdown
 
@@ -44,18 +44,18 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 任务列表勾选回写
 - 代码高亮与复制按钮
 - KaTeX 和 Mermaid 代码块渲染
-- 编辑器与预览之间滚动同步、互相定位
+- 编辑器与預覽之间滚动同步、互相定位
 
 ### LaTeX
 
 - 行内公式与常见数学环境的 KaTeX 渲染
-- 编辑器与预览之间滚动同步、互相定位
-- 支持缩放
+- 编辑器与預覽之间滚动同步、互相定位
+- 支援缩放
 
 ### Mermaid
 
 - 基础语法预检查与错误提示
-- 放大后支持拖拽平移
+- 放大后支援拖拽平移
 
 ### JSON / YAML / TOML
 
@@ -63,7 +63,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 全部展开 / 全部折叠
 - 点击键名跳转源码行
 
-## 安装方法
+## 安裝方式
 
 ### 通过 VSIX 安装
 
@@ -81,22 +81,22 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 5. 打包 VSIX：`npx @vscode/vsce package`
 6. 在 VS Code 中执行 `Extensions: Install from VSIX`，选择生成的 `sidebar-previewer-<version>.vsix`
 
-## 使用方法
+## 使用方式
 
-1. 打开任意支持的文件（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.yaml`、`.yml`、`.toml`）
+1. 打开任意支援的文件（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.yaml`、`.yml`、`.toml`）
 2. 点击左侧 Activity Bar 中的 Sidebar Previewer 图标
-3. 预览面板会自动显示当前文件的渲染结果
+3. 預覽面板会自动显示当前文件的渲染结果
 4. 使用工具栏或 `Cmd/Ctrl` + 鼠标滚轮进行缩放
-5. Mermaid 预览支持拖拽查看放大区域
+5. Mermaid 預覽支援拖拽查看放大区域
 6. JSON / YAML / TOML 可点击键名跳转到源码对应行
 
-## 如何显示 VS Code 第二侧边栏？
+## 如何显示 VS Code 第二側邊欄？
 
 1. 打开命令面板，执行 `View: Toggle Secondary Side Bar`
 2. 或通过菜单 `View > Appearance > Secondary Side Bar`
-3. 如有需要，把 Sidebar Previewer 视图拖到第二侧边栏区域
+3. 如有需要，把 Sidebar Previewer 视图拖到第二側邊欄区域
 
-## 致谢
+## 致謝
 
 - [marked](https://github.com/markedjs/marked): parses Markdown into HTML for preview rendering.
 - [mermaid](https://github.com/mermaid-js/mermaid): renders Mermaid diagram blocks in Markdown and `.mmd/.mermaid` files.
@@ -105,6 +105,6 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - [js-yaml](https://github.com/nodeca/js-yaml): parses YAML data for structured preview.
 - [toml](https://github.com/BinaryMuse/toml-node): parses TOML data for structured preview.
 
-## 许可证
+## 授權條款
 
 Licensed under the [MIT License](./license.md).

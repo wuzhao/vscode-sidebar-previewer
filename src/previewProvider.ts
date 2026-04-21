@@ -10,6 +10,7 @@ import { i18n } from './i18n';
 
 export class PreviewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
+    private _webviewReady: boolean = false;
     private _previewCssPath: string;
     private _previewJsPath: string;
     private _currentHeadings: HeadingInfo[] = [];
@@ -91,6 +92,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         };
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        this._webviewReady = false;
 
         // 监听来自 webview 的消息
         this._extensionContext.subscriptions.push(
@@ -99,6 +101,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
                     this._zoomLevel = message.level;
                     vscode.window.setStatusBarMessage(i18n.format(i18n.zoomStatus, String(this._zoomLevel)), 2000);
                     this._updateZoomContext();
+                } else if (message.type === 'webviewReady') {
+                    this._webviewReady = true;
+                    this._refreshPreviewForActiveEditor();
                 } else if (message.type === 'visibleHeading') {
                     this._handleLocateEditor(message.headingId);
                 } else if (message.type === 'toggleCheckbox') {
@@ -114,18 +119,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             webviewView.onDidChangeVisibility(() => {
                 if (webviewView.visible) {
                     this._updateVisibleRangesListener();
-                    const editor = vscode.window.activeTextEditor;
-                    if (editor && editor.document) {
-                        this._showLoading();
-                        if(this._getSupportedFileType(editor.document)) {
-                            this._updatePreview(editor.document);
-                            this._scrollToEditorPosition(editor);
-                        } else {
-                            this._showEmptyState();
-                        }
-                    } else {
-                        this._showEmptyState();
-                    }
+                    this._refreshPreviewForActiveEditor();
                 }
             })
         );
@@ -136,19 +130,17 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
                 if (!this._view || !webviewView.visible) {
                     return;
                 }
+                if (!this._webviewReady) {
+                    return;
+                }
                 this._updateVisibleRangesListener();
                 try {
                     if (editor && editor.document) {
-                        this._showLoading();
-                        if(this._getSupportedFileType(editor.document)) {
-                            if (loadingTimeout) {
-                                clearTimeout(loadingTimeout);
-                                loadingTimeout = null;
-                            }
-                            this._updatePreview(editor.document);
-                        } else {
-                            this._showEmptyState();
+                        if (loadingTimeout) {
+                            clearTimeout(loadingTimeout);
+                            loadingTimeout = null;
                         }
+                        this._refreshPreviewForActiveEditor();
                     } else {
                         // 非文本编辑器（如图片），显示空状态；延时处理，避免快速切换编辑器时闪烁
                         loadingTimeout = setTimeout (() => {
@@ -200,26 +192,31 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             })
         );
 
-        // 初始化预览（延迟执行确保 webview 已准备好）
-        setTimeout(() => {
-            this._updateVisibleRangesListener();
-            try {
-                const editor = vscode.window.activeTextEditor;
-                if (editor && editor.document) {
-                    this._showLoading();
-                    if (this._getSupportedFileType(editor.document)) {
-                        this._updatePreview(editor.document);
-                        this._scrollToEditorPosition(editor);
-                    } else {
-                        this._showEmptyState();
-                    }
-                } else {
-                    this._showEmptyState();
-                }
-            } catch (error) {
-                console.error('Sidebar Previewer: Error in initial check', error);
+        this._refreshPreviewForActiveEditor();
+    }
+
+    private _refreshPreviewForActiveEditor(): void {
+        if (!this._view || !this._view.visible || !this._webviewReady) {
+            return;
+        }
+        this._updateVisibleRangesListener();
+        try {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor || !editor.document) {
+                this._showEmptyState();
+                return;
             }
-        }, 100);
+            const fileType = this._getSupportedFileType(editor.document);
+            if (!fileType) {
+                this._showEmptyState();
+                return;
+            }
+            this._showLoading();
+            this._updatePreview(editor.document);
+            this._scrollToEditorPosition(editor);
+        } catch (error) {
+            console.error('Sidebar Previewer: Error in refresh preview', error);
+        }
     }
 
     /**

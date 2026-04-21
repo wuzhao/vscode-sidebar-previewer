@@ -45,6 +45,39 @@ const strings: Record<string, I18nStrings> = {
         viewCode: '代码',
         viewPreview: '预览',
         previewError: '预览失败'
+    },
+    'zh_TW': {
+        emptyStateTitle: '檔案預覽',
+        emptyStateText: `目前檔案類型不支援預覽，僅支援以下格式：<ul>${supportedList}</ul>`,
+        zoomStatus: '預覽縮放: {0}%',
+        webviewTitle: '檔案預覽',
+        copySuccess: '已複製',
+        copyCode: '複製',
+        viewCode: '程式碼',
+        viewPreview: '預覽',
+        previewError: '預覽失敗'
+    },
+    'zh_HK': {
+        emptyStateTitle: '檔案預覽',
+        emptyStateText: `目前檔案類型不支援預覽，僅支援以下格式：<ul>${supportedList}</ul>`,
+        zoomStatus: '預覽縮放: {0}%',
+        webviewTitle: '檔案預覽',
+        copySuccess: '已複製',
+        copyCode: '複製',
+        viewCode: '程式碼',
+        viewPreview: '預覽',
+        previewError: '預覽失敗'
+    },
+    'ja_JP': {
+        emptyStateTitle: 'ファイルプレビュー',
+        emptyStateText: `このファイル形式はプレビューに対応していません。対応形式：<ul>${supportedList}</ul>`,
+        zoomStatus: 'プレビュー拡大率: {0}%',
+        webviewTitle: 'ファイルプレビュー',
+        copySuccess: 'コピー完了',
+        copyCode: 'コピー',
+        viewCode: 'コード',
+        viewPreview: 'プレビュー',
+        previewError: 'プレビュー失敗'
     }
 };
 
