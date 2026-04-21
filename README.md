@@ -64,12 +64,14 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Installation
 
-### Install from VSIX
+### Install from VS Code Marketplace
 
 1. Open VS Code
-2. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-3. Run `Extensions: Install from VSIX`
-4. Select the provided `.vsix` package
+2. Open Extensions view (`Cmd+Shift+X` on Mac, `Ctrl+Shift+X` on Windows/Linux)
+3. Search for `Sidebar Previewer`
+4. Click "**Install**" on the extension
+
+> Or install from the extension page: [Sidebar Previewer on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=MG12.sidebar-previewer)
 
 ### Build and install from source
 
