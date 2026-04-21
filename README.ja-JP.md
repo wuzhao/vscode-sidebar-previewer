@@ -107,4 +107,4 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## ライセンス
 
-Licensed under the [MIT License](./license.md).
+Licensed under the [MIT License](./LICENSE).
