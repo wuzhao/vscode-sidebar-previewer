@@ -20,5 +20,6 @@ test/**
 *.vsix
 
 CHANGELOG.md
+WIKI.md
 TASKS.md
 REVIEW.md

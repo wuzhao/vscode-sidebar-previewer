@@ -1,4 +1,5 @@
 import { HeadingInfo, PreviewResult } from './fileTypes';
+import { escapeHtml, escapeRegex } from './utils';
 
 export class LatexPreviewProvider {
     /**
@@ -42,11 +43,11 @@ export class LatexPreviewProvider {
             // 检测数学环境结束
             if (inMathEnv) {
                 mathBuffer.push(line);
-                const endMatch = line.match(new RegExp(`\\\\end\\{${mathEnvName.replace('*', '\\*')}\\}`));
+                const endMatch = line.match(new RegExp(`\\\\end\\{${escapeRegex(mathEnvName)}\\}`));
                 if (endMatch) {
                     inMathEnv = false;
                     const mathContent = mathBuffer.join('\n');
-                    parts.push(`<div class="katex-block" data-katex-display="true">${this.escapeHtml(mathContent)}</div>`);
+                    parts.push(`<div class="katex-block" data-katex-display="true">${escapeHtml(mathContent)}</div>`);
                     mathBuffer = [];
                 }
                 continue;
@@ -54,7 +55,7 @@ export class LatexPreviewProvider {
 
             // 检测 $$ 行内显示公式
             if (line.trim().startsWith('$$')) {
-                parts.push(`<div class="katex-block" data-katex-display="true">${this.escapeHtml(line)}</div>`);
+                parts.push(`<div class="katex-block" data-katex-display="true">${escapeHtml(line)}</div>`);
                 continue;
             }
 
@@ -70,7 +71,7 @@ export class LatexPreviewProvider {
             // 文档结构命令
             if (trimmed.startsWith('\\documentclass') || trimmed.startsWith('\\usepackage') ||
                 trimmed.startsWith('\\begin{document}') || trimmed.startsWith('\\end{document}')) {
-                parts.push(`<div class="latex-command">${this.escapeHtml(trimmed)}</div>`);
+                parts.push(`<div class="latex-command">${escapeHtml(trimmed)}</div>`);
                 continue;
             }
 
@@ -84,7 +85,7 @@ export class LatexPreviewProvider {
                 const text = sectionMatch[2];
                 const id = this.slugify(text);
                 headings.push({ level, text, line: i, id });
-                parts.push(`<h${level} id="${id}">${this.escapeHtml(text)}</h${level}>`);
+                parts.push(`<h${level} id="${id}">${escapeHtml(text)}</h${level}>`);
                 continue;
             }
 
@@ -94,14 +95,14 @@ export class LatexPreviewProvider {
                 const text = titleMatch[1];
                 const id = this.slugify(text);
                 headings.push({ level: 1, text, line: i, id });
-                parts.push(`<h1 id="${id}">${this.escapeHtml(text)}</h1>`);
+                parts.push(`<h1 id="${id}">${escapeHtml(text)}</h1>`);
                 continue;
             }
 
             // \\author 命令
             const authorMatch = trimmed.match(/\\author\{(.+?)\}/);
             if (authorMatch) {
-                parts.push(`<p class="latex-author">${this.escapeHtml(authorMatch[1])}</p>`);
+                parts.push(`<p class="latex-author">${escapeHtml(authorMatch[1])}</p>`);
                 continue;
             }
 
@@ -112,27 +113,23 @@ export class LatexPreviewProvider {
 
             // 注释
             if (trimmed.startsWith('%')) {
-                parts.push(`<div class="latex-comment">${this.escapeHtml(trimmed)}</div>`);
+                parts.push(`<div class="latex-comment">${escapeHtml(trimmed)}</div>`);
                 continue;
             }
 
             // 包含行内数学公式的普通文本
-            let processedLine = this.escapeHtml(trimmed);
+            let processedLine = escapeHtml(trimmed);
             // 替换行内 $...$ 公式为 KaTeX 标记
             processedLine = processedLine.replace(/\$([^$]+?)\$/g, '<span class="katex-inline" data-katex-display="false">$1</span>');
 
             parts.push(`<p>${processedLine}</p>`);
         }
 
-        return parts.join('\n');
-    }
+        if (inMathEnv && mathBuffer.length > 0) {
+            parts.push(`<pre class="error-detail">${escapeHtml(mathBuffer.join('\n'))}</pre>`);
+        }
 
-    private static escapeHtml(text: string): string {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+        return parts.join('\n');
     }
 
     private static slugify(text: string): string {

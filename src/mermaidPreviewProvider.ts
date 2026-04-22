@@ -1,4 +1,5 @@
 import { PreviewResult } from './fileTypes';
+import { escapeHtml } from './utils';
 
 export class MermaidPreviewProvider {
     /**
@@ -19,14 +20,11 @@ export class MermaidPreviewProvider {
         const firstLine = trimmed.split('\n')[0].trim();
         const isValid = validStarts.some(start => firstLine.startsWith(start));
         if (!isValid && firstLine.length > 0) {
-            throw new Error(`Invalid Mermaid syntax: unrecognized diagram type "${firstLine.substring(0, 30)}"`);
+            throw new Error('Invalid Mermaid syntax: unrecognized diagram type');
         }
 
         // 将 mermaid 源码包装在特殊容器中，由客户端渲染
-        const escapedContent = content
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+        const escapedContent = escapeHtml(content);
 
         const html = `<div class="mermaid-container"><pre class="mermaid">${escapedContent}</pre></div>`;
 

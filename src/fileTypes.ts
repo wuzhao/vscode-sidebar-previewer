@@ -80,6 +80,9 @@ const extensionMap: Map<string, FileType> = new Map(
  * 根据文件名获取文件类型
  */
 export function getFileType(fileName: string): FileType | null {
+    if (!fileName) {
+        return null;
+    }
     const lowerName = fileName.toLowerCase();
     for (const [ext, type] of extensionMap.entries()) {
         if (lowerName.endsWith(ext)) {

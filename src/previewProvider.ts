@@ -7,8 +7,9 @@ import { CodePreviewProvider } from './codePreviewProvider';
 import { LatexPreviewProvider } from './latexPreviewProvider';
 import { MermaidPreviewProvider } from './mermaidPreviewProvider';
 import { i18n } from './i18n';
+import { escapeHtml } from './utils';
 
-export class PreviewProvider implements vscode.WebviewViewProvider {
+export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     private _view?: vscode.WebviewView;
     private _webviewReady: boolean = false;
     private _previewCssPath: string;
@@ -21,6 +22,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     private _visibleRangesListener?: vscode.Disposable;
     private _zoomLevel: number = 100;
     private readonly ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
+    private _loadingTimeout: ReturnType<typeof setTimeout> | null = null;
 
     private _codiconCssPath: string;
     private _katexCssPath: string;
@@ -60,6 +62,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         if (fs.existsSync(preferredPath)) {
             return preferredPath;
         }
+        if (fs.existsSync(fallbackPath)) {
+            return fallbackPath;
+        }
+        console.warn(`Sidebar Previewer: asset not found, using preferred path fallback. preferred=${preferredPath}, fallback=${fallbackPath}`);
         return fallbackPath;
     }
 
@@ -118,12 +124,13 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         this._extensionContext.subscriptions.push(
             webviewView.onDidChangeVisibility(() => {
                 if (webviewView.visible) {
+                    this._clearLoadingTimeout();
                     this._updateVisibleRangesListener();
                     this._refreshPreviewForActiveEditor();
                 }
             })
         );
-        let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
+
         // 监听活动编辑器变化
         this._extensionContext.subscriptions.push(
             vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -136,14 +143,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
                 this._updateVisibleRangesListener();
                 try {
                     if (editor && editor.document) {
-                        if (loadingTimeout) {
-                            clearTimeout(loadingTimeout);
-                            loadingTimeout = null;
-                        }
+                        this._clearLoadingTimeout();
                         this._refreshPreviewForActiveEditor();
                     } else {
                         // 非文本编辑器（如图片），显示空状态；延时处理，避免快速切换编辑器时闪烁
-                        loadingTimeout = setTimeout (() => {
+                        this._setLoadingTimeout(() => {
                             this._showEmptyState();
                         }, 800);
                     }
@@ -195,10 +199,27 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         this._refreshPreviewForActiveEditor();
     }
 
+    private _setLoadingTimeout(callback: () => void, delayMs: number): void {
+        this._clearLoadingTimeout();
+        this._loadingTimeout = setTimeout(() => {
+            this._loadingTimeout = null;
+            callback();
+        }, delayMs);
+    }
+
+    private _clearLoadingTimeout(): void {
+        if (!this._loadingTimeout) {
+            return;
+        }
+        clearTimeout(this._loadingTimeout);
+        this._loadingTimeout = null;
+    }
+
     private _refreshPreviewForActiveEditor(): void {
         if (!this._view || !this._view.visible || !this._webviewReady) {
             return;
         }
+        this._clearLoadingTimeout();
         this._updateVisibleRangesListener();
         try {
             const editor = vscode.window.activeTextEditor;
@@ -300,6 +321,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
      * 显示空状态
      */
     private _showEmptyState(): void {
+        this._clearLoadingTimeout();
         this._currentHeadings = [];
         this._currentFileType = null;
         this._supportsLocate = false;
@@ -324,6 +346,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
      * 显示 loading 状态
      */
     private _showLoading(): void {
+        this._clearLoadingTimeout();
         try {
             if (!this._view) {
                 return;
@@ -357,6 +380,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         options?: { suppressAutoScroll?: boolean; preserveScrollPosition?: boolean }
     ): void {
         try {
+            this._clearLoadingTimeout();
             if (!this._view) {
                 return;
             }
@@ -493,6 +517,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
      * 显示错误状态
      */
     private _showError(message: string): void {
+        this._clearLoadingTimeout();
         this._supportsLocate = false;
         this._updateVisibleRangesListener();
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
@@ -502,7 +527,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             if (!this._view) {
                 return;
             }
-            const errorHtml = `<div class="error-state"><i class="codicon codicon-search-stop error-icon"></i><div class="error-text">${i18n.previewError}</div><pre class="error-detail">${this._escapeHtml(message)}</pre></div>`;
+            const errorHtml = `<div class="error-state"><i class="codicon codicon-search-stop error-icon"></i><div class="error-text">${i18n.previewError}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`;
             this._view.webview.postMessage({
                 type: 'update',
                 content: errorHtml,
@@ -510,14 +535,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         } catch (err) {
             console.error('Sidebar Previewer: Error in _showError', err);
         }
-    }
-
-    private _escapeHtml(text: string): string {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
     }
 
     /**
@@ -789,7 +806,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     <link rel="stylesheet" href="${katexCssUri}">
     <link rel="stylesheet" href="${previewCssUri}">
 </head>
-<body data-copy-success="${this._escapeHtml(i18n.copySuccess)}" data-copy-code="${this._escapeHtml(i18n.copyCode)}" data-view-code="${this._escapeHtml(i18n.viewCode)}" data-view-preview="${this._escapeHtml(i18n.viewPreview)}">
+<body data-copy-success="${escapeHtml(i18n.copySuccess)}" data-copy-code="${escapeHtml(i18n.copyCode)}" data-view-code="${escapeHtml(i18n.viewCode)}" data-view-preview="${escapeHtml(i18n.viewPreview)}">
     <div id="sidebar-previewer-container">
         <div class="content" id="content">
             <div class="loading-state"><div class="loading-spinner"></div></div>
@@ -800,5 +817,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     <script src="${previewJsUri}"></script>
 </body>
 </html>`;
+    }
+
+    public dispose(): void {
+        this._clearLoadingTimeout();
+        if (this._visibleRangesListener) {
+            this._visibleRangesListener.dispose();
+            this._visibleRangesListener = undefined;
+        }
+        this._view = undefined;
+        this._webviewReady = false;
     }
 }

@@ -1,26 +1,47 @@
 import * as yaml from 'js-yaml';
 import * as toml from 'toml';
 import { FileType, PreviewResult } from './fileTypes';
+import { escapeHtml, escapeRegex } from './utils';
 
 interface KeyLineLocator {
     next(key: string): number;
 }
 
 export class CodePreviewProvider {
+    private static readonly MAX_HTML_LENGTH = 10 * 1024 * 1024;
+
     /**
      * 解析数据文件内容，返回树形结构的 HTML
      */
     static parse(content: string, fileType: FileType): PreviewResult {
-        const parsed = this.parseContent(content, fileType);
-        const lines = content.split('\n');
-        const lineLocator = this.createKeyLineLocator(lines, fileType);
-        const html = this.renderTree(parsed, lineLocator);
+        try {
+            const parsed = this.parseContent(content, fileType);
+            const lines = content.split('\n');
+            const lineLocator = this.createKeyLineLocator(lines, fileType);
+            const html = this.renderTree(parsed, lineLocator);
+            const wrappedHtml = `<div class="data-tree">${html}</div>`;
 
-        return {
-            html: `<div class="data-tree">${html}</div>`,
-            fileType,
-            supportsLocate: false,
-        };
+            if (wrappedHtml.length > this.MAX_HTML_LENGTH) {
+                return {
+                    html: '<div class="error-state"><div class="error-text">Preview content is too large to render safely.</div></div>',
+                    fileType,
+                    supportsLocate: false,
+                };
+            }
+
+            return {
+                html: wrappedHtml,
+                fileType,
+                supportsLocate: false,
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            return {
+                html: `<div class="error-state"><div class="error-text">Failed to parse ${fileType.toUpperCase()} content.</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
+                fileType,
+                supportsLocate: false,
+            };
+        }
     }
 
     /**
@@ -97,7 +118,7 @@ export class CodePreviewProvider {
     }
 
     private static buildFallbackKeyLines(key: string, lines: string[], fileType: FileType): number[] {
-        const escaped = this.escapeRegex(key);
+        const escaped = escapeRegex(key);
         const patterns: RegExp[] = [];
 
         switch (fileType) {
@@ -251,9 +272,9 @@ export class CodePreviewProvider {
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 if (this.isCompound(value)) {
                     const bracket = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${this.escapeHtml(key)}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${this.escapeHtml(key)}</span>: ${this.renderPrimitive(value)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: ${this.renderPrimitive(value)}</div>`;
                 }
             }
         }
@@ -269,10 +290,10 @@ export class CodePreviewProvider {
             return `<span class="tree-value tree-null">null</span>`;
         }
         if (data instanceof Date) {
-            return `<span class="tree-value tree-string">"${this.escapeHtml(data.toISOString())}"</span>`;
+            return `<span class="tree-value tree-string">"${escapeHtml(data.toISOString())}"</span>`;
         }
         if (typeof data === 'string') {
-            return `<span class="tree-value tree-string">"${this.escapeHtml(data)}"</span>`;
+            return `<span class="tree-value tree-string">"${escapeHtml(data)}"</span>`;
         }
         if (typeof data === 'number') {
             return `<span class="tree-value tree-number">${data}</span>`;
@@ -286,7 +307,7 @@ export class CodePreviewProvider {
         if (typeof data === 'object' && Object.keys(data as Record<string, unknown>).length === 0) {
             return `<span class="tree-value tree-empty">{}</span>`;
         }
-        return `<span class="tree-value">${this.escapeHtml(String(data))}</span>`;
+        return `<span class="tree-value">${escapeHtml(String(data))}</span>`;
     }
 
     /**
@@ -317,24 +338,12 @@ export class CodePreviewProvider {
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 if (this.isCompound(value)) {
                     const bracket = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${this.escapeHtml(key)}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${this.escapeHtml(key)}</span>: ${this.renderPrimitive(value)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: ${this.renderPrimitive(value)}</div>`;
                 }
             }
         }
         return html;
-    }
-
-    private static escapeHtml(text: string): string {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
-    private static escapeRegex(str: string): string {
-        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 }

@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { CodePreviewProvider } = require('../../out/codePreviewProvider');
+const { MarkdownProvider } = require('../../out/markdownProvider');
 const { LatexPreviewProvider } = require('../../out/latexPreviewProvider');
 const { MermaidPreviewProvider } = require('../../out/mermaidPreviewProvider');
 const { supportsLocate, isDataTreeType } = require('../../out/fileTypes');
@@ -87,3 +88,27 @@ test('Provider locate capabilities stay consistent with file type capabilities',
     assert.equal(isDataTreeType('toml'), true);
     assert.equal(isDataTreeType('markdown'), false);
 });
+
+  test('CodePreviewProvider returns an error state for invalid JSON', () => {
+    const result = CodePreviewProvider.parse('{"k":', 'json');
+
+    assert.equal(result.fileType, 'json');
+    assert.equal(result.supportsLocate, false);
+    assert.ok(result.html.includes('Failed to parse JSON content.'));
+  });
+
+  test('MarkdownProvider escapes front matter HTML content', () => {
+    const source = [
+      '---',
+      'title: "<script>alert(1)</script>"',
+      'author: "Tom & Jerry"',
+      '---',
+      '# Heading'
+    ].join('\n');
+
+    const result = MarkdownProvider.parse(source);
+
+    assert.ok(result.html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+    assert.ok(result.html.includes('Tom &amp; Jerry'));
+    assert.equal(result.html.includes('<script>alert(1)</script>'), false);
+  });

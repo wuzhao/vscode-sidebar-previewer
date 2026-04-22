@@ -2,6 +2,7 @@ import { Marked, Renderer } from 'marked';
 import hljs from 'highlight.js';
 import * as yaml from 'js-yaml';
 import { HeadingInfo } from './fileTypes';
+import { escapeHtml } from './utils';
 
 export class MarkdownProvider {
     /**
@@ -20,8 +21,8 @@ export class MarkdownProvider {
                 if (fmData && typeof fmData === 'object' && !Array.isArray(fmData)) {
                     frontMatterHtml = this.renderFrontMatterTable(fmData as Record<string, unknown>);
                 }
-            } catch (_e) {
-                // YAML 解析失败，忽略 front matter
+            } catch (error) {
+                console.warn('Sidebar Previewer: failed to parse front matter YAML', error);
             }
             bodyContent = content.slice(fmMatch[0].length);
         }
@@ -76,10 +77,10 @@ export class MarkdownProvider {
         renderer.code = function (code: string, infostring: string | undefined): string {
             const lang = (infostring || '').match(/^\S*/)?.[0] || '';
             if (lang === 'mermaid') {
-                return `<div class="mermaid mermaid-block">${MarkdownProvider.escapeHtml(code)}</div>\n`;
+                return `<div class="mermaid mermaid-block">${escapeHtml(code)}</div>\n`;
             }
             if (lang === 'math') {
-                return `<div class="katex-block" data-katex-display="true">${MarkdownProvider.escapeHtml(code)}</div>\n`;
+                return `<div class="katex-block" data-katex-display="true">${escapeHtml(code)}</div>\n`;
             }
             let highlighted: string;
             if (lang && hljs.getLanguage(lang)) {
@@ -108,7 +109,7 @@ export class MarkdownProvider {
                 }
             },
             renderer(token: any) {
-                return `<span class="katex-inline" data-katex-display="false">${MarkdownProvider.escapeHtml(token.text)}</span>`;
+                return `<span class="katex-inline" data-katex-display="false">${escapeHtml(token.text)}</span>`;
             }
         };
 
@@ -129,7 +130,7 @@ export class MarkdownProvider {
                 }
             },
             renderer(token: any) {
-                return `<div class="katex-block" data-katex-display="true">${MarkdownProvider.escapeHtml(token.text)}</div>\n`;
+                return `<div class="katex-block" data-katex-display="true">${escapeHtml(token.text)}</div>\n`;
             }
         };
 
@@ -162,7 +163,7 @@ export class MarkdownProvider {
         let rows = '';
         for (const [key, value] of Object.entries(data)) {
             const valueHtml = this.renderFrontMatterValue(value);
-            rows += `<tr><td class="fm-key">${this.escapeHtml(key)}</td><td class="fm-value">${valueHtml}</td></tr>`;
+            rows += `<tr><td class="fm-key">${escapeHtml(key)}</td><td class="fm-value">${valueHtml}</td></tr>`;
         }
         return `<table class="frontmatter-table"><tbody>${rows}</tbody></table>`;
     }
@@ -175,7 +176,7 @@ export class MarkdownProvider {
             return '';
         }
         if (value instanceof Date) {
-            return this.escapeHtml(value.toISOString().split('T')[0]);
+            return escapeHtml(value.toISOString().split('T')[0]);
         }
         if (Array.isArray(value)) {
             const items = value.map(v => `<li>${this.renderFrontMatterValue(v)}</li>`).join('');
@@ -184,25 +185,14 @@ export class MarkdownProvider {
         if (typeof value === 'object') {
             const entries = Object.entries(value as Record<string, unknown>);
             if (entries.length === 0) {
-                return this.escapeHtml(String(value));
+                return escapeHtml(String(value));
             }
             const items = entries
-                .map(([k, v]) => `<li><strong>${this.escapeHtml(k)}:</strong> ${this.renderFrontMatterValue(v)}</li>`)
+                .map(([k, v]) => `<li><strong>${escapeHtml(k)}:</strong> ${this.renderFrontMatterValue(v)}</li>`)
                 .join('');
             return `<ul>${items}</ul>`;
         }
-        return this.escapeHtml(String(value));
-    }
-
-    /**
-     * HTML 转义
-     */
-    private static escapeHtml(text: string): string {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+        return escapeHtml(String(value));
     }
 
     /**

@@ -8,6 +8,8 @@ export function activate(context: vscode.ExtensionContext) {
     const feedbackIssuesUrl = vscode.Uri.parse('https://github.com/wuzhao/vscode-sidebar-previewer/issues/new');
     const previewProvider = new PreviewProvider(context);
 
+    context.subscriptions.push(previewProvider);
+
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             'sidebar-previewer',
@@ -15,66 +17,22 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // 注册缩放命令
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.zoomIn', () => {
-            previewProvider.zoomIn();
-        })
-    );
+    const commandHandlers: Array<[string, () => void | Thenable<unknown>]> = [
+        ['sidebarPreviewer.zoomIn', () => previewProvider.zoomIn()],
+        ['sidebarPreviewer.zoomOut', () => previewProvider.zoomOut()],
+        ['sidebarPreviewer.zoomReset', () => previewProvider.zoomReset()],
+        ['sidebarPreviewer.locateEditor', () => previewProvider.locateEditor()],
+        ['sidebarPreviewer.locatePreview', () => previewProvider.locatePreview()],
+        ['sidebarPreviewer.enableFollowScroll', () => previewProvider.enableFollowScroll()],
+        ['sidebarPreviewer.disableFollowScroll', () => previewProvider.disableFollowScroll()],
+        ['sidebarPreviewer.expandAll', () => previewProvider.expandAll()],
+        ['sidebarPreviewer.collapseAll', () => previewProvider.collapseAll()],
+        ['sidebarPreviewer.feedback', () => vscode.env.openExternal(feedbackIssuesUrl)]
+    ];
 
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.zoomOut', () => {
-            previewProvider.zoomOut();
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.zoomReset', () => {
-            previewProvider.zoomReset();
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.locateEditor', () => {
-            previewProvider.locateEditor();
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.locatePreview', () => {
-            previewProvider.locatePreview();
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.enableFollowScroll', () => {
-            previewProvider.enableFollowScroll();
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.feedback', async () => {
-            await vscode.env.openExternal(feedbackIssuesUrl);
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.disableFollowScroll', () => {
-            previewProvider.disableFollowScroll();
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.expandAll', () => {
-            previewProvider.expandAll();
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('sidebarPreviewer.collapseAll', () => {
-            previewProvider.collapseAll();
-        })
-    );
+    for (const [command, handler] of commandHandlers) {
+        context.subscriptions.push(vscode.commands.registerCommand(command, handler));
+    }
 }
 
 export function deactivate() {}

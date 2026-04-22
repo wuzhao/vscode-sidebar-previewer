@@ -6,6 +6,16 @@ const l10n = {
     viewCode: l10nSource.viewCode || 'Code',
     viewPreview: l10nSource.viewPreview || 'Preview',
 };
+const VALID_MESSAGE_TYPES = new Set([
+    'update',
+    'loading',
+    'scrollToHeading',
+    'getVisibleHeading',
+    'zoom',
+    'expandAll',
+    'collapseAll',
+    'highlightDataTreeRange',
+]);
 let currentHeadings = [];
 let isScrollingFromEditor = false;
 let zoomLevel = 100;
@@ -13,6 +23,7 @@ const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
 let wheelTimeout = null;
 let currentFileType = null;
 const MERMAID_ZOOM_MULTIPLIER = 2;
+const MERMAID_RENDER_TIMEOUT_MS = 5000;
 const mermaidDragState = {
     container: null,
     dragging: false,
@@ -22,8 +33,27 @@ const mermaidDragState = {
     startScrollTop: 0,
 };
 
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function getErrorMessage(error) {
+    if (error && typeof error === 'object' && 'message' in error) {
+        return String(error.message);
+    }
+    return String(error || 'Unknown error');
+}
+
 window.addEventListener('message', event => {
     const message = event.data;
+    if (!message || typeof message.type !== 'string' || !VALID_MESSAGE_TYPES.has(message.type)) {
+        return;
+    }
+
     switch (message.type) {
         case 'update':
             updateContent(message);
@@ -391,7 +421,7 @@ function addCopyButton(pre) {
 
     copyBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (copyBtn.classList.contains('copied')) {
+        if (copyBtn.classList.contains('copied') || copyBtn.classList.contains('copy-failed')) {
             return;
         }
         const code = pre.querySelector('code');
@@ -404,18 +434,20 @@ function addCopyButton(pre) {
             copyBtn.innerHTML = l10n.copySuccess;
         } catch (err) {
             console.error('Copy failed:', err);
+            copyBtn.classList.add('copy-failed');
+            copyBtn.textContent = 'FAILED';
         }
     });
 
     copyBtn.addEventListener('mouseleave', () => {
-        if (copyBtn.classList.contains('copied')) {
+        if (copyBtn.classList.contains('copied') || copyBtn.classList.contains('copy-failed')) {
             if (resetTimer) {
                 clearTimeout(resetTimer);
             }
             resetTimer = setTimeout(() => {
                 copyBtn.classList.add('fade-out');
                 setTimeout(() => {
-                    copyBtn.classList.remove('copied', 'fade-out');
+                    copyBtn.classList.remove('copied', 'copy-failed', 'fade-out');
                     copyBtn.innerHTML = '<i class="codicon codicon-copy"></i>';
                     resetTimer = null;
                 }, 300);
@@ -485,10 +517,10 @@ function renderKatex() {
                 .replace(/\\end\{[^}]+\}/g, '')
                 .trim();
             if (cleaned) {
-                katex.render(cleaned, block, { displayMode: true, throwOnError: false });
+                katex.render(cleaned, block, { displayMode: true, throwOnError: true });
             }
         } catch (e) {
-            block.innerHTML = '<span class="render-error-inline">' + (e.message || 'KaTeX error') + '</span>';
+            block.innerHTML = '<span class="render-error-inline">' + escapeHtml(getErrorMessage(e)) + '</span>';
         }
     });
 
@@ -501,10 +533,10 @@ function renderKatex() {
         try {
             const tex = (span.getAttribute('data-source') || '').replace(/^\$|\$$/g, '').trim();
             if (tex) {
-                katex.render(tex, span, { displayMode: false, throwOnError: false });
+                katex.render(tex, span, { displayMode: false, throwOnError: true });
             }
         } catch (e) {
-            span.innerHTML = '<span class="render-error-inline">' + (e.message || 'KaTeX error') + '</span>';
+            span.innerHTML = '<span class="render-error-inline">' + escapeHtml(getErrorMessage(e)) + '</span>';
         }
     });
 }
@@ -541,10 +573,17 @@ function renderMermaid() {
     });
 
     // 使用 mermaid.run() 进行就地渲染
-    mermaid.run({
-        querySelector: '.mermaid',
-        suppressErrors: false,
-    }).then(() => {
+    const renderPromise = Promise.race([
+        mermaid.run({
+            querySelector: '.mermaid',
+            suppressErrors: false,
+        }),
+        new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Mermaid rendering timeout')), MERMAID_RENDER_TIMEOUT_MS);
+        })
+    ]);
+
+    renderPromise.then(() => {
         if (currentFileType !== 'mermaid') {
             return;
         }
@@ -557,11 +596,12 @@ function renderMermaid() {
             }
         });
     }).catch(err => {
+        const errorMessage = escapeHtml(getErrorMessage(err));
         elements.forEach(el => {
             if (!el.querySelector('svg')) {
                 el.innerHTML = '<div class="render-error-block">'
                     + '<i class="codicon codicon-error"></i> '
-                    + (err && err.message ? err.message : String(err) || 'Mermaid rendering error')
+                    + errorMessage
                     + '</div>';
             }
         });
