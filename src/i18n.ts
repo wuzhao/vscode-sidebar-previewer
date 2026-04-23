@@ -29,7 +29,7 @@ const strings: Record<string, I18nStrings> = {
         emptyStateText: `Preview not supported for this file type.<br />Supported formats:<ul>${supportedList}</ul>`,
         zoomStatus: 'Sidebar Previewer Zoom: {0}%',
         webviewTitle: 'Sidebar Previewer',
-        copySuccess: 'COPIED!',
+        copySuccess: 'Copied',
         copyCode: 'Copy',
         viewCode: 'Code',
         viewPreview: 'Preview',

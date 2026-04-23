@@ -446,7 +446,7 @@ function addCopyButton(pre) {
         try {
             await navigator.clipboard.writeText(text);
             copyBtn.classList.add('copied');
-            copyBtn.innerHTML = l10n.copySuccess;
+            copyBtn.innerHTML = '<i class="codicon codicon-pass-filled"></i>' + l10n.copySuccess;
         } catch (err) {
             console.error('Copy failed:', err);
             copyBtn.classList.add('copy-failed');

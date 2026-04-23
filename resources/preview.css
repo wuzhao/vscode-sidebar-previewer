@@ -778,6 +778,10 @@ pre:hover .copy-btn {
     padding-right: 10px;
 }
 
+.copy-btn.copied .codicon {
+    margin-right: 6px;
+}
+
 .copy-btn.copy-failed {
     background-color: var(--vscode-errorForeground);
     color: var(--vscode-editor-background);
@@ -892,7 +896,7 @@ pre:hover .copy-btn {
     font-size: 12px;
     line-height: 1.45;
     white-space: normal;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .35);
     pointer-events: none;
     z-index: 1000;
     opacity: 0;
