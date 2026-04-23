@@ -846,23 +846,61 @@ pre:hover .copy-btn {
     text-decoration: underline;
 }
 
+.data-tree .tree-root-comment {
+    padding: 1px 0 1px 20px;
+}
+
+.data-tree .tree-root-comment .tree-comment-icon {
+    margin-left: 0;
+}
+
 .data-tree .tree-comment-icon {
-    margin-left: 4px;
-    color: var(--vscode-descriptionForeground);
-    opacity: 0.85;
-    cursor: help;
-    vertical-align: text-top;
+    margin: -1px 2px 0 4px;
+    padding: 3px;
+    border-radius: 50%;
+    color: var(--vscode-foreground);
+    background-color: color-mix(in srgb, var(--vscode-foreground) 25%, transparent 75%);
+    cursor: pointer;
     font-size: 12px;
+    font-weight: 700;
+    vertical-align: text-top;
 }
 
 .data-tree .tree-comment-icon:hover {
     opacity: 1;
-    color: var(--vscode-foreground);
+}
+
+.tree-comment-tooltip {
+    position: fixed;
+    left: 0;
+    top: 0;
+    max-width: min(420px, calc(100vw - 16px));
+    padding: 6px 8px;
+    border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-panel-border));
+    border-radius: 6px;
+    background: var(--vscode-editorHoverWidget-background, var(--vscode-editorWidget-background, var(--vscode-editor-background)));
+    color: var(--vscode-editorHoverWidget-foreground, var(--vscode-editor-foreground));
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-2px);
+    transition: opacity 0.08s ease, transform 0.08s ease, visibility 0s linear 0.08s;
+}
+
+.tree-comment-tooltip.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition: opacity 0.06s ease, transform 0.06s ease;
 }
 
 .data-tree .tree-item.is-highlight {
-    background-color: rgba(100, 149, 237, 0.22);
-    background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 55%, transparent 45%);
+    background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 65%, transparent 35%);
     text-decoration: none;
 }
 

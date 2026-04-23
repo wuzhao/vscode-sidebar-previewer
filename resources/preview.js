@@ -32,6 +32,8 @@ const mermaidDragState = {
     startScrollLeft: 0,
     startScrollTop: 0,
 };
+let commentTooltip = null;
+let commentTooltipTarget = null;
 
 function escapeHtml(value) {
     return String(value)
@@ -124,6 +126,8 @@ document.addEventListener('wheel', (e) => {
 window.addEventListener('mousemove', onMermaidMouseMove);
 window.addEventListener('mouseup', stopMermaidDragging);
 window.addEventListener('blur', stopMermaidDragging);
+window.addEventListener('resize', positionCommentTooltip);
+document.addEventListener('scroll', positionCommentTooltip, true);
 
 // 通知扩展缩放级别变化
 function notifyZoomChange() {
@@ -136,6 +140,7 @@ function notifyZoomChange() {
 function updateContent(data) {
     const content = document.getElementById('content');
     const previousScrollTop = content.scrollTop;
+    hideCommentTooltip();
     teardownMermaidPan();
     content.classList.remove('is-mermaid-preview');
     content.classList.remove('is-loading');
@@ -175,6 +180,7 @@ function updateContent(data) {
     // 数据树类型：绑定 key 点击定位
     if (currentFileType === 'json' || currentFileType === 'yaml' || currentFileType === 'toml') {
         bindTreeKeyClicks();
+        bindCommentTooltips();
         highlightTreeRange(data.selectionStartLine, data.selectionEndLine);
 
         // 编辑时自动展开到修改行
@@ -756,6 +762,74 @@ function highlightTreeRange(startLine, endLine) {
             closestItem.classList.add('is-highlight');
         }
     }
+}
+
+function ensureCommentTooltip() {
+    if (commentTooltip) {
+        return commentTooltip;
+    }
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tree-comment-tooltip';
+    tooltip.setAttribute('role', 'tooltip');
+    document.body.appendChild(tooltip);
+    commentTooltip = tooltip;
+    return tooltip;
+}
+
+function showCommentTooltip(target) {
+    const comment = target.getAttribute('data-comment');
+    if (!comment) {
+        return;
+    }
+
+    const tooltip = ensureCommentTooltip();
+    tooltip.textContent = comment;
+    commentTooltipTarget = target;
+    tooltip.classList.add('is-visible');
+    positionCommentTooltip();
+}
+
+function hideCommentTooltip() {
+    if (!commentTooltip) {
+        return;
+    }
+    commentTooltip.classList.remove('is-visible');
+    commentTooltipTarget = null;
+}
+
+function positionCommentTooltip() {
+    if (!commentTooltip || !commentTooltipTarget || !commentTooltip.classList.contains('is-visible')) {
+        return;
+    }
+
+    const targetRect = commentTooltipTarget.getBoundingClientRect();
+    const tooltipRect = commentTooltip.getBoundingClientRect();
+    const edgePadding = 8;
+    const gap = 8;
+
+    let left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+    left = Math.max(edgePadding, Math.min(left, window.innerWidth - tooltipRect.width - edgePadding));
+
+    let top = targetRect.top - tooltipRect.height - gap;
+    if (top < edgePadding) {
+        top = targetRect.bottom + gap;
+    }
+    top = Math.max(edgePadding, Math.min(top, window.innerHeight - tooltipRect.height - edgePadding));
+
+    commentTooltip.style.left = `${left}px`;
+    commentTooltip.style.top = `${top}px`;
+}
+
+function bindCommentTooltips() {
+    const icons = document.querySelectorAll('.data-tree .tree-comment-icon[data-comment]');
+    icons.forEach(icon => {
+        icon.addEventListener('mouseenter', () => showCommentTooltip(icon));
+        icon.addEventListener('mousemove', positionCommentTooltip);
+        icon.addEventListener('mouseleave', hideCommentTooltip);
+        icon.addEventListener('focus', () => showCommentTooltip(icon));
+        icon.addEventListener('blur', hideCommentTooltip);
+    });
 }
 
 // 绑定树形视图 key 点击事件

@@ -111,19 +111,46 @@ test('CodePreviewProvider returns an error state for invalid JSON', () => {
     assert.ok(result.html.includes('Failed to parse JSON content.'));
 });
 
-test('Comment icon and tooltip are rendered for JSON/YAML/TOML keys', () => {
+test('Comment icon metadata is rendered for JSON/YAML/TOML keys', () => {
     const json = CodePreviewProvider.parse('{\n  "name": "Alice", // profile name\n}', 'json');
     const yaml = CodePreviewProvider.parse('name: Alice # full name', 'yaml');
     const toml = CodePreviewProvider.parse('name = "Alice" # display name', 'toml');
 
-    assert.ok(json.html.includes('tree-comment-icon codicon codicon-comment-discussion'));
-    assert.ok(json.html.includes('title="profile name"'));
+    assert.ok(json.html.includes('tree-comment-icon codicon codicon-note'));
+    assert.ok(json.html.includes('data-comment="profile name"'));
+    assert.equal(json.html.includes('title="profile name"'), false);
 
-    assert.ok(yaml.html.includes('tree-comment-icon codicon codicon-comment-discussion'));
-    assert.ok(yaml.html.includes('title="full name"'));
+    assert.ok(yaml.html.includes('tree-comment-icon codicon codicon-note'));
+    assert.ok(yaml.html.includes('data-comment="full name"'));
 
-    assert.ok(toml.html.includes('tree-comment-icon codicon codicon-comment-discussion'));
-    assert.ok(toml.html.includes('title="display name"'));
+    assert.ok(toml.html.includes('tree-comment-icon codicon codicon-note'));
+    assert.ok(toml.html.includes('data-comment="display name"'));
+});
+
+test('JSON array comments, top-level comments, and multiple inline comments are preserved', () => {
+    const source = [
+        '// outer comment A',
+        '/* outer comment B */',
+        '{',
+        '  "http.noProxy": [',
+        '    "localhost", // array comment A',
+        '    "127.0.0.1" /* array comment B */',
+        '  ],',
+        '  "autoProxy.lastUsedProxyUrl" /* first inline */ /* second inline */ : "http://127.0.0.1:13659"',
+        '}',
+    ].join('\n');
+
+    const result = CodePreviewProvider.parse(source, 'json');
+
+    assert.ok(result.html.includes('tree-root-comment'));
+    assert.ok(result.html.includes('data-comment="outer comment A"'));
+    assert.ok(result.html.includes('data-comment="outer comment B"'));
+
+    assert.ok(/<span class="tree-index" data-line="\d+">0<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
+    assert.ok(result.html.includes('data-comment="array comment A"'));
+    assert.ok(result.html.includes('data-comment="array comment B"'));
+
+    assert.ok(result.html.includes('data-comment="first inline&#10;&#10;second inline"'));
 });
 
 test('MarkdownProvider escapes front matter HTML content', () => {
