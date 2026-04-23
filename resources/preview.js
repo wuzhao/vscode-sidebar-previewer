@@ -216,7 +216,7 @@ function scrollToHeading(headingId) {
     const element = document.getElementById(headingId);
     if (element) {
         isScrollingFromEditor = true;
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.scrollIntoView({ behavior: 'instant', block: 'start' });
         setTimeout(() => {
             isScrollingFromEditor = false;
         }, 300);
