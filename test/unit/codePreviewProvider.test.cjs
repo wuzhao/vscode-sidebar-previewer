@@ -29,6 +29,21 @@ function assertLineContains(source, keyToken, line) {
     assert.ok(lines[line].includes(keyToken), `line ${line} should contain ${keyToken}`);
 }
 
+function decodeHtmlAttr(value) {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#10;/g, '\n')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+function extractCommentPayloads(html) {
+  return Array.from(html.matchAll(/data-comments="([^"]+)"/g), match => {
+    return JSON.parse(decodeHtmlAttr(match[1]));
+  });
+}
+
 test('JSON duplicate keys map to distinct source lines', () => {
     const source = `{
   "root": {
@@ -117,17 +132,17 @@ test('Comment icon metadata is rendered for JSON/YAML/TOML keys', () => {
     const toml = CodePreviewProvider.parse('name = "Alice" # display name', 'toml');
 
     assert.ok(json.html.includes('tree-comment-icon codicon codicon-note'));
-    assert.ok(json.html.includes('data-comment="profile name"'));
-    assert.equal(json.html.includes('title="profile name"'), false);
+  assert.equal(json.html.includes('data-comment='), false);
+  assert.ok(extractCommentPayloads(json.html).some(payload => payload.length === 1 && payload[0].marker === '/' && payload[0].text === 'profile name'));
 
     assert.ok(yaml.html.includes('tree-comment-icon codicon codicon-note'));
-    assert.ok(yaml.html.includes('data-comment="full name"'));
+  assert.ok(extractCommentPayloads(yaml.html).some(payload => payload.length === 1 && payload[0].marker === '#' && payload[0].text === 'full name'));
 
     assert.ok(toml.html.includes('tree-comment-icon codicon codicon-note'));
-    assert.ok(toml.html.includes('data-comment="display name"'));
+  assert.ok(extractCommentPayloads(toml.html).some(payload => payload.length === 1 && payload[0].marker === '#' && payload[0].text === 'display name'));
 });
 
-test('JSON array comments, top-level comments, and multiple inline comments are preserved', () => {
+test('JSON comment groups are merged into a single icon payload', () => {
     const source = [
         '// outer comment A',
         '/* outer comment B */',
@@ -141,16 +156,46 @@ test('JSON array comments, top-level comments, and multiple inline comments are 
     ].join('\n');
 
     const result = CodePreviewProvider.parse(source, 'json');
+  const payloads = extractCommentPayloads(result.html);
 
-    assert.ok(result.html.includes('tree-root-comment'));
-    assert.ok(result.html.includes('data-comment="outer comment A"'));
-    assert.ok(result.html.includes('data-comment="outer comment B"'));
+  assert.ok(result.html.includes('tree-standalone-comment'));
+  assert.equal(result.html.includes('&#10;&#10;'), false);
 
-    assert.ok(/<span class="tree-index" data-line="\d+">0<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
-    assert.ok(result.html.includes('data-comment="array comment A"'));
-    assert.ok(result.html.includes('data-comment="array comment B"'));
+  const mergedOuter = payloads.filter(payload => payload.length === 2
+    && payload[0].marker === '/'
+    && payload[0].text === 'outer comment A'
+    && payload[1].marker === '*'
+    && payload[1].text === 'outer comment B');
+  assert.equal(mergedOuter.length, 1);
 
-    assert.ok(result.html.includes('data-comment="first inline&#10;&#10;second inline"'));
+  assert.ok(payloads.some(payload => payload.some(item => item.text === 'array comment A' && item.marker === '/')));
+  assert.ok(payloads.some(payload => payload.some(item => item.text === 'array comment B' && item.marker === '*')));
+
+  const mergedInline = payloads.filter(payload => payload.length === 2
+    && payload[0].text === 'first inline'
+    && payload[0].marker === '*'
+    && payload[1].text === 'second inline'
+    && payload[1].marker === '*');
+  assert.equal(mergedInline.length, 1);
+});
+
+test('Trailing array comment without next element becomes standalone icon', () => {
+  const source = [
+    '{',
+    '  "items": [',
+    '    1',
+    '    // tail comment',
+    '  ],',
+    '  "next": 2',
+    '}',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'json');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(result.html.includes('tree-standalone-comment'));
+  assert.ok(payloads.some(payload => payload.length === 1 && payload[0].marker === '/' && payload[0].text === 'tail comment'));
+  assert.equal(/<span class="tree-key" data-line="\d+">next<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
 });
 
 test('MarkdownProvider escapes front matter HTML content', () => {

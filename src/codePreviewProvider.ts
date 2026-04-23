@@ -11,11 +11,28 @@ interface ArrayItemLineLocator {
     next(): number;
 }
 
-type CommentLineIndex = Map<number, string>;
+type CommentMarker = '/' | '*' | '#';
+
+interface CommentEntry {
+    marker: CommentMarker;
+    text: string;
+}
+
+type CommentLineIndex = Map<number, CommentEntry[]>;
+
+interface StandaloneCommentGroup {
+    line: number;
+    comments: CommentEntry[];
+}
+
+interface StandaloneCommentCursor {
+    groups: StandaloneCommentGroup[];
+    index: number;
+}
 
 interface CommentMetadata {
     lineComments: CommentLineIndex;
-    topLevelComments: string[];
+    standaloneGroups: StandaloneCommentGroup[];
 }
 
 export class CodePreviewProvider {
@@ -36,7 +53,7 @@ export class CodePreviewProvider {
                 lineLocator,
                 arrayItemLineLocator,
                 commentMetadata.lineComments,
-                commentMetadata.topLevelComments
+                commentMetadata.standaloneGroups
             );
             const wrappedHtml = `<div class="data-tree">${html}</div>`;
 
@@ -672,19 +689,63 @@ export class CodePreviewProvider {
                 return this.buildHashCommentMetadata(lines, 'toml', arrayItemLines);
             default:
                 return {
-                    lineComments: new Map<number, string>(),
-                    topLevelComments: [],
+                    lineComments: new Map<number, CommentEntry[]>(),
+                    standaloneGroups: [],
                 };
         }
     }
 
     private static buildJsonCommentMetadata(lines: string[], arrayItemLines: Set<number>): CommentMetadata {
-        const lineComments = new Map<number, string>();
-        const pending: string[] = [];
-        const topLevelComments: string[] = [];
+        const lineComments = new Map<number, CommentEntry[]>();
+        const standaloneGroups: StandaloneCommentGroup[] = [];
+        const pending: CommentEntry[] = [];
+        const preamble: CommentEntry[] = [];
+        const arrayDepthByLine = this.buildJsonArrayDepthAtLineStart(lines);
+        let pendingLine = -1;
+        let pendingArrayDepth = -1;
+        let preambleLine = -1;
         let inBlockComment = false;
         let blockParts: string[] = [];
         let hasBoundNode = false;
+
+        const flushPreamble = (): void => {
+            if (preamble.length === 0 || preambleLine < 0) {
+                return;
+            }
+            this.pushStandaloneGroup(standaloneGroups, preambleLine, preamble);
+            preamble.length = 0;
+            preambleLine = -1;
+        };
+
+        const flushPendingStandalone = (): void => {
+            if (pending.length === 0 || pendingLine < 0) {
+                return;
+            }
+            this.pushStandaloneGroup(standaloneGroups, pendingLine, pending);
+            pending.length = 0;
+            pendingLine = -1;
+            pendingArrayDepth = -1;
+        };
+
+        const pushCommentForCurrentContext = (marker: CommentMarker, text: string, line: number, arrayDepth: number): void => {
+            if (!text) {
+                return;
+            }
+
+            if (!hasBoundNode) {
+                if (preamble.length === 0) {
+                    preambleLine = line;
+                }
+                this.pushComment(preamble, marker, text);
+                return;
+            }
+
+            if (pending.length === 0) {
+                pendingLine = line;
+                pendingArrayDepth = arrayDepth;
+            }
+            this.pushComment(pending, marker, text);
+        };
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -692,6 +753,8 @@ export class CodePreviewProvider {
             const keyExists = this.extractJsonKeys(line).length > 0;
             const arrayItemExists = arrayItemLines.has(i);
             const inlineComments = this.findJsonInlineComments(line);
+            const bindableLine = keyExists || arrayItemExists;
+            const currentArrayDepth = arrayDepthByLine[i] ?? 0;
 
             if (inBlockComment) {
                 const end = line.indexOf('*/');
@@ -699,7 +762,7 @@ export class CodePreviewProvider {
                     blockParts.push(line.slice(0, end));
                     const merged = this.cleanCommentText(blockParts.join('\n'));
                     if (merged) {
-                        this.appendComment(hasBoundNode ? pending : topLevelComments, merged);
+                        pushCommentForCurrentContext('*', merged, i, currentArrayDepth);
                     }
                     blockParts = [];
                     inBlockComment = false;
@@ -712,7 +775,7 @@ export class CodePreviewProvider {
             if (/^\s*\/\//.test(line)) {
                 const onlyComment = this.cleanCommentText(line.replace(/^\s*\/\//, ''));
                 if (onlyComment) {
-                    this.appendComment(hasBoundNode ? pending : topLevelComments, onlyComment);
+                    pushCommentForCurrentContext('/', onlyComment, i, currentArrayDepth);
                 }
                 continue;
             }
@@ -722,7 +785,7 @@ export class CodePreviewProvider {
                 if (singleLineBlock) {
                     const onlyComment = this.cleanCommentText(singleLineBlock[1]);
                     if (onlyComment) {
-                        this.appendComment(hasBoundNode ? pending : topLevelComments, onlyComment);
+                        pushCommentForCurrentContext('*', onlyComment, i, currentArrayDepth);
                     }
                     continue;
                 }
@@ -732,7 +795,7 @@ export class CodePreviewProvider {
                 if (end >= 0) {
                     const onlyComment = this.cleanCommentText(rest.slice(0, end));
                     if (onlyComment) {
-                        this.appendComment(hasBoundNode ? pending : topLevelComments, onlyComment);
+                        pushCommentForCurrentContext('*', onlyComment, i, currentArrayDepth);
                     }
                     continue;
                 }
@@ -742,30 +805,65 @@ export class CodePreviewProvider {
                 continue;
             }
 
-            const bindableLine = keyExists || arrayItemExists;
+            if (!hasBoundNode && bindableLine) {
+                flushPreamble();
+            }
+
             if (bindableLine) {
-                const comments = [...pending, ...inlineComments].filter(Boolean);
+                if (pending.length > 0 && pendingArrayDepth > 0 && !arrayItemExists && currentArrayDepth < pendingArrayDepth) {
+                    flushPendingStandalone();
+                }
+
+                const comments = [...pending, ...inlineComments].filter(comment => !!comment.text);
                 if (comments.length > 0) {
-                    lineComments.set(i, comments.join('\n\n'));
+                    lineComments.set(i, comments);
                 }
                 pending.length = 0;
+                pendingLine = -1;
+                pendingArrayDepth = -1;
                 hasBoundNode = true;
                 continue;
             }
 
             if (!hasBoundNode && inlineComments.length > 0) {
-                topLevelComments.push(...inlineComments);
+                if (preamble.length === 0) {
+                    preambleLine = i;
+                }
+                preamble.push(...inlineComments);
+                continue;
+            }
+
+            if (pending.length > 0 && pendingArrayDepth > 0 && currentArrayDepth < pendingArrayDepth) {
+                flushPendingStandalone();
+            }
+
+            if (pending.length > 0 && pendingArrayDepth > 0 && currentArrayDepth >= pendingArrayDepth) {
+                continue;
             }
 
             if (trimmed.length === 0) {
+                if (!hasBoundNode) {
+                    flushPreamble();
+                }
                 pending.length = 0;
+                pendingLine = -1;
+                pendingArrayDepth = -1;
                 continue;
             }
 
             pending.length = 0;
+            pendingLine = -1;
+            pendingArrayDepth = -1;
+
+            if (!hasBoundNode) {
+                flushPreamble();
+            }
         }
 
-        return { lineComments, topLevelComments };
+        flushPreamble();
+        flushPendingStandalone();
+
+        return { lineComments, standaloneGroups };
     }
 
     private static buildHashCommentMetadata(
@@ -773,10 +871,59 @@ export class CodePreviewProvider {
         fileType: 'yaml' | 'toml',
         arrayItemLines: Set<number>
     ): CommentMetadata {
-        const lineComments = new Map<number, string>();
-        const pending: string[] = [];
-        const topLevelComments: string[] = [];
+        const lineComments = new Map<number, CommentEntry[]>();
+        const standaloneGroups: StandaloneCommentGroup[] = [];
+        const pending: CommentEntry[] = [];
+        const preamble: CommentEntry[] = [];
+        const arrayDepthByLine = fileType === 'toml' ? this.buildTomlArrayDepthAtLineStart(lines) : undefined;
+        let pendingLine = -1;
+        let pendingFromArray = false;
+        let pendingIndent = -1;
+        let preambleLine = -1;
         let hasBoundNode = false;
+
+        const flushPreamble = (): void => {
+            if (preamble.length === 0 || preambleLine < 0) {
+                return;
+            }
+            this.pushStandaloneGroup(standaloneGroups, preambleLine, preamble);
+            preamble.length = 0;
+            preambleLine = -1;
+        };
+
+        const flushPendingStandalone = (): void => {
+            if (pending.length === 0 || pendingLine < 0) {
+                return;
+            }
+            this.pushStandaloneGroup(standaloneGroups, pendingLine, pending);
+            pending.length = 0;
+            pendingLine = -1;
+            pendingFromArray = false;
+            pendingIndent = -1;
+        };
+
+        const pushCommentForCurrentContext = (text: string, line: number, indent: number, arrayDepth: number): void => {
+            if (!text) {
+                return;
+            }
+
+            if (!hasBoundNode) {
+                if (preamble.length === 0) {
+                    preambleLine = line;
+                }
+                this.pushComment(preamble, '#', text);
+                return;
+            }
+
+            if (pending.length === 0) {
+                pendingLine = line;
+                pendingIndent = indent;
+                pendingFromArray = fileType === 'yaml'
+                    ? this.inferYamlPendingFromArray(lines, line, arrayItemLines)
+                    : arrayDepth > 0;
+            }
+            this.pushComment(pending, '#', text);
+        };
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -785,50 +932,106 @@ export class CodePreviewProvider {
             const arrayItemExists = arrayItemLines.has(i);
             const commentOnlyMatch = line.match(/^\s*#(.*)$/);
             const inlineComments = this.findHashInlineComments(line);
+            const bindableLine = keyExists || arrayItemExists;
+            const currentIndent = this.getIndentation(line);
+            const currentArrayDepth = arrayDepthByLine ? (arrayDepthByLine[i] ?? 0) : 0;
 
             if (commentOnlyMatch) {
                 const text = this.cleanCommentText(commentOnlyMatch[1]);
                 if (text) {
-                    this.appendComment(hasBoundNode ? pending : topLevelComments, text);
+                    pushCommentForCurrentContext(text, i, currentIndent, currentArrayDepth);
                 }
                 continue;
             }
 
-            const bindableLine = keyExists || arrayItemExists;
+            if (!hasBoundNode && bindableLine) {
+                flushPreamble();
+            }
+
             if (bindableLine) {
-                const comments = [...pending, ...inlineComments].filter(Boolean);
+                if (pending.length > 0 && pendingFromArray && !arrayItemExists) {
+                    const escapedArrayContext = fileType === 'yaml'
+                        ? currentIndent <= pendingIndent
+                        : currentArrayDepth === 0;
+                    if (escapedArrayContext) {
+                        flushPendingStandalone();
+                    }
+                }
+
+                const comments = [...pending, ...inlineComments].filter(comment => !!comment.text);
                 if (comments.length > 0) {
-                    lineComments.set(i, comments.join('\n\n'));
+                    lineComments.set(i, comments);
                 }
                 pending.length = 0;
+                pendingLine = -1;
+                pendingFromArray = false;
+                pendingIndent = -1;
                 hasBoundNode = true;
                 continue;
             }
 
             if (!hasBoundNode && inlineComments.length > 0) {
-                topLevelComments.push(...inlineComments);
+                if (preamble.length === 0) {
+                    preambleLine = i;
+                }
+                preamble.push(...inlineComments);
+                continue;
+            }
+
+            if (pending.length > 0 && pendingFromArray) {
+                const escapedArrayContext = fileType === 'yaml'
+                    ? currentIndent <= pendingIndent && trimmed.length > 0
+                    : currentArrayDepth === 0;
+                if (escapedArrayContext) {
+                    flushPendingStandalone();
+                }
+            }
+
+            if (pending.length > 0 && pendingFromArray) {
+                const stillInsideArrayContext = fileType === 'yaml'
+                    ? currentIndent > pendingIndent || trimmed.length === 0
+                    : currentArrayDepth > 0;
+                if (stillInsideArrayContext) {
+                    continue;
+                }
             }
 
             if (trimmed.length === 0) {
+                if (!hasBoundNode) {
+                    flushPreamble();
+                }
                 pending.length = 0;
+                pendingLine = -1;
+                pendingFromArray = false;
+                pendingIndent = -1;
                 continue;
             }
 
             pending.length = 0;
+            pendingLine = -1;
+            pendingFromArray = false;
+            pendingIndent = -1;
+
+            if (!hasBoundNode) {
+                flushPreamble();
+            }
         }
 
-        return { lineComments, topLevelComments };
+        flushPreamble();
+        flushPendingStandalone();
+
+        return { lineComments, standaloneGroups };
     }
 
-    private static appendComment(target: string[], comment: string): void {
-        if (!comment) {
+    private static pushComment(target: CommentEntry[], marker: CommentMarker, text: string): void {
+        if (!text) {
             return;
         }
-        target.push(comment);
+        target.push({ marker, text });
     }
 
-    private static findJsonInlineComments(line: string): string[] {
-        const comments: string[] = [];
+    private static findJsonInlineComments(line: string): CommentEntry[] {
+        const comments: CommentEntry[] = [];
         let inString = false;
         let escape = false;
 
@@ -857,7 +1060,7 @@ export class CodePreviewProvider {
             if (ch === '/' && next === '/') {
                 const text = this.cleanCommentText(line.slice(i + 2));
                 if (text) {
-                    comments.push(text);
+                    comments.push({ marker: '/', text });
                 }
                 break;
             }
@@ -866,7 +1069,7 @@ export class CodePreviewProvider {
                 const raw = end >= 0 ? line.slice(i + 2, end) : line.slice(i + 2);
                 const text = this.cleanCommentText(raw);
                 if (text) {
-                    comments.push(text);
+                    comments.push({ marker: '*', text });
                 }
                 if (end < 0) {
                     break;
@@ -878,7 +1081,7 @@ export class CodePreviewProvider {
         return comments;
     }
 
-    private static findHashInlineComments(line: string): string[] {
+    private static findHashInlineComments(line: string): CommentEntry[] {
         const codePart = this.stripHashCommentText(line);
         if (codePart.length === line.length) {
             return [];
@@ -886,7 +1089,7 @@ export class CodePreviewProvider {
 
         const rawComment = line.slice(codePart.length + 1);
         const text = this.cleanCommentText(rawComment);
-        return text ? [text] : [];
+        return text ? [{ marker: '#', text }] : [];
     }
 
     private static stripHashCommentText(line: string): string {
@@ -936,6 +1139,130 @@ export class CodePreviewProvider {
         return line;
     }
 
+    private static buildJsonArrayDepthAtLineStart(lines: string[]): number[] {
+        const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
+        const depthAtLineStart: number[] = [];
+        let arrayDepth = 0;
+
+        for (let i = 0; i < sanitizedLines.length; i++) {
+            const line = sanitizedLines[i];
+            depthAtLineStart.push(arrayDepth);
+
+            let inString = false;
+            let escape = false;
+            for (let j = 0; j < line.length; j++) {
+                const ch = line[j];
+
+                if (inString) {
+                    if (escape) {
+                        escape = false;
+                        continue;
+                    }
+                    if (ch === '\\') {
+                        escape = true;
+                        continue;
+                    }
+                    if (ch === '"') {
+                        inString = false;
+                    }
+                    continue;
+                }
+
+                if (ch === '"') {
+                    inString = true;
+                    continue;
+                }
+                if (ch === '[') {
+                    arrayDepth += 1;
+                    continue;
+                }
+                if (ch === ']') {
+                    arrayDepth = Math.max(0, arrayDepth - 1);
+                }
+            }
+        }
+
+        return depthAtLineStart;
+    }
+
+    private static buildTomlArrayDepthAtLineStart(lines: string[]): number[] {
+        const depthAtLineStart: number[] = [];
+        let arrayDepth = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            depthAtLineStart.push(arrayDepth);
+            const codeLine = this.stripHashCommentText(lines[i]);
+
+            if (arrayDepth > 0) {
+                arrayDepth += this.countSquareBracketDelta(codeLine);
+                if (arrayDepth < 0) {
+                    arrayDepth = 0;
+                }
+                continue;
+            }
+
+            const trimmed = codeLine.trim();
+            if (trimmed.length === 0 || /^\s*\[\[.*\]\]\s*$/.test(trimmed) || /^\s*\[.*\]\s*$/.test(trimmed)) {
+                continue;
+            }
+
+            const equalIndex = codeLine.indexOf('=');
+            if (equalIndex < 0) {
+                continue;
+            }
+
+            const rhs = codeLine.slice(equalIndex + 1);
+            const arrayStart = this.findTomlArrayStart(rhs);
+            if (arrayStart < 0) {
+                continue;
+            }
+
+            arrayDepth = this.countSquareBracketDelta(rhs.slice(arrayStart));
+            if (arrayDepth < 0) {
+                arrayDepth = 0;
+            }
+        }
+
+        return depthAtLineStart;
+    }
+
+    private static inferYamlPendingFromArray(lines: string[], lineIndex: number, arrayItemLines: Set<number>): boolean {
+        for (let i = lineIndex - 1; i >= 0; i--) {
+            const trimmed = lines[i].trim();
+            if (trimmed.length === 0 || /^#/.test(trimmed)) {
+                continue;
+            }
+
+            if (arrayItemLines.has(i)) {
+                return true;
+            }
+
+            if (this.extractYamlKeys(lines[i]).length > 0) {
+                return false;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    private static getIndentation(line: string): number {
+        const match = line.match(/^\s*/);
+        return match ? match[0].length : 0;
+    }
+
+    private static pushStandaloneGroup(groups: StandaloneCommentGroup[], line: number, comments: CommentEntry[]): void {
+        if (comments.length === 0) {
+            return;
+        }
+
+        groups.push({
+            line,
+            comments: [...comments],
+        });
+    }
+
     private static cleanCommentText(text: string): string {
         return text
             .split('\n')
@@ -944,26 +1271,39 @@ export class CodePreviewProvider {
             .trim();
     }
 
-    private static renderCommentIcon(comment: string): string {
-        const escapedComment = escapeHtml(comment).replace(/\n/g, '&#10;');
-        return `<span class="tree-comment-icon codicon codicon-note" data-comment="${escapedComment}" aria-label="${escapedComment}" tabindex="0"></span>`;
+    private static renderCommentIcon(comments: CommentEntry[]): string {
+        const encodedComments = escapeHtml(JSON.stringify(comments));
+        const ariaLabel = escapeHtml(comments.map(comment => `${comment.marker} ${comment.text}`).join('\n')).replace(/\n/g, '&#10;');
+        return `<span class="tree-comment-icon codicon codicon-note" data-comments="${encodedComments}" aria-label="${ariaLabel}" tabindex="0"></span>`;
     }
 
     private static renderCommentIconForLine(line: number, commentLines: CommentLineIndex): string {
         if (line < 0 || !commentLines.has(line)) {
             return '';
         }
-        return this.renderCommentIcon(commentLines.get(line) as string);
+        return this.renderCommentIcon(commentLines.get(line) as CommentEntry[]);
     }
 
-    private static renderTopLevelComments(comments: string[]): string {
-        if (comments.length === 0) {
-            return '';
-        }
+    private static createStandaloneCursor(groups: StandaloneCommentGroup[]): StandaloneCommentCursor {
+        const sortedGroups = [...groups].sort((a, b) => a.line - b.line);
+        return {
+            groups: sortedGroups,
+            index: 0,
+        };
+    }
 
-        return comments
-            .map(comment => `<div class="tree-root-comment">${this.renderCommentIcon(comment)}</div>`)
-            .join('');
+    private static renderStandaloneBeforeBoundary(cursor: StandaloneCommentCursor, boundaryExclusive: number): string {
+        let html = '';
+        while (cursor.index < cursor.groups.length && cursor.groups[cursor.index].line < boundaryExclusive) {
+            const group = cursor.groups[cursor.index];
+            html += `<div class="tree-item tree-standalone-comment">${this.renderCommentIcon(group.comments)}</div>`;
+            cursor.index += 1;
+        }
+        return html;
+    }
+
+    private static resolveBoundaryLine(line: number, fallback: number): number {
+        return line >= 0 ? line : fallback;
     }
 
     /**
@@ -989,34 +1329,69 @@ export class CodePreviewProvider {
         data: unknown,
         lineLocator: KeyLineLocator,
         arrayItemLineLocator: ArrayItemLineLocator,
-        commentLines: CommentLineIndex
+        commentLines: CommentLineIndex,
+        standaloneCursor: StandaloneCommentCursor,
+        boundaryExclusive: number
     ): string {
         let html = '<div class="tree-children">';
         if (Array.isArray(data)) {
-            data.forEach((item, index) => {
-                const line = arrayItemLineLocator.next();
+            const items = data.map(item => ({
+                value: item,
+                line: arrayItemLineLocator.next(),
+            }));
+
+            for (let i = 0; i < items.length; i++) {
+                const itemInfo = items[i];
+                const line = itemInfo.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 const commentIcon = this.renderCommentIconForLine(line, commentLines);
-                if (this.isCompound(item)) {
-                    const bracket = Array.isArray(item) ? `[${item.length}]` : `{${Object.keys(item as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${index}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(item, lineLocator, arrayItemLineLocator, commentLines)}</details></div>`;
+                const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
+                const nextBoundary = i + 1 < items.length
+                    ? this.resolveBoundaryLine(items[i + 1].line, boundaryExclusive)
+                    : boundaryExclusive;
+
+                html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary);
+
+                if (this.isCompound(itemInfo.value)) {
+                    const bracket = Array.isArray(itemInfo.value)
+                        ? `[${itemInfo.value.length}]`
+                        : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${index}</span>${commentIcon}: ${this.renderPrimitive(item)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
-            });
+            }
         } else if (typeof data === 'object' && data !== null) {
-            for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-                const line = lineLocator.next(key);
+            const entries = Object.entries(data as Record<string, unknown>).map(([key, value]) => ({
+                key,
+                value,
+                line: lineLocator.next(key),
+            }));
+
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
+                const line = entry.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 const commentIcon = this.renderCommentIconForLine(line, commentLines);
-                if (this.isCompound(value)) {
-                    const bracket = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator, arrayItemLineLocator, commentLines)}</details></div>`;
+                const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
+                const nextBoundary = i + 1 < entries.length
+                    ? this.resolveBoundaryLine(entries[i + 1].line, boundaryExclusive)
+                    : boundaryExclusive;
+
+                html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary);
+
+                if (this.isCompound(entry.value)) {
+                    const bracket = Array.isArray(entry.value)
+                        ? `[${entry.value.length}]`
+                        : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: ${this.renderPrimitive(value)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }
             }
         }
+
+        html += this.renderStandaloneBeforeBoundary(standaloneCursor, boundaryExclusive);
         html += '</div>';
         return html;
     }
@@ -1057,40 +1432,77 @@ export class CodePreviewProvider {
         lineLocator: KeyLineLocator,
         arrayItemLineLocator: ArrayItemLineLocator,
         commentLines: CommentLineIndex,
-        topLevelComments: string[]
+        standaloneGroups: StandaloneCommentGroup[]
     ): string {
-        const topLevelHtml = this.renderTopLevelComments(topLevelComments);
+        const cursor = this.createStandaloneCursor(standaloneGroups);
+        const rootBoundary = Number.POSITIVE_INFINITY;
+
         if (!this.isCompound(data)) {
-            return topLevelHtml + this.renderPrimitive(data);
+            let html = this.renderStandaloneBeforeBoundary(cursor, rootBoundary);
+            html += this.renderPrimitive(data);
+            html += this.renderStandaloneBeforeBoundary(cursor, rootBoundary);
+            return html;
         }
 
-        // 顶层直接渲染子节点（不包裹 details）
-        let html = topLevelHtml;
+        let html = '';
         if (Array.isArray(data)) {
-            data.forEach((item, index) => {
-                const line = arrayItemLineLocator.next();
+            const items = data.map(item => ({
+                value: item,
+                line: arrayItemLineLocator.next(),
+            }));
+
+            for (let i = 0; i < items.length; i++) {
+                const itemInfo = items[i];
+                const line = itemInfo.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 const commentIcon = this.renderCommentIconForLine(line, commentLines);
-                if (this.isCompound(item)) {
-                    const bracket = Array.isArray(item) ? `[${item.length}]` : `{${Object.keys(item as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${index}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(item, lineLocator, arrayItemLineLocator, commentLines)}</details></div>`;
+                const itemBoundary = this.resolveBoundaryLine(line, rootBoundary);
+                const nextBoundary = i + 1 < items.length
+                    ? this.resolveBoundaryLine(items[i + 1].line, rootBoundary)
+                    : rootBoundary;
+
+                html += this.renderStandaloneBeforeBoundary(cursor, itemBoundary);
+
+                if (this.isCompound(itemInfo.value)) {
+                    const bracket = Array.isArray(itemInfo.value)
+                        ? `[${itemInfo.value.length}]`
+                        : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${index}</span>${commentIcon}: ${this.renderPrimitive(item)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
-            });
+            }
         } else if (typeof data === 'object' && data !== null) {
-            for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-                const line = lineLocator.next(key);
+            const entries = Object.entries(data as Record<string, unknown>).map(([key, value]) => ({
+                key,
+                value,
+                line: lineLocator.next(key),
+            }));
+
+            for (let i = 0; i < entries.length; i++) {
+                const entry = entries[i];
+                const line = entry.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 const commentIcon = this.renderCommentIconForLine(line, commentLines);
-                if (this.isCompound(value)) {
-                    const bracket = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator, arrayItemLineLocator, commentLines)}</details></div>`;
+                const itemBoundary = this.resolveBoundaryLine(line, rootBoundary);
+                const nextBoundary = i + 1 < entries.length
+                    ? this.resolveBoundaryLine(entries[i + 1].line, rootBoundary)
+                    : rootBoundary;
+
+                html += this.renderStandaloneBeforeBoundary(cursor, itemBoundary);
+
+                if (this.isCompound(entry.value)) {
+                    const bracket = Array.isArray(entry.value)
+                        ? `[${entry.value.length}]`
+                        : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: ${this.renderPrimitive(value)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }
             }
         }
+
+        html += this.renderStandaloneBeforeBoundary(cursor, rootBoundary);
         return html;
     }
 }

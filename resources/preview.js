@@ -777,14 +777,62 @@ function ensureCommentTooltip() {
     return tooltip;
 }
 
+function parseCommentPayload(target) {
+    const raw = target.getAttribute('data-comments');
+    if (!raw) {
+        return [];
+    }
+
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+        return parsed.filter(item => {
+            return item
+                && typeof item === 'object'
+                && typeof item.marker === 'string'
+                && typeof item.text === 'string'
+                && item.text.length > 0;
+        });
+    } catch (_error) {
+        return [];
+    }
+}
+
+function renderCommentTooltipItems(tooltip, comments) {
+    tooltip.innerHTML = '';
+    const list = document.createElement('div');
+    list.className = 'tree-comment-tooltip-list';
+
+    comments.forEach(comment => {
+        const row = document.createElement('div');
+        row.className = 'tree-comment-tooltip-item';
+
+        const marker = document.createElement('span');
+        marker.className = 'tree-comment-tooltip-marker';
+        marker.textContent = comment.marker;
+
+        const body = document.createElement('span');
+        body.className = 'tree-comment-tooltip-body';
+        body.textContent = comment.text;
+
+        row.appendChild(marker);
+        row.appendChild(body);
+        list.appendChild(row);
+    });
+
+    tooltip.appendChild(list);
+}
+
 function showCommentTooltip(target) {
-    const comment = target.getAttribute('data-comment');
-    if (!comment) {
+    const comments = parseCommentPayload(target);
+    if (comments.length === 0) {
         return;
     }
 
     const tooltip = ensureCommentTooltip();
-    tooltip.textContent = comment;
+    renderCommentTooltipItems(tooltip, comments);
     commentTooltipTarget = target;
     tooltip.classList.add('is-visible');
     positionCommentTooltip();
@@ -822,7 +870,7 @@ function positionCommentTooltip() {
 }
 
 function bindCommentTooltips() {
-    const icons = document.querySelectorAll('.data-tree .tree-comment-icon[data-comment]');
+    const icons = document.querySelectorAll('.data-tree .tree-comment-icon[data-comments]');
     icons.forEach(icon => {
         icon.addEventListener('mouseenter', () => showCommentTooltip(icon));
         icon.addEventListener('mousemove', positionCommentTooltip);

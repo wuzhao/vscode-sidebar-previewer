@@ -850,7 +850,15 @@ pre:hover .copy-btn {
     padding: 1px 0 1px 20px;
 }
 
+.data-tree .tree-standalone-comment {
+    padding: 1px 0 1px 20px;
+}
+
 .data-tree .tree-root-comment .tree-comment-icon {
+    margin-left: 0;
+}
+
+.data-tree .tree-standalone-comment .tree-comment-icon {
     margin-left: 0;
 }
 
@@ -882,7 +890,7 @@ pre:hover .copy-btn {
     color: var(--vscode-editorHoverWidget-foreground, var(--vscode-editor-foreground));
     font-size: 12px;
     line-height: 1.45;
-    white-space: pre-wrap;
+    white-space: normal;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
     pointer-events: none;
     z-index: 1000;
@@ -897,6 +905,30 @@ pre:hover .copy-btn {
     visibility: visible;
     transform: translateY(0);
     transition: opacity 0.06s ease, transform 0.06s ease;
+}
+
+.tree-comment-tooltip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tree-comment-tooltip-item {
+    display: grid;
+    grid-template-columns: 1ch minmax(0, 1fr);
+    align-items: start;
+    column-gap: 8px;
+}
+
+.tree-comment-tooltip-marker {
+    color: color-mix(in srgb, var(--vscode-descriptionForeground) 35%, transparent 65%);
+    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    line-height: 1.45;
+}
+
+.tree-comment-tooltip-body {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .data-tree .tree-item.is-highlight {
