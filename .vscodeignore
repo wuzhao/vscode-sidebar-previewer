@@ -18,6 +18,7 @@ scripts/**
 src/**
 test/**
 *.vsix
+README.*.md
 
 CHANGELOG.md
 WIKI.md
