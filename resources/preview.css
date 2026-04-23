@@ -846,6 +846,20 @@ pre:hover .copy-btn {
     text-decoration: underline;
 }
 
+.data-tree .tree-comment-icon {
+    margin-left: 4px;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.85;
+    cursor: help;
+    vertical-align: text-top;
+    font-size: 12px;
+}
+
+.data-tree .tree-comment-icon:hover {
+    opacity: 1;
+    color: var(--vscode-foreground);
+}
+
 .data-tree .tree-item.is-highlight {
     background-color: rgba(100, 149, 237, 0.22);
     background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 55%, transparent 45%);

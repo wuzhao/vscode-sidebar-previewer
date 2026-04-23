@@ -16,7 +16,7 @@ const supportedExtensions = [
     'Markdown (.md)',
     'LaTeX (.tex)',
     'Mermaid (.mmd / .mermaid)',
-    'JSON (.json)',
+    'JSON / JSONC (.json / .jsonc)',
     'YAML (.yaml / .yml)',
     'TOML (.toml)'
 ];

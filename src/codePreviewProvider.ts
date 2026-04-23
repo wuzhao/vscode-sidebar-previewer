@@ -6,6 +6,7 @@ import { escapeHtml, escapeRegex } from './utils';
 interface KeyLineLocator {
     next(key: string): number;
 }
+type CommentLineIndex = Map<number, string>;
 
 export class CodePreviewProvider {
     private static readonly MAX_HTML_LENGTH = 10 * 1024 * 1024;
@@ -17,8 +18,9 @@ export class CodePreviewProvider {
         try {
             const parsed = this.parseContent(content, fileType);
             const lines = content.split('\n');
+            const commentLines = this.buildCommentLineIndex(lines, fileType);
             const lineLocator = this.createKeyLineLocator(lines, fileType);
-            const html = this.renderTree(parsed, lineLocator);
+            const html = this.renderTree(parsed, lineLocator, commentLines);
             const wrappedHtml = `<div class="data-tree">${html}</div>`;
 
             if (wrappedHtml.length > this.MAX_HTML_LENGTH) {
@@ -50,7 +52,7 @@ export class CodePreviewProvider {
     private static parseContent(content: string, fileType: FileType): unknown {
         switch (fileType) {
             case 'json':
-                return JSON.parse(content);
+                return this.parseJsonOrJsonc(content);
             case 'yaml': {
                 const docs = yaml.loadAll(content);
                 return docs.length === 1 ? docs[0] : docs;
@@ -83,6 +85,128 @@ export class CodePreviewProvider {
                 return this.consumeIndexedLine(fallbackIndex, fallbackCursor, key);
             }
         };
+    }
+
+    private static parseJsonOrJsonc(content: string): unknown {
+        try {
+            return JSON.parse(content);
+        } catch (_error) {
+            return JSON.parse(this.sanitizeJsonc(content));
+        }
+    }
+
+    private static sanitizeJsonc(content: string): string {
+        const withoutComments = this.stripJsoncComments(content);
+        return this.stripJsonTrailingCommas(withoutComments);
+    }
+
+    private static stripJsoncComments(content: string): string {
+        let out = '';
+        let inString = false;
+        let escape = false;
+
+        for (let i = 0; i < content.length; i++) {
+            const ch = content[i];
+            const next = i + 1 < content.length ? content[i + 1] : '';
+
+            if (inString) {
+                out += ch;
+                if (escape) {
+                    escape = false;
+                    continue;
+                }
+                if (ch === '\\') {
+                    escape = true;
+                } else if (ch === '"') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (ch === '"') {
+                inString = true;
+                out += ch;
+                continue;
+            }
+
+            if (ch === '/' && next === '/') {
+                while (i < content.length && content[i] !== '\n') {
+                    out += ' ';
+                    i++;
+                }
+                if (i < content.length && content[i] === '\n') {
+                    out += '\n';
+                }
+                continue;
+            }
+
+            if (ch === '/' && next === '*') {
+                out += ' ';
+                out += ' ';
+                i += 2;
+                while (i < content.length) {
+                    const current = content[i];
+                    const following = i + 1 < content.length ? content[i + 1] : '';
+                    if (current === '*' && following === '/') {
+                        out += ' ';
+                        out += ' ';
+                        i++;
+                        break;
+                    }
+                    out += current === '\n' ? '\n' : ' ';
+                    i++;
+                }
+                continue;
+            }
+
+            out += ch;
+        }
+
+        return out;
+    }
+
+    private static stripJsonTrailingCommas(content: string): string {
+        let out = '';
+        let inString = false;
+        let escape = false;
+
+        for (let i = 0; i < content.length; i++) {
+            const ch = content[i];
+
+            if (inString) {
+                out += ch;
+                if (escape) {
+                    escape = false;
+                    continue;
+                }
+                if (ch === '\\') {
+                    escape = true;
+                } else if (ch === '"') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (ch === '"') {
+                inString = true;
+                out += ch;
+                continue;
+            }
+
+            if (ch === ',') {
+                let j = i + 1;
+                while (j < content.length && /\s/.test(content[j])) {
+                    j++;
+                }
+                if (j < content.length && (content[j] === '}' || content[j] === ']')) {
+                    continue;
+                }
+            }
+
+            out += ch;
+        }
+
+        return out;
     }
 
     private static consumeIndexedLine(
@@ -233,6 +357,245 @@ export class CodePreviewProvider {
         index.set(normalizedKey, [line]);
     }
 
+    private static buildCommentLineIndex(lines: string[], fileType: FileType): CommentLineIndex {
+        switch (fileType) {
+            case 'json':
+                return this.buildJsonCommentLineIndex(lines);
+            case 'yaml':
+                return this.buildHashCommentLineIndex(lines, 'yaml');
+            case 'toml':
+                return this.buildHashCommentLineIndex(lines, 'toml');
+            default:
+                return new Map<number, string>();
+        }
+    }
+
+    private static buildJsonCommentLineIndex(lines: string[]): CommentLineIndex {
+        const result = new Map<number, string>();
+        const pending: string[] = [];
+        let inBlockComment = false;
+        let blockParts: string[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+            const keyExists = this.extractJsonKeys(line).length > 0;
+            const inlineComments: string[] = [];
+
+            if (inBlockComment) {
+                const end = line.indexOf('*/');
+                if (end >= 0) {
+                    blockParts.push(line.slice(0, end));
+                    const merged = this.cleanCommentText(blockParts.join('\n'));
+                    if (merged) {
+                        pending.push(merged);
+                    }
+                    blockParts = [];
+                    inBlockComment = false;
+                } else {
+                    blockParts.push(line);
+                    continue;
+                }
+            }
+
+            if (/^\s*\/\//.test(line)) {
+                const onlyComment = this.cleanCommentText(line.replace(/^\s*\/\//, ''));
+                if (onlyComment) {
+                    pending.push(onlyComment);
+                }
+                continue;
+            }
+
+            if (/^\s*\/\*/.test(line)) {
+                const singleLineBlock = line.match(/^\s*\/\*(.*?)\*\/\s*$/);
+                if (singleLineBlock) {
+                    const onlyComment = this.cleanCommentText(singleLineBlock[1]);
+                    if (onlyComment) {
+                        pending.push(onlyComment);
+                    }
+                    continue;
+                }
+
+                const rest = line.replace(/^\s*\/\*/, '');
+                const end = rest.indexOf('*/');
+                if (end >= 0) {
+                    const onlyComment = this.cleanCommentText(rest.slice(0, end));
+                    if (onlyComment) {
+                        pending.push(onlyComment);
+                    }
+                    continue;
+                }
+
+                inBlockComment = true;
+                blockParts = [rest];
+                continue;
+            }
+
+            const inlineComment = this.findJsonInlineComment(line);
+            if (inlineComment) {
+                inlineComments.push(inlineComment);
+            }
+
+            if (keyExists) {
+                const comments = [...pending, ...inlineComments].filter(Boolean);
+                if (comments.length > 0) {
+                    result.set(i, comments.join('\n'));
+                }
+                pending.length = 0;
+                continue;
+            }
+
+            if (trimmed.length === 0) {
+                pending.length = 0;
+                continue;
+            }
+
+            pending.length = 0;
+        }
+
+        return result;
+    }
+
+    private static buildHashCommentLineIndex(lines: string[], fileType: 'yaml' | 'toml'): CommentLineIndex {
+        const result = new Map<number, string>();
+        const pending: string[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+            const keyExists = this.extractKeysFromLine(line, fileType).length > 0;
+            const commentOnlyMatch = line.match(/^\s*#(.*)$/);
+            const inlineComment = this.findHashInlineComment(line);
+
+            if (commentOnlyMatch) {
+                const text = this.cleanCommentText(commentOnlyMatch[1]);
+                if (text) {
+                    pending.push(text);
+                }
+                continue;
+            }
+
+            if (keyExists) {
+                const comments = [...pending];
+                if (inlineComment) {
+                    comments.push(inlineComment);
+                }
+                if (comments.length > 0) {
+                    result.set(i, comments.join('\n'));
+                }
+                pending.length = 0;
+                continue;
+            }
+
+            if (trimmed.length === 0) {
+                pending.length = 0;
+                continue;
+            }
+
+            pending.length = 0;
+        }
+
+        return result;
+    }
+
+    private static findJsonInlineComment(line: string): string | null {
+        let inString = false;
+        let escape = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            const next = i + 1 < line.length ? line[i + 1] : '';
+
+            if (inString) {
+                if (escape) {
+                    escape = false;
+                    continue;
+                }
+                if (ch === '\\') {
+                    escape = true;
+                } else if (ch === '"') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (ch === '"') {
+                inString = true;
+                continue;
+            }
+
+            if (ch === '/' && next === '/') {
+                return this.cleanCommentText(line.slice(i + 2));
+            }
+            if (ch === '/' && next === '*') {
+                const end = line.indexOf('*/', i + 2);
+                const raw = end >= 0 ? line.slice(i + 2, end) : line.slice(i + 2);
+                return this.cleanCommentText(raw);
+            }
+        }
+
+        return null;
+    }
+
+    private static findHashInlineComment(line: string): string | null {
+        let inSingle = false;
+        let inDouble = false;
+        let escape = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+
+            if (inDouble) {
+                if (escape) {
+                    escape = false;
+                    continue;
+                }
+                if (ch === '\\') {
+                    escape = true;
+                    continue;
+                }
+                if (ch === '"') {
+                    inDouble = false;
+                }
+                continue;
+            }
+
+            if (inSingle) {
+                if (ch === '\'') {
+                    inSingle = false;
+                }
+                continue;
+            }
+
+            if (ch === '"') {
+                inDouble = true;
+                continue;
+            }
+            if (ch === '\'') {
+                inSingle = true;
+                continue;
+            }
+            if (ch === '#') {
+                return this.cleanCommentText(line.slice(i + 1));
+            }
+        }
+
+        return null;
+    }
+
+    private static cleanCommentText(text: string): string {
+        return text
+            .split('\n')
+            .map(line => line.trim().replace(/^\*+\s?/, ''))
+            .join('\n')
+            .trim();
+    }
+
+    private static renderCommentIcon(comment: string): string {
+        const escapedComment = escapeHtml(comment);
+        return ` <span class="tree-comment-icon codicon codicon-comment-discussion" title="${escapedComment}" aria-label="${escapedComment}"></span>`;
+    }
+
     /**
      * 判断值是否为复合类型（对象或非空数组）
      */
@@ -254,14 +617,15 @@ export class CodePreviewProvider {
      */
     private static renderCompoundChildren(
         data: unknown,
-        lineLocator: KeyLineLocator
+        lineLocator: KeyLineLocator,
+        commentLines: CommentLineIndex
     ): string {
         let html = '<div class="tree-children">';
         if (Array.isArray(data)) {
             data.forEach((item, index) => {
                 if (this.isCompound(item)) {
                     const bracket = Array.isArray(item) ? `[${item.length}]` : `{${Object.keys(item as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index">${index}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(item, lineLocator)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index">${index}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(item, lineLocator, commentLines)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index">${index}</span>: ${this.renderPrimitive(item)}</div>`;
                 }
@@ -270,11 +634,14 @@ export class CodePreviewProvider {
             for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
                 const line = lineLocator.next(key);
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
+                const commentIcon = line >= 0 && commentLines.has(line)
+                    ? this.renderCommentIcon(commentLines.get(line) as string)
+                    : '';
                 if (this.isCompound(value)) {
                     const bracket = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator, commentLines)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: ${this.renderPrimitive(value)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: ${this.renderPrimitive(value)}</div>`;
                 }
             }
         }
@@ -315,7 +682,8 @@ export class CodePreviewProvider {
      */
     private static renderTree(
         data: unknown,
-        lineLocator: KeyLineLocator
+        lineLocator: KeyLineLocator,
+        commentLines: CommentLineIndex
     ): string {
         if (!this.isCompound(data)) {
             return this.renderPrimitive(data);
@@ -327,7 +695,7 @@ export class CodePreviewProvider {
             data.forEach((item, index) => {
                 if (this.isCompound(item)) {
                     const bracket = Array.isArray(item) ? `[${item.length}]` : `{${Object.keys(item as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index">${index}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(item, lineLocator)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index">${index}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(item, lineLocator, commentLines)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index">${index}</span>: ${this.renderPrimitive(item)}</div>`;
                 }
@@ -336,11 +704,14 @@ export class CodePreviewProvider {
             for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
                 const line = lineLocator.next(key);
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
+                const commentIcon = line >= 0 && commentLines.has(line)
+                    ? this.renderCommentIcon(commentLines.get(line) as string)
+                    : '';
                 if (this.isCompound(value)) {
                     const bracket = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(value, lineLocator, commentLines)}</details></div>`;
                 } else {
-                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>: ${this.renderPrimitive(value)}</div>`;
+                    html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(key)}</span>${commentIcon}: ${this.renderPrimitive(value)}</div>`;
                 }
             }
         }

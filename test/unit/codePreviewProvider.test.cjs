@@ -5,7 +5,7 @@ const { CodePreviewProvider } = require('../../out/codePreviewProvider');
 const { MarkdownProvider } = require('../../out/markdownProvider');
 const { LatexPreviewProvider } = require('../../out/latexPreviewProvider');
 const { MermaidPreviewProvider } = require('../../out/mermaidPreviewProvider');
-const { supportsLocate, isDataTreeType } = require('../../out/fileTypes');
+const { supportsLocate, isDataTreeType, getFileType } = require('../../out/fileTypes');
 
 function escapeRegex(input) {
     return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -87,17 +87,46 @@ test('Provider locate capabilities stay consistent with file type capabilities',
     assert.equal(isDataTreeType('yaml'), true);
     assert.equal(isDataTreeType('toml'), true);
     assert.equal(isDataTreeType('markdown'), false);
+    assert.equal(getFileType('settings.jsonc'), 'json');
 });
 
-  test('CodePreviewProvider returns an error state for invalid JSON', () => {
+test('CodePreviewProvider parses JSONC (comments and trailing commas)', () => {
+    const source = `{
+  "name": "Alice", // profile name
+  "age": 20,
+}`;
+    const result = CodePreviewProvider.parse(source, 'json');
+
+    assert.equal(result.fileType, 'json');
+    assert.equal(result.supportsLocate, false);
+    assert.ok(result.html.includes('<span class="tree-key" data-line="1">name</span>'));
+    assert.equal(result.html.includes('Failed to parse JSON content.'), false);
+});
+
+test('CodePreviewProvider returns an error state for invalid JSON', () => {
     const result = CodePreviewProvider.parse('{"k":', 'json');
 
     assert.equal(result.fileType, 'json');
     assert.equal(result.supportsLocate, false);
     assert.ok(result.html.includes('Failed to parse JSON content.'));
-  });
+});
 
-  test('MarkdownProvider escapes front matter HTML content', () => {
+test('Comment icon and tooltip are rendered for JSON/YAML/TOML keys', () => {
+    const json = CodePreviewProvider.parse('{\n  "name": "Alice", // profile name\n}', 'json');
+    const yaml = CodePreviewProvider.parse('name: Alice # full name', 'yaml');
+    const toml = CodePreviewProvider.parse('name = "Alice" # display name', 'toml');
+
+    assert.ok(json.html.includes('tree-comment-icon codicon codicon-comment-discussion'));
+    assert.ok(json.html.includes('title="profile name"'));
+
+    assert.ok(yaml.html.includes('tree-comment-icon codicon codicon-comment-discussion'));
+    assert.ok(yaml.html.includes('title="full name"'));
+
+    assert.ok(toml.html.includes('tree-comment-icon codicon codicon-comment-discussion'));
+    assert.ok(toml.html.includes('title="display name"'));
+});
+
+test('MarkdownProvider escapes front matter HTML content', () => {
     const source = [
       '---',
       'title: "<script>alert(1)</script>"',
@@ -111,4 +140,4 @@ test('Provider locate capabilities stay consistent with file type capabilities',
     assert.ok(result.html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
     assert.ok(result.html.includes('Tom &amp; Jerry'));
     assert.equal(result.html.includes('<script>alert(1)</script>'), false);
-  });
+});

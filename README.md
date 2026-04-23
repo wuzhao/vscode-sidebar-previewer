@@ -4,7 +4,7 @@
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.ja-JP.md)
 
-Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, and TOML.
+Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON/JSONC, YAML, and TOML.
 
 ## Why do you need it?
 
@@ -30,7 +30,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Markdown | `.md`, `.markdown` |
 | LaTeX | `.tex` |
 | Mermaid | `.mmd`, `.mermaid` |
-| JSON | `.json` |
+| JSON / JSONC | `.json`, `.jsonc` |
 | YAML | `.yaml`, `.yml` |
 | TOML | `.toml` |
 
@@ -61,6 +61,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Collapsible tree view
 - Expand all / collapse all
 - Click key to jump to source line
+- Comment icon on keys with hover tooltip
 
 ## Installation
 
@@ -84,7 +85,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Usage
 
-1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.yaml`, `.yml`, `.toml`)
+1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.jsonc`, `.yaml`, `.yml`, `.toml`)
 2. Click the Sidebar Previewer icon in the Activity Bar
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom

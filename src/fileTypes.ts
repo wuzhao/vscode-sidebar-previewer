@@ -55,7 +55,7 @@ const fileTypeCapabilities: Record<FileType, FileTypeCapabilities> = {
         isDataTree: false,
     },
     json: {
-        extensions: ['.json'],
+        extensions: ['.json', '.jsonc'],
         supportsLocate: false,
         isDataTree: true,
     },

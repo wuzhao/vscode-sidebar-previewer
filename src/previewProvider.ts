@@ -368,6 +368,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         if (document.languageId === 'markdown') {
             return 'markdown';
         }
+        if (document.languageId === 'jsonc') {
+            return 'json';
+        }
         return getFileType(document.fileName);
     }
 
