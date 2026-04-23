@@ -766,6 +766,19 @@ export class CodePreviewProvider {
                     }
                     blockParts = [];
                     inBlockComment = false;
+
+                    const trailing = line.slice(end + 2);
+                    if (trailing.trim().length === 0) {
+                        continue;
+                    }
+
+                    const trailingComments = this.findJsonInlineComments(trailing);
+                    if (trailingComments.length > 0) {
+                        trailingComments.forEach(comment => {
+                            pushCommentForCurrentContext(comment.marker, comment.text, i, currentArrayDepth);
+                        });
+                        continue;
+                    }
                 } else {
                     blockParts.push(line);
                     continue;

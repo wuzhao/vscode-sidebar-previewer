@@ -179,6 +179,54 @@ test('JSON comment groups are merged into a single icon payload', () => {
   assert.equal(mergedInline.length, 1);
 });
 
+test('Multiline block and line comments merge into one popup payload', () => {
+  const source = [
+    '{',
+    '  /* block comment line 1',
+    '   * block comment line 2',
+    '   */',
+    '  // line comment after block',
+    '  "name": "Alice"',
+    '}',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'json');
+  const payloads = extractCommentPayloads(result.html);
+
+  const merged = payloads.filter(payload => payload.length === 2
+    && payload[0].marker === '*'
+    && payload[0].text === 'block comment line 1\nblock comment line 2'
+    && payload[1].marker === '/'
+    && payload[1].text === 'line comment after block');
+
+  assert.equal(merged.length, 1);
+});
+
+test('Consecutive multiline block comments merge into one popup payload', () => {
+  const source = [
+    '{',
+    '  /* first block line 1',
+    '   * first block line 2',
+    '   */',
+    '  /* second block line 1',
+    '   * second block line 2',
+    '   */',
+    '  "name": "Alice"',
+    '}',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'json');
+  const payloads = extractCommentPayloads(result.html);
+
+  const merged = payloads.filter(payload => payload.length === 2
+    && payload[0].marker === '*'
+    && payload[0].text === 'first block line 1\nfirst block line 2'
+    && payload[1].marker === '*'
+    && payload[1].text === 'second block line 1\nsecond block line 2');
+
+  assert.equal(merged.length, 1);
+});
+
 test('Trailing array comment without next element becomes standalone icon', () => {
   const source = [
     '{',
