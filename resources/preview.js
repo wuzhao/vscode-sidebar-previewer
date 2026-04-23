@@ -16,15 +16,11 @@ const VALID_MESSAGE_TYPES = new Set([
     'collapseAll',
     'highlightDataTreeRange',
 ]);
-let currentHeadings = [];
-let isScrollingFromEditor = false;
-let zoomLevel = 100;
 const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
-let wheelTimeout = null;
-let currentFileType = null;
 const MERMAID_ZOOM_MULTIPLIER = 2;
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
 const COMMENT_TOOLTIP_HIDE_DELAY_MS = 240;
+const COMMENT_TOOLTIP_CLICK_BLOCK_WINDOW_MS = 260;
 const mermaidDragState = {
     container: null,
     dragging: false,
@@ -33,11 +29,19 @@ const mermaidDragState = {
     startScrollLeft: 0,
     startScrollTop: 0,
 };
+
+let currentHeadings = [];
+let isScrollingFromEditor = false;
+let zoomLevel = 100;
+let wheelTimeout = null;
+let currentFileType = null;
 let commentTooltip = null;
 let commentTooltipTarget = null;
 let commentTooltipHideTimer = null;
 let commentTooltipHovering = false;
 let commentTooltipFocusLocked = false;
+let commentTooltipInteractionGuardBound = false;
+let commentTooltipInteractionDismissedAt = 0;
 
 function escapeHtml(value) {
     return String(value)
@@ -183,6 +187,7 @@ function updateContent(data) {
 
     // 数据树类型：绑定 key 点击定位
     if (currentFileType === 'json' || currentFileType === 'yaml' || currentFileType === 'toml') {
+        bindCommentTooltipInteractionGuard();
         bindTreeKeyClicks();
         bindCommentTooltips();
         highlightTreeRange(data.selectionStartLine, data.selectionEndLine);
@@ -818,6 +823,70 @@ function isElementWithinCommentTooltip(element) {
     return element === commentTooltip || commentTooltip.contains(element);
 }
 
+function isCommentTooltipInteractionLocked() {
+    return Boolean(
+        commentTooltipFocusLocked
+        && commentTooltip
+        && commentTooltip.classList.contains('is-visible')
+    );
+}
+
+function isLockedToDifferentCommentTarget(target) {
+    return Boolean(
+        isCommentTooltipInteractionLocked()
+        && commentTooltipTarget
+        && commentTooltipTarget !== target
+    );
+}
+
+function stopEvent(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') {
+        event.stopImmediatePropagation();
+    }
+}
+
+function bindCommentTooltipInteractionGuard() {
+    if (commentTooltipInteractionGuardBound) {
+        return;
+    }
+
+    const content = document.getElementById('content');
+    if (!content) {
+        return;
+    }
+
+    const onGuardedInteraction = (event) => {
+        if (event.type === 'click' && commentTooltipInteractionDismissedAt > 0) {
+            const elapsed = performance.now() - commentTooltipInteractionDismissedAt;
+            commentTooltipInteractionDismissedAt = 0;
+            if (elapsed <= COMMENT_TOOLTIP_CLICK_BLOCK_WINDOW_MS) {
+                stopEvent(event);
+                return;
+            }
+        }
+
+        if (!isCommentTooltipInteractionLocked()) {
+            return;
+        }
+        if (isElementWithinCommentTooltip(event.target)) {
+            return;
+        }
+
+        hideCommentTooltip(true);
+        if (event.type === 'pointerdown') {
+            commentTooltipInteractionDismissedAt = performance.now();
+        }
+        stopEvent(event);
+    };
+
+    content.addEventListener('pointerdown', onGuardedInteraction, true);
+    content.addEventListener('click', onGuardedInteraction, true);
+    content.addEventListener('contextmenu', onGuardedInteraction, true);
+    commentTooltipInteractionGuardBound = true;
+}
+
 function parseCommentPayload(target) {
     const raw = target.getAttribute('data-comments');
     if (!raw) {
@@ -952,15 +1021,40 @@ function positionCommentTooltip() {
 function bindCommentTooltips() {
     const icons = document.querySelectorAll('.data-tree .tree-comment-icon[data-comments]');
     icons.forEach(icon => {
+        icon.addEventListener('pointerdown', (event) => {
+            stopEvent(event);
+            if (isLockedToDifferentCommentTarget(icon)) {
+                return;
+            }
+            showCommentTooltip(icon);
+        });
+        icon.addEventListener('click', (event) => {
+            stopEvent(event);
+            if (isLockedToDifferentCommentTarget(icon)) {
+                return;
+            }
+            showCommentTooltip(icon);
+            const tooltip = ensureCommentTooltip();
+            tooltip.focus({ preventScroll: true });
+        });
         icon.addEventListener('mouseenter', () => {
+            if (isLockedToDifferentCommentTarget(icon)) {
+                return;
+            }
             commentTooltipHovering = true;
             showCommentTooltip(icon);
         });
         icon.addEventListener('mousemove', () => {
+            if (isLockedToDifferentCommentTarget(icon)) {
+                return;
+            }
             commentTooltipHovering = true;
             positionCommentTooltip();
         });
         icon.addEventListener('mouseleave', (event) => {
+            if (isLockedToDifferentCommentTarget(icon)) {
+                return;
+            }
             if (isElementWithinCommentTooltip(event.relatedTarget)) {
                 commentTooltipHovering = true;
                 clearCommentTooltipHideTimer();
@@ -973,6 +1067,9 @@ function bindCommentTooltips() {
             scheduleCommentTooltipHide();
         });
         icon.addEventListener('focus', () => {
+            if (isLockedToDifferentCommentTarget(icon)) {
+                return;
+            }
             commentTooltipFocusLocked = true;
             showCommentTooltip(icon);
         });
@@ -995,6 +1092,10 @@ function bindTreeKeyClicks() {
     const keys = document.querySelectorAll('.data-tree .tree-key[data-line]');
     keys.forEach(key => {
         key.addEventListener('click', (e) => {
+            if (isCommentTooltipInteractionLocked()) {
+                stopEvent(e);
+                return;
+            }
             e.stopPropagation();
             e.preventDefault();
             const line = parseInt(key.getAttribute('data-line'), 10);
