@@ -24,6 +24,7 @@ let wheelTimeout = null;
 let currentFileType = null;
 const MERMAID_ZOOM_MULTIPLIER = 2;
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
+const COMMENT_TOOLTIP_HIDE_DELAY_MS = 240;
 const mermaidDragState = {
     container: null,
     dragging: false,
@@ -34,6 +35,9 @@ const mermaidDragState = {
 };
 let commentTooltip = null;
 let commentTooltipTarget = null;
+let commentTooltipHideTimer = null;
+let commentTooltipHovering = false;
+let commentTooltipFocusLocked = false;
 
 function escapeHtml(value) {
     return String(value)
@@ -140,7 +144,7 @@ function notifyZoomChange() {
 function updateContent(data) {
     const content = document.getElementById('content');
     const previousScrollTop = content.scrollTop;
-    hideCommentTooltip();
+    hideCommentTooltip(true);
     teardownMermaidPan();
     content.classList.remove('is-mermaid-preview');
     content.classList.remove('is-loading');
@@ -772,9 +776,46 @@ function ensureCommentTooltip() {
     const tooltip = document.createElement('div');
     tooltip.className = 'tree-comment-tooltip';
     tooltip.setAttribute('role', 'tooltip');
+    tooltip.setAttribute('tabindex', '0');
+
+    tooltip.addEventListener('mouseenter', () => {
+        commentTooltipHovering = true;
+        clearCommentTooltipHideTimer();
+    });
+    tooltip.addEventListener('mousemove', positionCommentTooltip);
+    tooltip.addEventListener('mouseleave', () => {
+        commentTooltipHovering = false;
+        if (commentTooltipFocusLocked) {
+            return;
+        }
+        scheduleCommentTooltipHide();
+    });
+    tooltip.addEventListener('mousedown', () => {
+        commentTooltipFocusLocked = true;
+        updateCommentTooltipFocusClass();
+        clearCommentTooltipHideTimer();
+    });
+    tooltip.addEventListener('focus', () => {
+        commentTooltipFocusLocked = true;
+        updateCommentTooltipFocusClass();
+        clearCommentTooltipHideTimer();
+    });
+    tooltip.addEventListener('blur', () => {
+        commentTooltipFocusLocked = false;
+        updateCommentTooltipFocusClass();
+        hideCommentTooltip(true);
+    });
+
     document.body.appendChild(tooltip);
     commentTooltip = tooltip;
     return tooltip;
+}
+
+function isElementWithinCommentTooltip(element) {
+    if (!commentTooltip || !(element instanceof Node)) {
+        return false;
+    }
+    return element === commentTooltip || commentTooltip.contains(element);
 }
 
 function parseCommentPayload(target) {
@@ -831,18 +872,57 @@ function showCommentTooltip(target) {
         return;
     }
 
+    clearCommentTooltipHideTimer();
     const tooltip = ensureCommentTooltip();
     renderCommentTooltipItems(tooltip, comments);
     commentTooltipTarget = target;
     tooltip.classList.add('is-visible');
+    updateCommentTooltipFocusClass();
     positionCommentTooltip();
 }
 
-function hideCommentTooltip() {
+function clearCommentTooltipHideTimer() {
+    if (!commentTooltipHideTimer) {
+        return;
+    }
+    clearTimeout(commentTooltipHideTimer);
+    commentTooltipHideTimer = null;
+}
+
+function scheduleCommentTooltipHide(delayMs = COMMENT_TOOLTIP_HIDE_DELAY_MS) {
+    clearCommentTooltipHideTimer();
+    commentTooltipHideTimer = setTimeout(() => {
+        commentTooltipHideTimer = null;
+        if (commentTooltipFocusLocked || commentTooltipHovering) {
+            return;
+        }
+        hideCommentTooltip(true);
+    }, delayMs);
+}
+
+function updateCommentTooltipFocusClass() {
     if (!commentTooltip) {
         return;
     }
+    commentTooltip.classList.toggle('is-focused', commentTooltipFocusLocked);
+}
+
+function hideCommentTooltip(force = false) {
+    if (!commentTooltip) {
+        return;
+    }
+    if (!force && commentTooltipFocusLocked) {
+        return;
+    }
+
+    if (force) {
+        commentTooltipHovering = false;
+        commentTooltipFocusLocked = false;
+    }
+
+    clearCommentTooltipHideTimer();
     commentTooltip.classList.remove('is-visible');
+    commentTooltip.classList.remove('is-focused');
     commentTooltipTarget = null;
 }
 
@@ -872,11 +952,41 @@ function positionCommentTooltip() {
 function bindCommentTooltips() {
     const icons = document.querySelectorAll('.data-tree .tree-comment-icon[data-comments]');
     icons.forEach(icon => {
-        icon.addEventListener('mouseenter', () => showCommentTooltip(icon));
-        icon.addEventListener('mousemove', positionCommentTooltip);
-        icon.addEventListener('mouseleave', hideCommentTooltip);
-        icon.addEventListener('focus', () => showCommentTooltip(icon));
-        icon.addEventListener('blur', hideCommentTooltip);
+        icon.addEventListener('mouseenter', () => {
+            commentTooltipHovering = true;
+            showCommentTooltip(icon);
+        });
+        icon.addEventListener('mousemove', () => {
+            commentTooltipHovering = true;
+            positionCommentTooltip();
+        });
+        icon.addEventListener('mouseleave', (event) => {
+            if (isElementWithinCommentTooltip(event.relatedTarget)) {
+                commentTooltipHovering = true;
+                clearCommentTooltipHideTimer();
+                return;
+            }
+            commentTooltipHovering = false;
+            if (commentTooltipFocusLocked) {
+                return;
+            }
+            scheduleCommentTooltipHide();
+        });
+        icon.addEventListener('focus', () => {
+            commentTooltipFocusLocked = true;
+            showCommentTooltip(icon);
+        });
+        icon.addEventListener('blur', (event) => {
+            if (isElementWithinCommentTooltip(event.relatedTarget)) {
+                commentTooltipFocusLocked = true;
+                updateCommentTooltipFocusClass();
+                clearCommentTooltipHideTimer();
+                return;
+            }
+            commentTooltipFocusLocked = false;
+            updateCommentTooltipFocusClass();
+            hideCommentTooltip(true);
+        });
     });
 }
 

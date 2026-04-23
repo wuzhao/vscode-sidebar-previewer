@@ -878,6 +878,11 @@ pre:hover .copy-btn {
     opacity: 1;
 }
 
+.data-tree .tree-comment-icon:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder, var(--vscode-contrastActiveBorder));
+    outline-offset: 1px;
+}
+
 .tree-comment-tooltip {
     position: fixed;
     left: 0;
@@ -895,6 +900,7 @@ pre:hover .copy-btn {
     pointer-events: none;
     z-index: 1000;
     opacity: 0;
+    cursor: default;
     visibility: hidden;
     transform: translateY(-2px);
     transition: opacity 0.08s ease, transform 0.08s ease, visibility 0s linear 0.08s;
@@ -903,8 +909,13 @@ pre:hover .copy-btn {
 .tree-comment-tooltip.is-visible {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
     transform: translateY(0);
     transition: opacity 0.06s ease, transform 0.06s ease;
+}
+
+.tree-comment-tooltip.is-focused {
+    border-color: var(--vscode-focusBorder, var(--vscode-editorHoverWidget-border, var(--vscode-panel-border)));
 }
 
 .tree-comment-tooltip-list {
@@ -932,7 +943,7 @@ pre:hover .copy-btn {
 }
 
 .data-tree .tree-item.is-highlight {
-    background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 65%, transparent 35%);
+    background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%);
     text-decoration: none;
 }
 
