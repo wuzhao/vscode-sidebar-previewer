@@ -104,7 +104,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - [marked](https://github.com/markedjs/marked)：將 Markdown 解析為 HTML，用於預覽渲染。
 - [mermaid](https://github.com/mermaid-js/mermaid)：渲染 Markdown 及 `.mmd/.mermaid` 檔案中的 Mermaid 圖表區塊。
 - [katex](https://github.com/KaTeX/KaTeX)：渲染 Markdown 和 LaTeX 預覽中的數學公式。
-- [highlight.js](https://github.com/highlightjs/highlight.js)：為程式碼區塊提供 Syntax Highlighting。
+- [highlight.js](https://github.com/highlightjs/highlight.js)：為程式碼區塊提供語法高亮。
 - [js-yaml](https://github.com/nodeca/js-yaml)：解析 YAML 數據，用於結構化預覽。
 - [toml](https://github.com/BinaryMuse/toml-node)：解析 TOML 數據，用於結構化預覽。
 

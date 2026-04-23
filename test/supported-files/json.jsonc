@@ -1,0 +1,44 @@
+{
+  // JSONC fixture for mixed comment-style coverage
+  /** Root-level doc comment */
+  "meta": {
+    "name": "Complex JSONC Fixture", /// triple slash note
+    "version": "1.0.0", //! bang-style line comment
+    "url": "https://example.com/api//v1", // ensure // in string is preserved
+    /* block before property */ "maintainer": "Preview Team",
+    "flags": {
+      "experimental": true /* inline block */ /* second inline block */, // mixed inline comment chain
+      "strict": false //// slash-heavy non-mainstream line comment
+    }
+  },
+  /* multi-line
+     block comment before records */
+  "records": [
+    {
+      "id": 1,
+      "name": "alpha", // classic line comment
+      /** inline doc block before score */
+      "score": 98
+    },
+    // between-object line comment
+    {
+      "id": 2,
+      "name": "beta",
+      "score": 87 /* inline block score */, 
+      "labels": [
+        "fast", /* inline block item */
+        "stable" /// triple slash list item
+      ]
+    }
+  ],
+  /*! exclamation block style often seen in tooling output */
+  "commentStyles": [
+    "// line",
+    "/// triple slash",
+    "//! bang line",
+    "/* block */",
+    "/** doc block */",
+    "/*! exclamation block */"
+  ],
+  "note": "All comment styles should be tolerated" // trailing end comment
+}

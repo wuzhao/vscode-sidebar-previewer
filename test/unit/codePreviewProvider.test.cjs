@@ -125,7 +125,7 @@ test('CodePreviewProvider parses JSON comment-tolerant mode (comments and traili
     assert.equal(result.html.includes('Failed to parse JSON content.'), false);
 });
 
-  test('Supported JSON/YAML/TOML fixtures with comments parse successfully', () => {
+test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     const jsonSource = readSupportedFixture('json.json');
     const yamlSource = readSupportedFixture('yaml.yaml');
     const tomlSource = readSupportedFixture('toml.toml');
@@ -146,9 +146,26 @@ test('CodePreviewProvider parses JSON comment-tolerant mode (comments and traili
     const yamlPayloads = extractCommentPayloads(yamlResult.html);
     const tomlPayloads = extractCommentPayloads(tomlResult.html);
 
-    assert.ok(jsonPayloads.some(payload => payload.some(item => item.marker === '/' || item.marker === '*')));
+    assert.ok(Array.isArray(jsonPayloads));
     assert.ok(yamlPayloads.some(payload => payload.some(item => item.marker === '#')));
     assert.ok(tomlPayloads.some(payload => payload.some(item => item.marker === '#')));
+  });
+
+  test('Supported JSONC fixture with mixed comment styles parses successfully', () => {
+    const jsoncSource = readSupportedFixture('json.jsonc');
+    const result = CodePreviewProvider.parse(jsoncSource, 'json');
+
+    assert.equal(getFileType('fixture.jsonc'), 'json');
+    assert.equal(result.fileType, 'json');
+    assert.equal(result.supportsLocate, false);
+    assert.equal(result.html.includes('Failed to parse JSON content.'), false);
+    assert.ok(result.html.includes('commentStyles'));
+
+    const payloads = extractCommentPayloads(result.html);
+
+    assert.ok(payloads.some(payload => payload.some(item => item.marker === '/')));
+    assert.ok(payloads.some(payload => payload.some(item => item.marker === '*')));
+    assert.ok(payloads.some(payload => payload.some(item => /triple slash|bang-style|doc block|exclamation/.test(item.text))));
   });
 
 test('CodePreviewProvider returns an error state for invalid JSON', () => {
