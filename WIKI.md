@@ -9,73 +9,70 @@
 ## 架构图
 
 ```plaintext
-┌─────────────────────────────────────────────────────────────────┐
-│                        VS Code Extension Host                   │
-│                                                                 │
-│  extension.ts                                                   │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  activate()                                             │   │
-│  │  · 初始化 i18n                                          │   │
-│  │  · 注册 WebviewViewProvider                             │   │
-│  │  · 注册所有命令（zoomIn/Out/Reset, locate, follow...）   │   │
-│  └────────────────────┬────────────────────────────────────┘   │
-│                       │ new PreviewProvider(context)            │
-│                       ▼                                         │
-│  previewProvider.ts                                             │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  PreviewProvider  (WebviewViewProvider)                 │   │
-│  │                                                         │   │
-│  │  · 监听编辑器切换 / 文档变更 / 可视区域滚动              │   │
-│  │  · 识别文件类型（fileTypes.ts）                          │   │
-│  │  · 调用对应 Format Provider 解析内容                     │   │
-│  │  · 构建 Webview HTML（注入 CSS/JS 资源）                 │   │
-│  │  · 与 Webview 双向 postMessage 通信                      │   │
-│  │  · 暴露命令接口（zoom / locate / follow / expand...）    │   │
-│  └──────┬──────────────────────────────────────────────────┘   │
-│         │ parse(content, fileType)                              │
-│         ▼                                                       │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │              Format Providers（解析层）                   │  │
-│  │                                                          │  │
-│  │  markdownProvider.ts    → Markdown + front matter        │  │
-│  │  latexPreviewProvider.ts → LaTeX → HTML + KaTeX 占位     │  │
-│  │  codePreviewProvider.ts  → JSON / YAML / TOML → 树形 HTML│  │
-│  │  mermaidPreviewProvider.ts → Mermaid → 原始代码块        │  │
-│  │                                                          │  │
-│  │  返回: { html, fileType, supportsLocate, headings? }     │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                 │
-│  fileTypes.ts   — 文件扩展名 → FileType 映射 + 能力描述         │
-│  i18n.ts        — 多语言字符串（zh-CN/zh-TW/zh-HK/ja-JP/en）   │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │ postMessage / onDidReceiveMessage
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                         Webview（浏览器环境）                    │
-│                                                                 │
-│  resources/preview.js                                           │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  · 接收 update 消息，将 HTML 注入 DOM                    │   │
-│  │  · 触发 KaTeX 渲染（数学公式）                           │   │
-│  │  · 触发 Mermaid 渲染（图表）                             │   │
-│  │  · 处理缩放（滚轮 + 命令）                               │   │
-│  │  · 处理编辑器 ↔ 预览双向定位/滚动同步                    │   │
-│  │  · 代码块复制按钮交互                                    │   │
-│  │  · Mermaid 图表拖拽平移                                  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  resources/preview.css  — 预览样式（VS Code 主题变量适配）       │
-│                                                                 │
-│  resources/vendor/                                              │
-│  ├── katex/       — 数学公式渲染库                              │
-│  ├── mermaid/     — 图表渲染库                                  │
-│  └── codicons/    — VS Code 图标字体                            │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                        VS Code Extension Host                    │
+│   extension.ts                                                   │
+│   ┌──────────────────────────────────────────────────────────┐   │
+│   │  activate()                                              │   │
+│   │  · 初始化 i18n                                           │   │
+│   │  · 注册 WebviewViewProvider                              │   │
+│   │  · 注册所有命令（zoomIn/Out/Reset, locate, follow...）   │   │
+│   └─────────────────────┬────────────────────────────────────┘   │
+│                         │ new PreviewProvider(context)           │
+│                         ▼                                        │
+│   previewProvider.ts                                             │
+│   ┌──────────────────────────────────────────────────────────┐   │
+│   │  PreviewProvider (WebviewViewProvider)                   │   │
+│   │  · 监听编辑器切换 / 文档变更 / 可视区域滚动              │   │
+│   │  · 识别文件类型（fileTypes.ts）                          │   │
+│   │  · 调用对应 Format Provider 解析内容                     │   │
+│   │  · 构建 Webview HTML（注入 CSS/JS 资源）                 │   │
+│   │  · 与 Webview 双向 postMessage 通信                      │   │
+│   │  · 暴露命令接口（zoom / locate / follow / expand...）    │   │
+│   └─────────────────────┬────────────────────────────────────┘   │
+│                         │ parse(content, fileType)               │
+│                         ▼                                        │
+│   ┌──────────────────────────────────────────────────────────┐   │
+│   │                Format Providers（解析层）                │   │
+│   │                                                          │   │
+│   │  markdownProvider.ts       → Markdown + front matter     │   │
+│   │  latexPreviewProvider.ts   → LaTeX → HTML + KaTeX 占位   │   │
+│   │  codePreviewProvider.ts    → JSON/YAML/TOML → 树形 HTML  │   │
+│   │  mermaidPreviewProvider.ts → Mermaid → 原始代码块        │   │
+│   │                                                          │   │
+│   │  返回: { html, fileType, supportsLocate, headings? }     │   │
+│   └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│   fileTypes.ts   — 文件扩展名 → FileType 映射 + 能力描述         │
+│   i18n.ts        — 多语言字符串（en/zh-CN/zh-TW/zh-HK/ja-JP）    │
+└─────────────────────────┬────────────────────────────────────────┘
+                          │ postMessage / onDidReceiveMessage
+                          ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                       Webview（浏览器环境）                      │
+│                                                                  │
+│   resources/preview.js                                           │
+│   ┌──────────────────────────────────────────────────────────┐   │
+│   │  · 接收 update 消息，将 HTML 注入 DOM                    │   │
+│   │  · 触发 KaTeX 渲染（数学公式）                           │   │
+│   │  · 触发 Mermaid 渲染（图表）                             │   │
+│   │  · 处理缩放（滚轮 + 命令）                               │   │
+│   │  · 处理编辑器 ↔ 预览双向定位/滚动同步                    │   │
+│   │  · 代码块复制按钮交互                                    │   │
+│   │  · Mermaid 图表拖拽平移                                  │   │
+│   └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│   resources/preview.css  — 预览样式（VS Code 主题变量适配）      │
+│   resources/vendor/                                              │
+│   ├── katex/             — 数学公式渲染库                        │
+│   ├── mermaid/           — 图表渲染库                            │
+│   └── codicons/          — VS Code 图标字体                      │
+└──────────────────────────────────────────────────────────────────┘
 
 消息协议（Extension Host ↔ Webview）：
-  Host → Webview : update | loading | scrollToHeading | zoom |
-                   expandAll | collapseAll | highlightDataTreeRange
-  Webview → Host : getVisibleHeading | locateEditor
+Host → Webview : update | loading | scrollToHeading | zoom |
+                 expandAll | collapseAll | highlightDataTreeRange
+Webview → Host : getVisibleHeading | locateEditor
 ```
 
 ---

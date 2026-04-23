@@ -119,7 +119,7 @@ pre.error-detail {
     white-space: pre-wrap;
     word-break: break-word;
     text-align: left;
-    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: monospace;
 }
 
 /* Mermaid container */
@@ -183,7 +183,7 @@ body.mermaid-dragging {
 /* LaTeX styles */
 .latex-command {
     color: var(--vscode-descriptionForeground);
-    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: monospace;
     font-size: 85%;
     padding: 2px 0;
 }
@@ -197,7 +197,7 @@ body.mermaid-dragging {
 
 .latex-comment {
     color: var(--vscode-descriptionForeground);
-    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: monospace;
     font-size: 85%;
     opacity: 0.6;
     padding: 2px 0;
@@ -269,7 +269,7 @@ code {
     padding: 0.2em 0.4em;
     margin: 0;
     font-size: 85%;
-    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: 'Maple Mono NF CN', monospace;
     background-color: var(--vscode-textCodeBlock-background);
     border-radius: 4px;
 }
@@ -796,7 +796,7 @@ pre:hover .copy-btn {
 
 /* Data tree view */
 .data-tree {
-    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: monospace;
     font-size: 13px;
     line-height: 1.6;
     padding: 8px 0;
@@ -922,7 +922,7 @@ pre:hover .copy-btn {
 
 .tree-comment-tooltip-marker {
     color: color-mix(in srgb, var(--vscode-descriptionForeground) 35%, transparent 65%);
-    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: monospace;
     line-height: 1.45;
 }
 
