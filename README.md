@@ -30,7 +30,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Markdown | `.md`, `.markdown` |
 | LaTeX | `.tex` |
 | Mermaid | `.mmd`, `.mermaid` |
-| JSON | `.json` |
+| JSON | `.json`, `.jsonc` |
 | YAML | `.yaml`, `.yml` |
 | TOML | `.toml` |
 
