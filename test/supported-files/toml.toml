@@ -2,7 +2,7 @@
 # A realistic Cargo configuration example
 
 [package]
-name = "web-service"
+name = "web-service" # package crate name
 version = "0.5.2"
 edition = "2021"
 authors = ["Public Test Maintainers"]
@@ -17,7 +17,7 @@ rust-version = "1.75"
 [features]
 default = ["tls", "compression"]
 tls = ["rustls", "tokio-rustls"]
-compression = ["tower-http/compression-full"]
+compression = ["tower-http/compression-full"] # enable response compression
 tracing = ["tracing-subscriber", "tracing-opentelemetry"]
 full = ["tls", "compression", "tracing"]
 
@@ -25,7 +25,7 @@ full = ["tls", "compression", "tracing"]
 tokio = { version = "1.36", features = ["full"] }
 axum = { version = "0.7", features = ["macros", "multipart"] }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = "1.0" # JSON serialization
 sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "uuid", "chrono"] }
 uuid = { version = "1.7", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -39,7 +39,7 @@ jsonwebtoken = "9.2"
 argon2 = "0.5"
 validator = { version = "0.17", features = ["derive"] }
 
-# Optional dependencies
+# Optional dependencies (feature-gated)
 rustls = { version = "0.22", optional = true }
 tokio-rustls = { version = "0.25", optional = true }
 tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter", "json"] }
@@ -59,7 +59,7 @@ overflow-checks = true
 
 [profile.release]
 opt-level = 3
-lto = "thin"
+lto = "thin" # faster link time than full LTO
 strip = "symbols"
 codegen-units = 1
 panic = "abort"

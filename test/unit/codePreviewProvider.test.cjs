@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const { CodePreviewProvider } = require('../../out/codePreviewProvider');
 const { MarkdownProvider } = require('../../out/markdownProvider');
@@ -42,6 +44,11 @@ function extractCommentPayloads(html) {
   return Array.from(html.matchAll(/data-comments="([^"]+)"/g), match => {
     return JSON.parse(decodeHtmlAttr(match[1]));
   });
+}
+
+function readSupportedFixture(name) {
+    const filePath = path.join(__dirname, '..', 'supported-files', name);
+    return fs.readFileSync(filePath, 'utf8');
 }
 
 test('JSON duplicate keys map to distinct source lines', () => {
@@ -105,7 +112,7 @@ test('Provider locate capabilities stay consistent with file type capabilities',
     assert.equal(getFileType('settings.jsonc'), 'json');
 });
 
-test('CodePreviewProvider parses JSONC (comments and trailing commas)', () => {
+test('CodePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
     const source = `{
   "name": "Alice", // profile name
   "age": 20,
@@ -117,6 +124,32 @@ test('CodePreviewProvider parses JSONC (comments and trailing commas)', () => {
     assert.ok(result.html.includes('<span class="tree-key" data-line="1">name</span>'));
     assert.equal(result.html.includes('Failed to parse JSON content.'), false);
 });
+
+  test('Supported JSON/YAML/TOML fixtures with comments parse successfully', () => {
+    const jsonSource = readSupportedFixture('json.json');
+    const yamlSource = readSupportedFixture('yaml.yaml');
+    const tomlSource = readSupportedFixture('toml.toml');
+
+    const jsonResult = CodePreviewProvider.parse(jsonSource, 'json');
+    const yamlResult = CodePreviewProvider.parse(yamlSource, 'yaml');
+    const tomlResult = CodePreviewProvider.parse(tomlSource, 'toml');
+
+    assert.equal(jsonResult.fileType, 'json');
+    assert.equal(yamlResult.fileType, 'yaml');
+    assert.equal(tomlResult.fileType, 'toml');
+
+    assert.equal(jsonResult.html.includes('Failed to parse JSON content.'), false);
+    assert.equal(yamlResult.html.includes('Failed to parse YAML content.'), false);
+    assert.equal(tomlResult.html.includes('Failed to parse TOML content.'), false);
+
+    const jsonPayloads = extractCommentPayloads(jsonResult.html);
+    const yamlPayloads = extractCommentPayloads(yamlResult.html);
+    const tomlPayloads = extractCommentPayloads(tomlResult.html);
+
+    assert.ok(jsonPayloads.some(payload => payload.some(item => item.marker === '/' || item.marker === '*')));
+    assert.ok(yamlPayloads.some(payload => payload.some(item => item.marker === '#')));
+    assert.ok(tomlPayloads.some(payload => payload.some(item => item.marker === '#')));
+  });
 
 test('CodePreviewProvider returns an error state for invalid JSON', () => {
     const result = CodePreviewProvider.parse('{"k":', 'json');

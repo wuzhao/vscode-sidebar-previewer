@@ -5,10 +5,10 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: web-application
+  name: web-application # deployment name
   namespace: production
   labels:
-    app: web-app
+    app: web-app # app label used by selector
     environment: production
     tier: frontend
   annotations:
@@ -58,7 +58,7 @@ spec:
               name: https
           env:
             - name: NODE_ENV
-              value: production
+              value: production # runtime mode
             - name: LOG_LEVEL
               value: info
             - name: POD_NAME
@@ -72,7 +72,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: db-credentials
+                  name: db-credentials # injected from secret
                   key: connection-string
             - name: REDIS_HOST
               valueFrom:
@@ -91,7 +91,7 @@ spec:
           resources:
             requests:
               cpu: 250m
-              memory: 256Mi
+              memory: 256Mi # baseline request
             limits:
               cpu: 500m
               memory: 512Mi
@@ -208,6 +208,7 @@ spec:
 
       affinity:
         podAntiAffinity:
+          # Prefer spreading pods across nodes for resilience
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
               podAffinityTerm:
@@ -242,7 +243,7 @@ spec:
           operator: Equal
           value: web-tier
           effect: NoSchedule
-        - key: node.kubernetes.io/not-ready
+        - key: node.kubernetes.io/not-ready # temporary node outage
           operator: Exists
           effect: NoExecute
           tolerationSeconds: 300

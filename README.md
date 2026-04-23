@@ -1,10 +1,10 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.3-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.4-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.ja-JP.md)
 
-Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON/JSONC, YAML, and TOML.
+Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, and TOML.
 
 ## Why do you need it?
 
@@ -30,7 +30,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Markdown | `.md`, `.markdown` |
 | LaTeX | `.tex` |
 | Mermaid | `.mmd`, `.mermaid` |
-| JSON / JSONC | `.json`, `.jsonc` |
+| JSON | `.json` |
 | YAML | `.yaml`, `.yml` |
 | TOML | `.toml` |
 
@@ -61,6 +61,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Collapsible tree view
 - Expand all / collapse all
 - Click key to jump to source line
+- JSON preview accepts inline/block comments and trailing commas
 - Comment icon on keys with hover tooltip
 
 ## Installation
