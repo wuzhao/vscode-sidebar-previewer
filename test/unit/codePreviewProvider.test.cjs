@@ -172,6 +172,18 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(result.html.includes('@generatedAt'));
   });
 
+  test('XML attributes are previewed as @-prefixed keys on the same object', () => {
+    const source = '<book id="101" category="fiction"><title>The Great Gatsby</title></book>';
+    const result = CodePreviewProvider.parse(source, 'xml');
+
+    assert.equal(result.fileType, 'xml');
+    assert.equal(result.html.includes('Failed to parse XML content.'), false);
+    assert.ok(result.html.includes('@id'));
+    assert.ok(result.html.includes('@category'));
+    assert.ok(result.html.includes('title'));
+    assert.ok(result.html.includes('"The Great Gatsby"'));
+  });
+
   test('TablePreviewProvider parses CSV/TSV fixtures as HTML tables', () => {
     const csvSource = readSupportedFixture('csv.csv');
     const tsvSource = readSupportedFixture('tsv.tsv');
@@ -217,10 +229,11 @@ test('CodePreviewProvider returns an error state for invalid JSON', () => {
     assert.ok(result.html.includes('Failed to parse JSON content.'));
 });
 
-test('Comment icon metadata is rendered for JSON/YAML/TOML keys', () => {
+test('Comment icon metadata is rendered for JSON/YAML/TOML/XML keys', () => {
     const json = CodePreviewProvider.parse('{\n  "name": "Alice", // profile name\n}', 'json');
     const yaml = CodePreviewProvider.parse('name: Alice # full name', 'yaml');
     const toml = CodePreviewProvider.parse('name = "Alice" # display name', 'toml');
+  const xml = CodePreviewProvider.parse('<root>\n  <!-- profile name -->\n  <name>Alice</name>\n</root>', 'xml');
 
     assert.ok(json.html.includes('tree-comment-icon codicon codicon-note'));
   assert.equal(json.html.includes('data-comment='), false);
@@ -231,6 +244,82 @@ test('Comment icon metadata is rendered for JSON/YAML/TOML keys', () => {
 
     assert.ok(toml.html.includes('tree-comment-icon codicon codicon-note'));
   assert.ok(extractCommentPayloads(toml.html).some(payload => payload.length === 1 && payload[0].marker === '#' && payload[0].text === 'display name'));
+
+    assert.ok(xml.html.includes('tree-comment-icon codicon codicon-note'));
+  assert.ok(extractCommentPayloads(xml.html).some(payload => payload.some(item => item.marker === '-' && item.text === 'profile name')));
+});
+
+test('XML comment groups use hyphen marker in popup payload', () => {
+  const source = [
+    '<catalog>',
+    '  <!-- list heading -->',
+    '  <items><!-- inline marker --><item id="A" /></items>',
+    '  <!-- multi-line',
+    '       xml comment -->',
+    '  <summary total="1" />',
+    '</catalog>',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'xml');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'list heading')));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'inline marker')));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'multi-line\nxml comment')));
+});
+
+test('JSON comment before object key keeps binding across blank lines', () => {
+  const source = [
+    '{',
+    '  // settings object',
+    '',
+    '  "settings": {',
+    '    "theme": "dark"',
+    '  }',
+    '}',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'json');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(/<span class="tree-key" data-line="\d+">settings<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '/' && item.text === 'settings object')));
+  assert.equal(result.html.includes('tree-standalone-comment'), false);
+});
+
+test('TOML comment before object key keeps binding across blank lines', () => {
+  const source = [
+    '# server object',
+    '',
+    '[server]',
+    'host = "localhost"',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'toml');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(/<span class="tree-key" data-line="\d+">server<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '#' && item.text === 'server object')));
+  assert.equal(result.html.includes('tree-standalone-comment'), false);
+});
+
+test('XML comment before object key keeps binding across blank lines', () => {
+  const source = [
+    '<!-- catalog object -->',
+    '',
+    '<catalog>',
+    '  <book id="101" category="fiction">',
+    '    <title>The Great Gatsby</title>',
+    '  </book>',
+    '</catalog>',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'xml');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(/<span class="tree-key" data-line="\d+">catalog<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'catalog object')));
+  assert.equal(result.html.includes('tree-standalone-comment'), false);
 });
 
 test('JSON comment groups are merged into a single icon payload', () => {

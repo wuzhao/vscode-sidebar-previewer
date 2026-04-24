@@ -17,7 +17,17 @@ interface XmlTagMatch {
     attributesSource: string;
 }
 
-type CommentMarker = '/' | '*' | '#';
+interface XmlCommentScanState {
+    inComment: boolean;
+    parts: string[];
+}
+
+interface XmlLineCommentScanResult {
+    nonCommentText: string;
+    comments: string[];
+}
+
+type CommentMarker = '/' | '*' | '#' | '-';
 
 interface CommentEntry {
     marker: CommentMarker;
@@ -831,12 +841,128 @@ export class CodePreviewProvider {
                 return this.buildHashCommentMetadata(lines, 'yaml', arrayItemLines);
             case 'toml':
                 return this.buildHashCommentMetadata(lines, 'toml', arrayItemLines);
+            case 'xml':
+                return this.buildXmlCommentMetadata(lines);
             default:
                 return {
                     lineComments: new Map<number, CommentEntry[]>(),
                     standaloneGroups: [],
                 };
         }
+    }
+
+    private static buildXmlCommentMetadata(lines: string[]): CommentMetadata {
+        const lineComments = new Map<number, CommentEntry[]>();
+        const standaloneGroups: StandaloneCommentGroup[] = [];
+        const pending: CommentEntry[] = [];
+        const preamble: CommentEntry[] = [];
+        const scanState: XmlCommentScanState = {
+            inComment: false,
+            parts: [],
+        };
+        let pendingLine = -1;
+        let preambleLine = -1;
+        let hasBoundNode = false;
+
+        const flushPreamble = (): void => {
+            if (preamble.length === 0 || preambleLine < 0) {
+                return;
+            }
+            this.pushStandaloneGroup(standaloneGroups, preambleLine, preamble);
+            preamble.length = 0;
+            preambleLine = -1;
+        };
+
+        const flushPendingStandalone = (): void => {
+            if (pending.length === 0 || pendingLine < 0) {
+                return;
+            }
+            this.pushStandaloneGroup(standaloneGroups, pendingLine, pending);
+            pending.length = 0;
+            pendingLine = -1;
+        };
+
+        const pushCommentForCurrentContext = (text: string, line: number): void => {
+            if (!text) {
+                return;
+            }
+
+            if (!hasBoundNode) {
+                if (preamble.length === 0) {
+                    preambleLine = line;
+                }
+                this.pushComment(preamble, '-', text);
+                return;
+            }
+
+            if (pending.length === 0) {
+                pendingLine = line;
+            }
+            this.pushComment(pending, '-', text);
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const scan = this.scanXmlLineComments(line, scanState);
+            const hasCode = scan.nonCommentText.trim().length > 0;
+            const bindableLine = this.extractXmlKeys(scan.nonCommentText).length > 0;
+            const commentOnlyLine = scan.comments.length > 0 && !hasCode;
+
+            if (commentOnlyLine) {
+                scan.comments.forEach(text => pushCommentForCurrentContext(text, i));
+                continue;
+            }
+
+            if (!hasBoundNode && bindableLine && preamble.length > 0) {
+                pending.push(...preamble);
+                pendingLine = pendingLine >= 0 ? pendingLine : preambleLine;
+                preamble.length = 0;
+                preambleLine = -1;
+            }
+
+            if (bindableLine) {
+                const inlineComments = scan.comments.map(text => ({ marker: '-' as CommentMarker, text }));
+                const comments = [...pending, ...inlineComments].filter(comment => !!comment.text);
+                if (comments.length > 0) {
+                    lineComments.set(i, comments);
+                }
+                pending.length = 0;
+                pendingLine = -1;
+                hasBoundNode = true;
+                continue;
+            }
+
+            if (scan.comments.length > 0) {
+                scan.comments.forEach(text => pushCommentForCurrentContext(text, i));
+            }
+
+            if (hasCode) {
+                pending.length = 0;
+                pendingLine = -1;
+                if (!hasBoundNode) {
+                    flushPreamble();
+                }
+                continue;
+            }
+
+            if (!hasCode && scan.comments.length === 0) {
+                continue;
+            }
+            pending.length = 0;
+            pendingLine = -1;
+        }
+
+        if (scanState.inComment && scanState.parts.length > 0) {
+            const tailComment = this.cleanXmlCommentText(scanState.parts.join('\n'));
+            if (tailComment) {
+                pushCommentForCurrentContext(tailComment, lines.length - 1);
+            }
+        }
+
+        flushPreamble();
+        flushPendingStandalone();
+
+        return { lineComments, standaloneGroups };
     }
 
     private static buildJsonCommentMetadata(lines: string[], arrayItemLines: Set<number>): CommentMetadata {
@@ -962,8 +1088,12 @@ export class CodePreviewProvider {
                 continue;
             }
 
-            if (!hasBoundNode && bindableLine) {
-                flushPreamble();
+            if (!hasBoundNode && bindableLine && preamble.length > 0) {
+                pending.push(...preamble);
+                pendingLine = pendingLine >= 0 ? pendingLine : preambleLine;
+                pendingArrayDepth = currentArrayDepth;
+                preamble.length = 0;
+                preambleLine = -1;
             }
 
             if (bindableLine) {
@@ -999,12 +1129,6 @@ export class CodePreviewProvider {
             }
 
             if (trimmed.length === 0) {
-                if (!hasBoundNode) {
-                    flushPreamble();
-                }
-                pending.length = 0;
-                pendingLine = -1;
-                pendingArrayDepth = -1;
                 continue;
             }
 
@@ -1102,7 +1226,16 @@ export class CodePreviewProvider {
             }
 
             if (!hasBoundNode && bindableLine) {
-                flushPreamble();
+                if (fileType === 'toml' && preamble.length > 0) {
+                    pending.push(...preamble);
+                    pendingLine = pendingLine >= 0 ? pendingLine : preambleLine;
+                    pendingIndent = currentIndent;
+                    pendingFromArray = currentArrayDepth > 0;
+                    preamble.length = 0;
+                    preambleLine = -1;
+                } else {
+                    flushPreamble();
+                }
             }
 
             if (bindableLine) {
@@ -1154,13 +1287,15 @@ export class CodePreviewProvider {
             }
 
             if (trimmed.length === 0) {
-                if (!hasBoundNode) {
-                    flushPreamble();
+                if (fileType === 'yaml') {
+                    if (!hasBoundNode) {
+                        flushPreamble();
+                    }
+                    pending.length = 0;
+                    pendingLine = -1;
+                    pendingFromArray = false;
+                    pendingIndent = -1;
                 }
-                pending.length = 0;
-                pendingLine = -1;
-                pendingFromArray = false;
-                pendingIndent = -1;
                 continue;
             }
 
@@ -1247,6 +1382,62 @@ export class CodePreviewProvider {
         const rawComment = line.slice(codePart.length + 1);
         const text = this.cleanCommentText(rawComment);
         return text ? [{ marker: '#', text }] : [];
+    }
+
+    private static scanXmlLineComments(line: string, state: XmlCommentScanState): XmlLineCommentScanResult {
+        const comments: string[] = [];
+        let nonCommentText = '';
+        let cursor = 0;
+
+        while (cursor < line.length) {
+            if (state.inComment) {
+                const end = line.indexOf('-->', cursor);
+                if (end < 0) {
+                    state.parts.push(line.slice(cursor));
+                    cursor = line.length;
+                    break;
+                }
+
+                state.parts.push(line.slice(cursor, end));
+                const text = this.cleanXmlCommentText(state.parts.join('\n'));
+                if (text) {
+                    comments.push(text);
+                }
+
+                state.inComment = false;
+                state.parts = [];
+                cursor = end + 3;
+                continue;
+            }
+
+            const start = line.indexOf('<!--', cursor);
+            if (start < 0) {
+                nonCommentText += line.slice(cursor);
+                break;
+            }
+
+            nonCommentText += line.slice(cursor, start);
+            cursor = start + 4;
+
+            const end = line.indexOf('-->', cursor);
+            if (end < 0) {
+                state.inComment = true;
+                state.parts = [line.slice(cursor)];
+                break;
+            }
+
+            const text = this.cleanXmlCommentText(line.slice(cursor, end));
+            if (text) {
+                comments.push(text);
+            }
+
+            cursor = end + 3;
+        }
+
+        return {
+            nonCommentText,
+            comments,
+        };
     }
 
     private static stripHashCommentText(line: string): string {
@@ -1424,6 +1615,14 @@ export class CodePreviewProvider {
         return text
             .split('\n')
             .map(line => line.trim().replace(/^\*+\s?/, ''))
+            .join('\n')
+            .trim();
+    }
+
+    private static cleanXmlCommentText(text: string): string {
+        return text
+            .split('\n')
+            .map(line => line.replace(/\r/g, '').trim())
             .join('\n')
             .trim();
     }

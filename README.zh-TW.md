@@ -4,7 +4,7 @@
 
 Language: [English](./README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文-臺灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
-VS Code 的側邊欄預覽器，支援實時渲染、滾動同步、樹形檢視、縮放控制等功能，多檔案格式支援包括 Markdown、LaTeX、Mermaid、JSON、YAML 和 TOML。
+VS Code 的側邊欄預覽器，支援實時渲染、滾動同步、樹形檢視、縮放控制等功能，多檔案格式支援包括 Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV 和 TSV。
 
 ## 為什麼需要它？
 
@@ -21,7 +21,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
 | LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
 | Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
+| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML&nbsp;/&nbsp;XML&nbsp;/&nbsp;CSV&nbsp;/&nbsp;TSV | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 ## 支援的檔案型別
 
@@ -33,6 +33,9 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | JSON | `.json`、`.jsonc` |
 | YAML | `.yaml`、`.yml` |
 | TOML | `.toml` |
+| XML | `.xml` |
+| CSV | `.csv` |
+| TSV | `.tsv` |
 
 ## 功能介紹
 
@@ -56,13 +59,14 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 基礎語法預檢查與錯誤提示
 - 放大後支援拖拽平移
 
-### JSON / YAML / TOML
+### JSON / YAML / TOML / XML / CSV / TSV
 
 - 可摺疊樹形檢視
 - 全部展開 / 全部摺疊
 - 點選鍵名跳轉原始碼行
 - JSON 支援註解與尾隨逗號解析模式
 - 含註解的鍵會顯示註解圖示，滑鼠懸停可查看註解內容
+- CSV / TSV 預覽渲染為 HTML 表格
 
 ## 安裝方法
 
@@ -86,12 +90,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 使用方法
 
-1. 開啟任意支援的檔案（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yaml`、`.yml`、`.toml`）
+1. 開啟任意支援的檔案（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yaml`、`.yml`、`.toml`、`.xml`、`.csv`、`.tsv`）
 2. 點選左側 Activity Bar 中的 Sidebar Previewer 圖示
 3. 預覽面板會自動顯示當前檔案的渲染結果
 4. 使用工具欄或 `Cmd/Ctrl` + 滑鼠滾輪進行縮放
 5. Mermaid 預覽支援拖拽檢視放大區域
-6. JSON / YAML / TOML 可點選鍵名跳轉到原始碼對應行
+6. JSON / YAML / TOML / XML 可點選鍵名跳轉到原始碼對應行；CSV / TSV 預覽為表格檢視
 
 ## 如何顯示 VS Code 第二側邊欄？
 

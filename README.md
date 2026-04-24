@@ -4,7 +4,7 @@
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.ja-JP.md)
 
-Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, and TOML.
+Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, TOML, XML, CSV, and TSV.
 
 ## Why do you need it?
 
@@ -21,7 +21,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
 | LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
 | Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
+| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML&nbsp;/&nbsp;XML&nbsp;/&nbsp;CSV&nbsp;/&nbsp;TSV | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 ## Supported Files
 
@@ -33,6 +33,9 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | JSON | `.json`, `.jsonc` |
 | YAML | `.yaml`, `.yml` |
 | TOML | `.toml` |
+| XML | `.xml` |
+| CSV | `.csv` |
+| TSV | `.tsv` |
 
 ## Feature Overview
 
@@ -56,13 +59,14 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Basic syntax precheck with clear error feedback
 - Drag-to-pan interaction when zoomed
 
-### JSON / YAML / TOML
+### JSON / YAML / TOML / XML / CSV / TSV
 
 - Collapsible tree view
 - Expand all / collapse all
 - Click key to jump to source line
 - JSON preview accepts inline/block comments and trailing commas
 - Comment icon on keys with hover tooltip
+- CSV/TSV preview renders as an HTML table
 
 ## Installation
 
@@ -86,12 +90,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Usage
 
-1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.jsonc`, `.yaml`, `.yml`, `.toml`)
+1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.jsonc`, `.yaml`, `.yml`, `.toml`, `.xml`, `.csv`, `.tsv`)
 2. Click the Sidebar Previewer icon in the Activity Bar
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
-6. In JSON/YAML/TOML preview, click keys to locate source lines
+6. In JSON/YAML/TOML/XML preview, click keys to locate source lines; CSV/TSV preview is rendered as a table
 
 ## How to show the VS Code Secondary Side Bar?
 

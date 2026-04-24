@@ -4,7 +4,7 @@
 
 Language: [English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
-VS Code のアクティビティバーで、リアルタイム描画・スクロール同期・ズーム操作を実現します。Markdown、LaTeX、Mermaid、JSON、YAML、TOML に対応しています。
+VS Code のアクティビティバーで、リアルタイム描画・スクロール同期・ズーム操作を実現します。Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV、TSV に対応しています。
 
 ## なぜ必要ですか？
 
@@ -21,7 +21,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
 | LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
 | Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
+| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML&nbsp;/&nbsp;XML&nbsp;/&nbsp;CSV&nbsp;/&nbsp;TSV | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
 
 ## 対応ファイル
 
@@ -33,6 +33,9 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | JSON | `.json`, `.jsonc` |
 | YAML | `.yaml`, `.yml` |
 | TOML | `.toml` |
+| XML | `.xml` |
+| CSV | `.csv` |
+| TSV | `.tsv` |
 
 ## 機能概要
 
@@ -56,13 +59,14 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 基本的な構文の事前チェックと、分かりやすいエラーフィードバック
 - ズーム時のドラッグによるパン（移動）操作
 
-### JSON / YAML / TOML
+### JSON / YAML / TOML / XML / CSV / TSV
 
 - 折りたたみ可能なツリー表示
 - すべて展開 / すべて折りたたむ
 - キー（項目）をクリックしてソース行へジャンプ
 - JSON はコメントと末尾カンマを含む入力を解析可能
 - コメント付きキーにはアイコンを表示し、ホバーで内容を確認可能
+- CSV/TSV プレビューは HTML テーブルとして表示
 
 ## インストール
 
@@ -86,12 +90,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 使い方
 
-1. サポートされているファイルを開く（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yaml`、`.yml`、`.toml`）
+1. サポートされているファイルを開く（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yaml`、`.yml`、`.toml`、`.xml`、`.csv`、`.tsv`）
 2. アクティビティバーにある Sidebar Previewer アイコンをクリックする
 3. プレビューパネルに現在のファイルが自動的に表示（レンダリング）される
 4. ツールバーのボタン、または `Cmd/Ctrl` + マウスホイールでズーム操作を行う
 5. Mermaid のプレビューでは、図をドラッグしてパン（移動）させる
-6. JSON/YAML/TOML のプレビューでは、キーをクリックしてソース行へジャンプする
+6. JSON/YAML/TOML/XML のプレビューではキーをクリックしてソース行へジャンプでき、CSV/TSV は表形式で表示されます
 
 ## VS Code のセカンダリサイドバーを表示するには？
 
