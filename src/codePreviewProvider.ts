@@ -2518,7 +2518,8 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    let childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, nextBoundary, yamlCloseLineLocator);
+                    let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
+                    childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                     childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
                     html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, entryPath, Array.isArray(entry.value) ? deferredXmlArrayComments : null)}</details></div>`;
                 } else {
@@ -2662,7 +2663,8 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    let childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, nextBoundary, yamlCloseLineLocator);
+                    let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
+                    childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                     childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
                     html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [entry.key], Array.isArray(entry.value) ? deferredXmlArrayComments : null)}</details></div>`;
                 } else {

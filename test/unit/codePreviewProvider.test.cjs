@@ -912,7 +912,7 @@ test('Task G YAML fixture label ownership mapping is correct', () => {
   assertLabelOwner(labelOwners, 'T', 'standalone', 'standalone');
 });
 
-test('Task J JSON array standalone comment [T] renders as array-scope standalone and [U] is outside labels scope', () => {
+test('Task L JSON standalone comment [T] renders at records[1] tail and [U] stays at records tail', () => {
   const source = readSupportedFixture('json.jsonc');
   const result = CodePreviewProvider.parse(source, 'json');
   const events = extractCommentRenderEvents(result.html);
@@ -921,9 +921,10 @@ test('Task J JSON array standalone comment [T] renders as array-scope standalone
   const uEvent = getLabelEvent(events, 'U');
 
   assert.equal(tEvent.ownerKind, 'standalone');
-  assert.ok(tEvent.path.includes('labels'), 'label [T] should be rendered within labels array scope');
+  assert.equal(tEvent.path, 'records > [1]', 'label [T] should be rendered as records[1] tail standalone');
+  assert.equal(tEvent.path.includes('labels'), false, 'label [T] should not remain inside labels array scope');
   assert.equal(uEvent.ownerKind, 'standalone');
-  assert.equal(uEvent.path.includes('labels'), false, 'label [U] should not remain in labels array scope');
+  assert.equal(uEvent.path, 'records', 'label [U] should remain as records tail standalone');
 });
 
 test('Task J XML final standalone comment [H] renders at document root tail', () => {
