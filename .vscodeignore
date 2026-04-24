@@ -1,26 +1,43 @@
+# FILE SYSTEM
 .DS_Store
 **/.DS_Store
 
+# GIT
+.gitignore
+.gitattributes
+
+# BUILD
 .vscode/**
 .vscode-test/**
 node_modules/**
 out/**
 !out/extension.js
-.gitignore
-.gitattributes
-tsconfig.json
-package-lock.json
 vsc-extension-quickstart.md
+package-lock.json
+tsconfig.json
 scripts/**
 **/*.map
 **/*.ts
+*.vsix
 
+# SOURCE
 src/**
 test/**
-*.vsix
-README.*.md
 
-CHANGELOG.md
+# AI AGENTS
+AGENTS.md
+CLAUDE.md
+.agents/
+.gemini/
+.claude/
+.cline/
+.codex/
+.cursor/
+
+# PROJECT FILES
+README.*.md
 WIKI.md
+ISSUES.md
 TASKS.md
 REVIEW.md
+CHANGELOG.md

@@ -1,11 +1,25 @@
+# FILE SYSTEM
 .DS_Store
 **/.DS_Store
 
+# BUILD
 node_modules/
 out/
 resources/vendor/
 .vscode-test/
 *.vsix
 
+# AI AGENTS
+AGENTS.md
+CLAUDE.md
+.agents/
+.gemini/
+.claude/
+.cline/
+.codex/
+.cursor/
+
+# PROJECT FILES
+ISSUES.md
 TASKS.md
 REVIEW.md
