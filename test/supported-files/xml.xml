@@ -1,6 +1,8 @@
+<!-- START [A] -->
+
 <?xml version="1.0" encoding="UTF-8"?>
 <?preview mode="strict" version="2026.04"?>
-<!-- catalog fixture with namespaces, comments, CDATA, attributes and repeated nodes -->
+<!-- catalog fixture with namespaces, comments, CDATA, attributes and repeated nodes [B] -->
 <catalog xmlns="https://example.com/catalog" xmlns:meta="https://example.com/meta" generatedAt="2026-04-21T12:00:00Z">
   <meta:source system="erp" batch="B-0421">
     <meta:owner><![CDATA[Ops & "QA" Team]]></meta:owner>
@@ -10,10 +12,10 @@
     </meta:flags>
   </meta:source>
 
-  <!-- primary products -->
+  <!-- primary products [C] -->
   <products>
     <product id="P-1001" sku="SKU-001" available="true">
-      <name>4K Monitor 27&quot;</name>
+      <name>4K Monitor 27&quot;</name> <!-- product name [D] -->
       <price currency="USD">399.99</price>
       <tags>
         <tag>display</tag>
@@ -28,6 +30,7 @@
       <name>Compact Keyboard</name>
       <price currency="USD">129.50</price>
       <tags>
+    <!-- product tags [E] -->
         <tag>peripheral</tag>
         <tag>wireless</tag>
       </tags>
@@ -42,9 +45,13 @@
     </product>
   </products>
 
+<!-- statistics properties [F] -->
   <meta:statistics>
     <meta:count type="products">2</meta:count>
     <meta:count type="warehouses">2</meta:count>
     <meta:lastSync timezone="UTC">2026-04-21T12:30:45Z</meta:lastSync>
+    <!-- last meta [G] -->
   </meta:statistics>
 </catalog>
+
+<!-- END [H] -->

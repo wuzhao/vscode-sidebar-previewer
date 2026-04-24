@@ -1,14 +1,14 @@
-# Kubernetes Deployment Configuration
-# A realistic multi-service deployment example
+# Kubernetes Deployment Configuration [A]
+# A realistic multi-service deployment example [B]
 
 apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: web-application # deployment name
+  name: web-application # deployment name [C]
   namespace: production
   labels:
-    app: web-app # app label used by selector
+    app: web-app # app label used by selector [D]
     environment: production
     tier: frontend
   annotations:
@@ -25,7 +25,10 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
+      # app comment [E]
       app: web-app
+      # lasy comment of matchLabels [F]
+  # template comment [G]
   template:
     metadata:
       labels:
@@ -42,6 +45,8 @@ spec:
             requests:
               cpu: 10m
               memory: 16Mi
+  # indentation is not aligned [H]
+      # containers comment [I]
       containers:
         - name: web-server
           image: registry.example.com/web-app:2.1.0
@@ -56,9 +61,10 @@ spec:
             - containerPort: 8443
               protocol: TCP
               name: https
+                  # indentation is not aligned [J]
           env:
             - name: NODE_ENV
-              value: production # runtime mode
+              value: production # runtime mode [K]
             - name: LOG_LEVEL
               value: info
             - name: POD_NAME
@@ -72,7 +78,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: db-credentials # injected from secret
+                  name: db-credentials # injected from secret [L]
                   key: connection-string
             - name: REDIS_HOST
               valueFrom:
@@ -91,7 +97,7 @@ spec:
           resources:
             requests:
               cpu: 250m
-              memory: 256Mi # baseline request
+              memory: 256Mi # baseline request [M]
             limits:
               cpu: 500m
               memory: 512Mi
@@ -208,7 +214,7 @@ spec:
 
       affinity:
         podAntiAffinity:
-          # Prefer spreading pods across nodes for resilience
+          # Prefer spreading pods across nodes for resilience [N]
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
               podAffinityTerm:
@@ -243,7 +249,7 @@ spec:
           operator: Equal
           value: web-tier
           effect: NoSchedule
-        - key: node.kubernetes.io/not-ready # temporary node outage
+        - key: node.kubernetes.io/not-ready # temporary node outage [O]
           operator: Exists
           effect: NoExecute
           tolerationSeconds: 300
@@ -260,7 +266,7 @@ spec:
         - name: registry-credentials
 
 ---
-# Service definition
+# Service definition [P]
 apiVersion: v1
 kind: Service
 
@@ -299,7 +305,7 @@ spec:
   healthCheckNodePort: 30080
 
 ---
-# HorizontalPodAutoscaler
+# HorizontalPodAutoscaler [Q]
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 
@@ -353,7 +359,7 @@ spec:
           averageValue: "1000"
 
 ---
-# PodDisruptionBudget
+# PodDisruptionBudget [R]
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 
@@ -366,3 +372,6 @@ spec:
   selector:
     matchLabels:
       app: web-app
+    # last selector of matchLabels [S]
+
+# END [T]

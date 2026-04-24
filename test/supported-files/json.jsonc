@@ -1,44 +1,61 @@
+/**
+ * START [A]
+ */
+
 {
-  // JSONC fixture for mixed comment-style coverage
-  /** Root-level doc comment */
+  // JSONC fixture for mixed comment-style coverage [B]
+  /** Root-level doc comment [C] */
   "meta": {
-    "name": "Complex JSONC Fixture", /// triple slash note
-    "version": "1.0.0", //! bang-style line comment
-    "url": "https://example.com/api//v1", // ensure // in string is preserved
-    /* block before property */ "maintainer": "Preview Team",
+    "name": "Complex JSONC Fixture", /// triple slash note [D]
+    "version": "1.0.0", //! bang-style line comment [E]
+    "url": "https://example.com/api//v1", // ensure // in string is preserved [F]
+    /* block before property [G] */ "maintainer": "Preview Team",
     "flags": {
-      "experimental": true /* inline block */ /* second inline block */, // mixed inline comment chain
-      "strict": false //// slash-heavy non-mainstream line comment
+      "experimental": true /* inline block [H] */ /* second inline block [I] */, // mixed inline comment chain [J]
+      "strict": false //// slash-heavy non-mainstream line comment [K]
     }
   },
   /* multi-line
-     block comment before records */
+     block comment before records [L] */
   "records": [
+    /**
+     * id, name and score
+     * 98/100
+     * [M]
+     */
     {
       "id": 1,
-      "name": "alpha", // classic line comment
-      /** inline doc block before score */
+      "name": "alpha",
+      /** inline doc block before score [N] */
       "score": 98
     },
-    // between-object line comment
+    // between-object line comment [O]
     {
       "id": 2,
+    // indentation is not aligned [P]
       "name": "beta",
-      "score": 87 /* inline block score */, 
+      "score": 87 /* inline block score [Q] */, 
       "labels": [
-        "fast", /* inline block item */
-        "stable" /// triple slash list item
+        "fast", /* inline block item [R] */
+        "stable" /// triple slash list item [S]
       ]
+      // append object item [T]
     }
+    // append array element [U]
   ],
-  /*! exclamation block style often seen in tooling output */
+  /*! exclamation block style often seen in tooling output [V] */
   "commentStyles": [
     "// line",
     "/// triple slash",
+    // array element [W]
     "//! bang line",
     "/* block */",
     "/** doc block */",
     "/*! exclamation block */"
   ],
-  "note": "All comment styles should be tolerated" // trailing end comment
+  "note": "All comment styles should be tolerated" // trailing end comment [X]
+
+  /* last item of root object [Y] */
 }
+
+/* END [Z] */
