@@ -20,6 +20,6 @@ CLAUDE.md
 .cursor/
 
 # PROJECT FILES
-ISSUES.md
-TASKS.md
-REVIEW.md
+issues/
+tasks/
+checklist/

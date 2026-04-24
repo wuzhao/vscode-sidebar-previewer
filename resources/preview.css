@@ -890,7 +890,7 @@ pre:hover .copy-btn {
 }
 
 .data-tree .tree-comment-icon {
-    margin: -1px 2px 0 4px;
+    margin: -2px 2px 0 4px;
     padding: 3px;
     border-radius: 50%;
     color: color-mix(in srgb, var(--vscode-foreground) 35%, transparent 65%);
@@ -904,6 +904,12 @@ pre:hover .copy-btn {
     color: color-mix(in srgb, var(--vscode-foreground) 65%, transparent 35%);
     background-color: color-mix(in srgb, var(--vscode-foreground) 15%, transparent 85%);
     opacity: 1;
+}
+
+.data-tree .tree-comment-icon.is-tooltip-focused {
+    color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent 30%);
+    background-color: color-mix(in srgb, var(--vscode-focusBorder) 22%, transparent 78%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--vscode-focusBorder) 60%, transparent 40%);
 }
 
 .tree-comment-tooltip {

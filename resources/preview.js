@@ -971,9 +971,33 @@ function scheduleCommentTooltipHide(delayMs = COMMENT_TOOLTIP_HIDE_DELAY_MS) {
 
 function updateCommentTooltipFocusClass() {
     if (!commentTooltip) {
+        clearCommentTooltipTargetFocusClass();
         return;
     }
     commentTooltip.classList.toggle('is-focused', commentTooltipFocusLocked);
+    updateCommentTooltipTargetFocusClass();
+}
+
+function clearCommentTooltipTargetFocusClass() {
+    const focusedIcons = document.querySelectorAll('.data-tree .tree-comment-icon.is-tooltip-focused');
+    focusedIcons.forEach(icon => icon.classList.remove('is-tooltip-focused'));
+}
+
+function updateCommentTooltipTargetFocusClass() {
+    clearCommentTooltipTargetFocusClass();
+
+    if (!commentTooltip || !commentTooltipTarget) {
+        return;
+    }
+
+    const tooltipIsFocused = document.activeElement === commentTooltip;
+    const shouldHighlightTarget = commentTooltip.classList.contains('is-visible')
+        && commentTooltipFocusLocked
+        && tooltipIsFocused;
+
+    if (shouldHighlightTarget) {
+        commentTooltipTarget.classList.add('is-tooltip-focused');
+    }
 }
 
 function hideCommentTooltip(force = false) {
@@ -990,6 +1014,7 @@ function hideCommentTooltip(force = false) {
     }
 
     clearCommentTooltipHideTimer();
+    clearCommentTooltipTargetFocusClass();
     commentTooltip.classList.remove('is-visible');
     commentTooltip.classList.remove('is-focused');
     commentTooltipTarget = null;

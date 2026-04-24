@@ -300,6 +300,99 @@ test('XML comments follow node keys but not @ attributes', () => {
   assert.equal(/<span class="tree-key" data-line="\d+">@category<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
 });
 
+test('Document-end comments become outermost standalone comments for JSON/YAML/TOML/XML', () => {
+  const jsonSource = [
+    '{',
+    '  "name": "Alice"',
+    '}',
+    '// root tail comment',
+  ].join('\n');
+  const yamlSource = [
+    'name: Alice',
+    '# root tail comment',
+  ].join('\n');
+  const tomlSource = [
+    'name = "Alice"',
+    '# root tail comment',
+  ].join('\n');
+  const xmlSource = [
+    '<root><name>Alice</name></root>',
+    '<!-- root tail comment -->',
+  ].join('\n');
+
+  const jsonResult = CodePreviewProvider.parse(jsonSource, 'json');
+  const yamlResult = CodePreviewProvider.parse(yamlSource, 'yaml');
+  const tomlResult = CodePreviewProvider.parse(tomlSource, 'toml');
+  const xmlResult = CodePreviewProvider.parse(xmlSource, 'xml');
+
+  const jsonPayloads = extractCommentPayloads(jsonResult.html);
+  const yamlPayloads = extractCommentPayloads(yamlResult.html);
+  const tomlPayloads = extractCommentPayloads(tomlResult.html);
+  const xmlPayloads = extractCommentPayloads(xmlResult.html);
+
+  assert.ok(jsonResult.html.includes('tree-standalone-comment'));
+  assert.ok(yamlResult.html.includes('tree-standalone-comment'));
+  assert.ok(tomlResult.html.includes('tree-standalone-comment'));
+  assert.ok(xmlResult.html.includes('tree-standalone-comment'));
+
+  assert.ok(jsonPayloads.some(payload => payload.some(item => item.marker === '/' && item.text === 'root tail comment')));
+  assert.ok(yamlPayloads.some(payload => payload.some(item => item.marker === '#' && item.text === 'root tail comment')));
+  assert.ok(tomlPayloads.some(payload => payload.some(item => item.marker === '#' && item.text === 'root tail comment')));
+  assert.ok(xmlPayloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'root tail comment')));
+});
+
+test('YAML comments follow indentation scope and do not leak to parent keys', () => {
+  const source = [
+    'app:',
+    '  settings:',
+    '    # nested tail comment',
+    '  next: true',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'yaml');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(result.html.includes('tree-standalone-comment'));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '#' && item.text === 'nested tail comment')));
+  assert.equal(/<span class="tree-key" data-line="\d+">next<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
+});
+
+test('JSON comments follow object containment and do not leak to parent siblings', () => {
+  const source = [
+    '{',
+    '  "outer": {',
+    '    // nested tail comment',
+    '  },',
+    '  "next": 1',
+    '}',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'json');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(result.html.includes('tree-standalone-comment'));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '/' && item.text === 'nested tail comment')));
+  assert.equal(/<span class="tree-key" data-line="\d+">next<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
+});
+
+test('XML comments follow object containment and do not leak to parent siblings', () => {
+  const source = [
+    '<root>',
+    '  <parent>',
+    '    <!-- nested tail comment -->',
+    '  </parent>',
+    '  <next>1</next>',
+    '</root>',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'xml');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(result.html.includes('tree-standalone-comment'));
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'nested tail comment')));
+  assert.equal(/<span class="tree-key" data-line="\d+">next<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
+});
+
 test('JSON comment before object key keeps binding across blank lines', () => {
   const source = [
     '{',

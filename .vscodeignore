@@ -37,7 +37,7 @@ CLAUDE.md
 # PROJECT FILES
 README.*.md
 WIKI.md
-ISSUES.md
-TASKS.md
-REVIEW.md
 CHANGELOG.md
+issues/
+tasks/
+checklist/

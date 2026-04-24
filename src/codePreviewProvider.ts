@@ -877,8 +877,10 @@ export class CodePreviewProvider {
             parts: [],
         };
         let pendingLine = -1;
+        let pendingDepth = -1;
         let preambleLine = -1;
         let hasBoundNode = false;
+        let xmlDepth = 0;
 
         const flushPreamble = (): void => {
             if (preamble.length === 0 || preambleLine < 0) {
@@ -896,9 +898,10 @@ export class CodePreviewProvider {
             this.pushStandaloneGroup(standaloneGroups, pendingLine, pending);
             pending.length = 0;
             pendingLine = -1;
+            pendingDepth = -1;
         };
 
-        const pushCommentForCurrentContext = (text: string, line: number): void => {
+        const pushCommentForCurrentContext = (text: string, line: number, depth: number): void => {
             if (!text) {
                 return;
             }
@@ -913,6 +916,7 @@ export class CodePreviewProvider {
 
             if (pending.length === 0) {
                 pendingLine = line;
+                pendingDepth = depth;
             }
             this.pushComment(pending, '-', text);
         };
@@ -920,23 +924,31 @@ export class CodePreviewProvider {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const scan = this.scanXmlLineComments(line, scanState);
+            const currentDepth = xmlDepth;
+            const nextDepth = Math.max(0, currentDepth + this.countXmlElementDepthDelta(scan.nonCommentText));
             const hasCode = scan.nonCommentText.trim().length > 0;
             const bindableLine = this.extractXmlKeys(scan.nonCommentText).length > 0;
             const commentOnlyLine = scan.comments.length > 0 && !hasCode;
 
             if (commentOnlyLine) {
-                scan.comments.forEach(text => pushCommentForCurrentContext(text, i));
+                scan.comments.forEach(text => pushCommentForCurrentContext(text, i, currentDepth));
+                xmlDepth = nextDepth;
                 continue;
             }
 
             if (!hasBoundNode && bindableLine && preamble.length > 0) {
                 pending.push(...preamble);
                 pendingLine = pendingLine >= 0 ? pendingLine : preambleLine;
+                pendingDepth = currentDepth;
                 preamble.length = 0;
                 preambleLine = -1;
             }
 
             if (bindableLine) {
+                if (pending.length > 0 && pendingDepth >= 0 && currentDepth < pendingDepth) {
+                    flushPendingStandalone();
+                }
+
                 const inlineComments = scan.comments.map(text => ({ marker: '-' as CommentMarker, text }));
                 const comments = [...pending, ...inlineComments].filter(comment => !!comment.text);
                 if (comments.length > 0) {
@@ -944,34 +956,40 @@ export class CodePreviewProvider {
                 }
                 pending.length = 0;
                 pendingLine = -1;
+                pendingDepth = -1;
                 hasBoundNode = true;
+                xmlDepth = nextDepth;
                 continue;
             }
 
             if (scan.comments.length > 0) {
-                scan.comments.forEach(text => pushCommentForCurrentContext(text, i));
+                scan.comments.forEach(text => pushCommentForCurrentContext(text, i, currentDepth));
+            }
+
+            if (pending.length > 0 && pendingDepth >= 0 && currentDepth < pendingDepth) {
+                flushPendingStandalone();
+            }
+
+            if (pending.length > 0) {
+                xmlDepth = nextDepth;
+                continue;
             }
 
             if (hasCode) {
-                pending.length = 0;
-                pendingLine = -1;
                 if (!hasBoundNode) {
                     flushPreamble();
                 }
+                xmlDepth = nextDepth;
                 continue;
             }
 
-            if (!hasCode && scan.comments.length === 0) {
-                continue;
-            }
-            pending.length = 0;
-            pendingLine = -1;
+            xmlDepth = nextDepth;
         }
 
         if (scanState.inComment && scanState.parts.length > 0) {
             const tailComment = this.cleanXmlCommentText(scanState.parts.join('\n'));
             if (tailComment) {
-                pushCommentForCurrentContext(tailComment, lines.length - 1);
+                pushCommentForCurrentContext(tailComment, lines.length - 1, xmlDepth);
             }
         }
 
@@ -987,8 +1005,10 @@ export class CodePreviewProvider {
         const pending: CommentEntry[] = [];
         const preamble: CommentEntry[] = [];
         const arrayDepthByLine = this.buildJsonArrayDepthAtLineStart(lines);
+        const objectDepthByLine = this.buildJsonObjectDepthAtLineStart(lines);
         let pendingLine = -1;
         let pendingArrayDepth = -1;
+        let pendingObjectDepth = -1;
         let preambleLine = -1;
         let inBlockComment = false;
         let blockParts: string[] = [];
@@ -1011,9 +1031,16 @@ export class CodePreviewProvider {
             pending.length = 0;
             pendingLine = -1;
             pendingArrayDepth = -1;
+            pendingObjectDepth = -1;
         };
 
-        const pushCommentForCurrentContext = (marker: CommentMarker, text: string, line: number, arrayDepth: number): void => {
+        const pushCommentForCurrentContext = (
+            marker: CommentMarker,
+            text: string,
+            line: number,
+            arrayDepth: number,
+            objectDepth: number
+        ): void => {
             if (!text) {
                 return;
             }
@@ -1029,6 +1056,7 @@ export class CodePreviewProvider {
             if (pending.length === 0) {
                 pendingLine = line;
                 pendingArrayDepth = arrayDepth;
+                pendingObjectDepth = objectDepth;
             }
             this.pushComment(pending, marker, text);
         };
@@ -1041,6 +1069,7 @@ export class CodePreviewProvider {
             const inlineComments = this.findJsonInlineComments(line);
             const bindableLine = keyExists || arrayItemExists;
             const currentArrayDepth = arrayDepthByLine[i] ?? 0;
+            const currentObjectDepth = objectDepthByLine[i] ?? 0;
 
             if (inBlockComment) {
                 const end = line.indexOf('*/');
@@ -1048,7 +1077,7 @@ export class CodePreviewProvider {
                     blockParts.push(line.slice(0, end));
                     const merged = this.cleanCommentText(blockParts.join('\n'));
                     if (merged) {
-                        pushCommentForCurrentContext('*', merged, i, currentArrayDepth);
+                        pushCommentForCurrentContext('*', merged, i, currentArrayDepth, currentObjectDepth);
                     }
                     blockParts = [];
                     inBlockComment = false;
@@ -1061,7 +1090,7 @@ export class CodePreviewProvider {
                     const trailingComments = this.findJsonInlineComments(trailing);
                     if (trailingComments.length > 0) {
                         trailingComments.forEach(comment => {
-                            pushCommentForCurrentContext(comment.marker, comment.text, i, currentArrayDepth);
+                            pushCommentForCurrentContext(comment.marker, comment.text, i, currentArrayDepth, currentObjectDepth);
                         });
                         continue;
                     }
@@ -1074,7 +1103,7 @@ export class CodePreviewProvider {
             if (/^\s*\/\//.test(line)) {
                 const onlyComment = this.cleanCommentText(line.replace(/^\s*\/\//, ''));
                 if (onlyComment) {
-                    pushCommentForCurrentContext('/', onlyComment, i, currentArrayDepth);
+                    pushCommentForCurrentContext('/', onlyComment, i, currentArrayDepth, currentObjectDepth);
                 }
                 continue;
             }
@@ -1084,7 +1113,7 @@ export class CodePreviewProvider {
                 if (singleLineBlock) {
                     const onlyComment = this.cleanCommentText(singleLineBlock[1]);
                     if (onlyComment) {
-                        pushCommentForCurrentContext('*', onlyComment, i, currentArrayDepth);
+                        pushCommentForCurrentContext('*', onlyComment, i, currentArrayDepth, currentObjectDepth);
                     }
                     continue;
                 }
@@ -1094,7 +1123,7 @@ export class CodePreviewProvider {
                 if (end >= 0) {
                     const onlyComment = this.cleanCommentText(rest.slice(0, end));
                     if (onlyComment) {
-                        pushCommentForCurrentContext('*', onlyComment, i, currentArrayDepth);
+                        pushCommentForCurrentContext('*', onlyComment, i, currentArrayDepth, currentObjectDepth);
                     }
                     continue;
                 }
@@ -1108,11 +1137,16 @@ export class CodePreviewProvider {
                 pending.push(...preamble);
                 pendingLine = pendingLine >= 0 ? pendingLine : preambleLine;
                 pendingArrayDepth = currentArrayDepth;
+                pendingObjectDepth = currentObjectDepth;
                 preamble.length = 0;
                 preambleLine = -1;
             }
 
             if (bindableLine) {
+                if (pending.length > 0 && pendingObjectDepth >= 0 && currentObjectDepth < pendingObjectDepth) {
+                    flushPendingStandalone();
+                }
+
                 if (pending.length > 0 && pendingArrayDepth > 0 && !arrayItemExists && currentArrayDepth < pendingArrayDepth) {
                     flushPendingStandalone();
                 }
@@ -1124,6 +1158,7 @@ export class CodePreviewProvider {
                 pending.length = 0;
                 pendingLine = -1;
                 pendingArrayDepth = -1;
+                pendingObjectDepth = -1;
                 hasBoundNode = true;
                 continue;
             }
@@ -1140,7 +1175,11 @@ export class CodePreviewProvider {
                 flushPendingStandalone();
             }
 
-            if (pending.length > 0 && pendingArrayDepth > 0 && currentArrayDepth >= pendingArrayDepth) {
+            if (pending.length > 0 && pendingObjectDepth >= 0 && currentObjectDepth < pendingObjectDepth) {
+                flushPendingStandalone();
+            }
+
+            if (pending.length > 0) {
                 continue;
             }
 
@@ -1151,6 +1190,7 @@ export class CodePreviewProvider {
             pending.length = 0;
             pendingLine = -1;
             pendingArrayDepth = -1;
+            pendingObjectDepth = -1;
 
             if (!hasBoundNode) {
                 flushPreamble();
@@ -1255,6 +1295,10 @@ export class CodePreviewProvider {
             }
 
             if (bindableLine) {
+                if (fileType === 'yaml' && pending.length > 0 && currentIndent < pendingIndent) {
+                    flushPendingStandalone();
+                }
+
                 if (pending.length > 0 && pendingFromArray && !arrayItemExists) {
                     const escapedArrayContext = fileType === 'yaml'
                         ? currentIndent <= pendingIndent
@@ -1293,6 +1337,10 @@ export class CodePreviewProvider {
                 }
             }
 
+            if (fileType === 'yaml' && pending.length > 0 && trimmed.length > 0 && currentIndent < pendingIndent) {
+                flushPendingStandalone();
+            }
+
             if (pending.length > 0 && pendingFromArray) {
                 const stillInsideArrayContext = fileType === 'yaml'
                     ? currentIndent > pendingIndent || trimmed.length === 0
@@ -1302,16 +1350,11 @@ export class CodePreviewProvider {
                 }
             }
 
+            if (fileType === 'yaml' && pending.length > 0 && (trimmed.length === 0 || currentIndent >= pendingIndent)) {
+                continue;
+            }
+
             if (trimmed.length === 0) {
-                if (fileType === 'yaml') {
-                    if (!hasBoundNode) {
-                        flushPreamble();
-                    }
-                    pending.length = 0;
-                    pendingLine = -1;
-                    pendingFromArray = false;
-                    pendingIndent = -1;
-                }
                 continue;
             }
 
@@ -1547,6 +1590,75 @@ export class CodePreviewProvider {
         }
 
         return depthAtLineStart;
+    }
+
+    private static buildJsonObjectDepthAtLineStart(lines: string[]): number[] {
+        const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
+        const depthAtLineStart: number[] = [];
+        let objectDepth = 0;
+
+        for (let i = 0; i < sanitizedLines.length; i++) {
+            const line = sanitizedLines[i];
+            depthAtLineStart.push(objectDepth);
+
+            let inString = false;
+            let escape = false;
+            for (let j = 0; j < line.length; j++) {
+                const ch = line[j];
+
+                if (inString) {
+                    if (escape) {
+                        escape = false;
+                        continue;
+                    }
+                    if (ch === '\\') {
+                        escape = true;
+                        continue;
+                    }
+                    if (ch === '"') {
+                        inString = false;
+                    }
+                    continue;
+                }
+
+                if (ch === '"') {
+                    inString = true;
+                    continue;
+                }
+                if (ch === '{') {
+                    objectDepth += 1;
+                    continue;
+                }
+                if (ch === '}') {
+                    objectDepth = Math.max(0, objectDepth - 1);
+                }
+            }
+        }
+
+        return depthAtLineStart;
+    }
+
+    private static countXmlElementDepthDelta(nonCommentText: string): number {
+        let delta = 0;
+        const pattern = /<\s*(\/)?\s*([A-Za-z_:][\w:.-]*)([^<>]*?)>/g;
+
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(nonCommentText)) !== null) {
+            const raw = match[0];
+            const isClosing = Boolean(match[1]);
+            const isSelfClosing = !isClosing && /\/\s*>$/.test(raw);
+
+            if (isClosing) {
+                delta -= 1;
+                continue;
+            }
+
+            if (!isSelfClosing) {
+                delta += 1;
+            }
+        }
+
+        return delta;
     }
 
     private static buildTomlArrayDepthAtLineStart(lines: string[]): number[] {
