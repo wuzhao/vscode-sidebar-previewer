@@ -16,12 +16,10 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 功能截圖
 
-| Type | Screenshot |
-| ---- | ---------- |
-| Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
-| LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
-| Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML&nbsp;/&nbsp;XML&nbsp;/&nbsp;CSV&nbsp;/&nbsp;TSV | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
+| | | |
+| -- | -- | -- |
+| Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTex ![LaTex](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
+| CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / YAML / TOML / XML ![JSON / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
 
 ## 支援的檔案型別
 
@@ -48,25 +46,27 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - KaTeX 和 Mermaid 程式碼塊渲染
 - 編輯器與預覽之間滾動同步、互相定位
 
+### Mermaid
+
+- 基礎語法預檢查與錯誤提示
+- 放大後支援拖拽平移
+
 ### LaTeX
 
 - 行內公式與常見數學環境的 KaTeX 渲染
 - 編輯器與預覽之間滾動同步、互相定位
 - 支援縮放
 
-### Mermaid
-
-- 基礎語法預檢查與錯誤提示
-- 放大後支援拖拽平移
-
-### JSON / YAML / TOML / XML / CSV / TSV
+### JSON / YAML / TOML / XML
 
 - 可摺疊樹形檢視
 - 全部展開 / 全部摺疊
 - 點選鍵名跳轉原始碼行
-- JSON 支援註解與尾隨逗號解析模式
 - 含註解的鍵會顯示註解圖示，滑鼠懸停可查看註解內容
-- CSV / TSV 預覽渲染為 HTML 表格
+
+### CSV / TSV
+
+- 渲染為表格預覽
 
 ## 安裝方法
 

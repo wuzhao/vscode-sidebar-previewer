@@ -16,12 +16,10 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## スクリーンショット
 
-| Type | Screenshot |
-| ---- | ---------- |
-| Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
-| LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
-| Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML&nbsp;/&nbsp;XML&nbsp;/&nbsp;CSV&nbsp;/&nbsp;TSV | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
+| | | |
+| -- | -- | -- |
+| Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTex ![LaTex](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
+| CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / YAML / TOML / XML ![JSON / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
 
 ## 対応ファイル
 
@@ -48,25 +46,27 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - KaTeX および Mermaid ブロックのレンダリング
 - エディタとプレビュー間の同期スクロールおよび位置特定（双方向スクロール）
 
+### Mermaid
+
+- 基本的な構文の事前チェックと、分かりやすいエラーフィードバック
+- ズーム時のドラッグによるパン（移動）操作
+
 ### LaTeX
 
 - インライン数式および主要な数学環境の KaTeX レンダリング
 - エディタとプレビュー間の同期スクロールおよび位置特定
 - ズーム表示対応
 
-### Mermaid
-
-- 基本的な構文の事前チェックと、分かりやすいエラーフィードバック
-- ズーム時のドラッグによるパン（移動）操作
-
-### JSON / YAML / TOML / XML / CSV / TSV
+### JSON / YAML / TOML / XML
 
 - 折りたたみ可能なツリー表示
 - すべて展開 / すべて折りたたむ
 - キー（項目）をクリックしてソース行へジャンプ
-- JSON はコメントと末尾カンマを含む入力を解析可能
 - コメント付きキーにはアイコンを表示し、ホバーで内容を確認可能
-- CSV/TSV プレビューは HTML テーブルとして表示
+
+### CSV / TSV
+
+- プレビューはテーブルとして表示
 
 ## インストール
 

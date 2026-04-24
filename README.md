@@ -16,12 +16,10 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Screenshots
 
-| Type | Screenshot |
-| ---- | ---------- |
-| Markdown | ![Markdown Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/markdown.png) |
-| LaTeX | ![Latex Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/latex.png) |
-| Mermaid | ![Mermaid Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/mermaid.png) |
-| JSON&nbsp;/&nbsp;YAML&nbsp;/&nbsp;TOML&nbsp;/&nbsp;XML&nbsp;/&nbsp;CSV&nbsp;/&nbsp;TSV | ![YAML Preview Screenshot](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/yaml.png) |
+| | | |
+| -- | -- | -- |
+| Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTex ![LaTex](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
+| CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / YAML / TOML / XML ![JSON / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
 
 ## Supported Files
 
@@ -48,25 +46,27 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - KaTeX and Mermaid block rendering
 - Follow-scroll and locate between editor and preview
 
+### Mermaid
+
+- Basic syntax precheck with clear error feedback
+- Drag-to-pan interaction when zoomed
+
 ### LaTeX
 
 - KaTeX rendering for inline formulas and common math environments
 - Follow-scroll and locate between editor and preview
 - Zoom support
 
-### Mermaid
-
-- Basic syntax precheck with clear error feedback
-- Drag-to-pan interaction when zoomed
-
-### JSON / YAML / TOML / XML / CSV / TSV
+### JSON / YAML / TOML / XML
 
 - Collapsible tree view
 - Expand all / collapse all
 - Click key to jump to source line
-- JSON preview accepts inline/block comments and trailing commas
 - Comment icon on keys with hover tooltip
-- CSV/TSV preview renders as an HTML table
+
+### CSV / TSV
+
+- Render as a table for preview
 
 ## Installation
 
