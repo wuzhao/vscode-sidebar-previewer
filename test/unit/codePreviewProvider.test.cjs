@@ -89,6 +89,118 @@ function extractCommentOwners(html) {
   return owners;
 }
 
+function extractCommentRenderEvents(html) {
+  const decode = decodeHtmlAttr;
+  const tokenPattern = /<[^>]+>|[^<]+/g;
+  const tokens = html.match(tokenPattern) || [];
+  const stack = [];
+  let inSummary = false;
+  let inStandaloneDiv = false;
+  let spanKind = null;
+  let spanText = '';
+  let summaryOwner = null;
+  const events = [];
+
+  for (const token of tokens) {
+    if (/^<details>$/i.test(token)) {
+      stack.push({ label: null });
+      continue;
+    }
+
+    if (/^<\/details>$/i.test(token)) {
+      stack.pop();
+      continue;
+    }
+
+    if (/^<summary>$/i.test(token)) {
+      inSummary = true;
+      summaryOwner = null;
+      continue;
+    }
+
+    if (/^<\/summary>$/i.test(token)) {
+      inSummary = false;
+      continue;
+    }
+
+    if (/^<div class="tree-item tree-standalone-comment">$/i.test(token)) {
+      inStandaloneDiv = true;
+      continue;
+    }
+
+    if (inStandaloneDiv && /^<\/div>$/i.test(token)) {
+      inStandaloneDiv = false;
+      continue;
+    }
+
+    if (/^<span class="tree-key"/i.test(token)) {
+      spanKind = 'key';
+      spanText = '';
+      continue;
+    }
+
+    if (/^<span class="tree-index"/i.test(token)) {
+      spanKind = 'index';
+      spanText = '';
+      continue;
+    }
+
+    if (spanKind && !/^<[^>]+>$/.test(token)) {
+      spanText += decode(token);
+      continue;
+    }
+
+    if (spanKind && /^<\/span>$/i.test(token)) {
+      const text = spanText;
+      if (inSummary && stack.length > 0) {
+        if (spanKind === 'key') {
+          stack[stack.length - 1].label = text;
+          summaryOwner = { kind: 'key', target: text };
+        } else {
+          stack[stack.length - 1].label = `[${text}]`;
+          summaryOwner = { kind: 'index', target: text };
+        }
+      }
+      spanKind = null;
+      spanText = '';
+      continue;
+    }
+
+    const iconMatch = token.match(/^<span class="tree-comment-icon[^>]*data-comments="([^"]+)"/i);
+    if (!iconMatch) {
+      continue;
+    }
+
+    const comments = JSON.parse(decode(iconMatch[1]));
+    const path = stack.map(entry => entry.label).filter(Boolean).join(' > ');
+    const owner = inStandaloneDiv
+      ? { kind: 'standalone', target: 'standalone' }
+      : (summaryOwner || { kind: 'unknown', target: 'unknown' });
+
+    for (const comment of comments) {
+      const match = /\[([A-Z])\]/.exec(comment.text);
+      if (!match) {
+        continue;
+      }
+
+      events.push({
+        label: match[1],
+        ownerKind: owner.kind,
+        ownerTarget: owner.target,
+        path,
+      });
+    }
+  }
+
+  return events;
+}
+
+function getLabelEvent(events, label) {
+  const found = events.filter(event => event.label === label);
+  assert.equal(found.length, 1, `label [${label}] should render exactly once`);
+  return found[0];
+}
+
 function buildLabelOwnerMap(owners) {
   const labelOwners = new Map();
 
@@ -798,6 +910,50 @@ test('Task G YAML fixture label ownership mapping is correct', () => {
   assertLabelOwner(labelOwners, 'R', 'key', 'apiVersion');
   assertLabelOwner(labelOwners, 'S', 'standalone', 'standalone');
   assertLabelOwner(labelOwners, 'T', 'standalone', 'standalone');
+});
+
+test('Task J JSON array standalone comment [T] renders as array-scope standalone and [U] is outside labels scope', () => {
+  const source = readSupportedFixture('json.jsonc');
+  const result = CodePreviewProvider.parse(source, 'json');
+  const events = extractCommentRenderEvents(result.html);
+
+  const tEvent = getLabelEvent(events, 'T');
+  const uEvent = getLabelEvent(events, 'U');
+
+  assert.equal(tEvent.ownerKind, 'standalone');
+  assert.ok(tEvent.path.includes('labels'), 'label [T] should be rendered within labels array scope');
+  assert.equal(uEvent.ownerKind, 'standalone');
+  assert.equal(uEvent.path.includes('labels'), false, 'label [U] should not remain in labels array scope');
+});
+
+test('Task J XML final standalone comment [H] renders at document root tail', () => {
+  const source = readSupportedFixture('xml.xml');
+  const result = CodePreviewProvider.parse(source, 'xml');
+  const events = extractCommentRenderEvents(result.html);
+
+  const hEvent = getLabelEvent(events, 'H');
+  assert.equal(hEvent.ownerKind, 'standalone');
+  assert.equal(hEvent.path, '');
+});
+
+test('Task J YAML final standalone comment [T] renders at document root tail', () => {
+  const source = readSupportedFixture('yaml.yaml');
+  const result = CodePreviewProvider.parse(source, 'yaml');
+  const events = extractCommentRenderEvents(result.html);
+
+  const tEvent = getLabelEvent(events, 'T');
+  assert.equal(tEvent.ownerKind, 'standalone');
+  assert.equal(tEvent.path, '');
+});
+
+test('Task J TOML final standalone comment [L] renders at document root tail', () => {
+  const source = readSupportedFixture('toml.toml');
+  const result = CodePreviewProvider.parse(source, 'toml');
+  const events = extractCommentRenderEvents(result.html);
+
+  const lEvent = getLabelEvent(events, 'L');
+  assert.equal(lEvent.ownerKind, 'standalone');
+  assert.equal(lEvent.path, '');
 });
 
 test('MarkdownProvider escapes front matter HTML content', () => {

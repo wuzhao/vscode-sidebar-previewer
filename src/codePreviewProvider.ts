@@ -12,6 +12,10 @@ interface ArrayItemLineLocator {
     next(): number;
 }
 
+interface JsonCloseLineLocator {
+    next(line: number): number;
+}
+
 interface XmlTagMatch {
     tagName: string;
     attributesSource: string;
@@ -39,6 +43,7 @@ type CommentLineIndex = Map<number, CommentEntry[]>;
 interface StandaloneCommentGroup {
     line: number;
     comments: CommentEntry[];
+    rootOnly?: boolean;
 }
 
 interface StandaloneCommentCursor {
@@ -64,6 +69,7 @@ export class CodePreviewProvider {
             const commentMetadata = this.buildCommentMetadata(lines, fileType);
             const lineLocator = this.createKeyLineLocator(lines, fileType);
             const arrayItemLineLocator = this.createArrayItemLineLocator(lines, fileType);
+            const jsonCloseLineLocator = fileType === 'json' ? this.createJsonCloseLineLocator(lines) : null;
             const html = this.renderTree(
                 parsed,
                 lineLocator,
@@ -71,7 +77,8 @@ export class CodePreviewProvider {
                 commentMetadata.lineComments,
                 commentMetadata.standaloneGroups,
                 fileType,
-                lines
+                lines,
+                jsonCloseLineLocator
             );
             const wrappedHtml = `<div class="data-tree">${html}</div>`;
 
@@ -224,6 +231,137 @@ export class CodePreviewProvider {
                 return line;
             }
         };
+    }
+
+    private static createJsonCloseLineLocator(lines: string[]): JsonCloseLineLocator {
+        const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
+        const cache = new Map<number, number>();
+
+        return {
+            next: (line: number): number => {
+                if (line < 0 || line >= sanitizedLines.length) {
+                    return -1;
+                }
+
+                const cached = cache.get(line);
+                if (cached !== undefined) {
+                    return cached;
+                }
+
+                const start = this.findJsonCompoundStartInLine(sanitizedLines[line]);
+                if (!start) {
+                    cache.set(line, -1);
+                    return -1;
+                }
+
+                const opener = start.char;
+                const closer = opener === '{' ? '}' : ']';
+                let depth = 0;
+
+                for (let row = line; row < sanitizedLines.length; row++) {
+                    const code = sanitizedLines[row];
+                    let inString = false;
+                    let escape = false;
+                    const startColumn = row === line ? start.column : 0;
+
+                    for (let col = startColumn; col < code.length; col++) {
+                        const ch = code[col];
+
+                        if (inString) {
+                            if (escape) {
+                                escape = false;
+                                continue;
+                            }
+
+                            if (ch === '\\') {
+                                escape = true;
+                                continue;
+                            }
+
+                            if (ch === '"') {
+                                inString = false;
+                            }
+                            continue;
+                        }
+
+                        if (ch === '"') {
+                            inString = true;
+                            continue;
+                        }
+
+                        if (ch === opener) {
+                            depth += 1;
+                            continue;
+                        }
+
+                        if (ch === closer) {
+                            depth -= 1;
+                            if (depth === 0) {
+                                cache.set(line, row);
+                                return row;
+                            }
+                        }
+                    }
+                }
+
+                cache.set(line, -1);
+                return -1;
+            }
+        };
+    }
+
+    private static findJsonCompoundStartInLine(line: string): { char: '{' | '['; column: number } | null {
+        let inString = false;
+        let escape = false;
+        let colonSeen = false;
+        let firstTokenIndex = -1;
+        let firstTokenChar = '';
+
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+
+            if (inString) {
+                if (escape) {
+                    escape = false;
+                    continue;
+                }
+
+                if (ch === '\\') {
+                    escape = true;
+                    continue;
+                }
+
+                if (ch === '"') {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (ch === '"') {
+                inString = true;
+                continue;
+            }
+
+            if (firstTokenIndex < 0 && !/\s|,/.test(ch)) {
+                firstTokenIndex = i;
+                firstTokenChar = ch;
+            }
+
+            if (ch === ':') {
+                colonSeen = true;
+                continue;
+            }
+
+            if ((ch === '{' || ch === '[') && colonSeen) {
+                return { char: ch, column: i };
+            }
+        }
+
+        if ((firstTokenChar === '{' || firstTokenChar === '[') && firstTokenIndex >= 0) {
+            return { char: firstTokenChar, column: firstTokenIndex };
+        }
+
+        return null;
     }
 
     private static buildArrayItemLineIndex(lines: string[], fileType: FileType): number[] {
@@ -971,11 +1109,11 @@ export class CodePreviewProvider {
             preambleLine = -1;
         };
 
-        const flushPendingStandalone = (): void => {
+        const flushPendingStandalone = (rootOnly = false): void => {
             if (pending.length === 0 || pendingLine < 0) {
                 return;
             }
-            this.pushStandaloneGroup(standaloneGroups, pendingLine, pending);
+            this.pushStandaloneGroup(standaloneGroups, pendingLine, pending, rootOnly);
             pending.length = 0;
             pendingLine = -1;
             pendingDepth = -1;
@@ -1078,7 +1216,7 @@ export class CodePreviewProvider {
         }
 
         flushPreamble();
-        flushPendingStandalone();
+        flushPendingStandalone(true);
 
         return { lineComments, standaloneGroups };
     }
@@ -1369,11 +1507,11 @@ export class CodePreviewProvider {
             preambleLine = -1;
         };
 
-        const flushPendingStandalone = (): void => {
+        const flushPendingStandalone = (rootOnly = false): void => {
             if (pending.length === 0 || pendingLine < 0) {
                 return;
             }
-            this.pushStandaloneGroup(standaloneGroups, pendingLine, pending);
+            this.pushStandaloneGroup(standaloneGroups, pendingLine, pending, rootOnly);
             pending.length = 0;
             pendingLine = -1;
             pendingFromArray = false;
@@ -1529,7 +1667,7 @@ export class CodePreviewProvider {
         }
 
         flushPreamble();
-        flushPendingStandalone();
+        flushPendingStandalone(true);
 
         return { lineComments, standaloneGroups };
     }
@@ -1934,7 +2072,12 @@ export class CodePreviewProvider {
         return match ? match[0].length : 0;
     }
 
-    private static pushStandaloneGroup(groups: StandaloneCommentGroup[], line: number, comments: CommentEntry[]): void {
+    private static pushStandaloneGroup(
+        groups: StandaloneCommentGroup[],
+        line: number,
+        comments: CommentEntry[],
+        rootOnly = false
+    ): void {
         if (comments.length === 0) {
             return;
         }
@@ -1942,6 +2085,7 @@ export class CodePreviewProvider {
         groups.push({
             line,
             comments: [...comments],
+            rootOnly,
         });
     }
 
@@ -2019,10 +2163,17 @@ export class CodePreviewProvider {
         };
     }
 
-    private static renderStandaloneBeforeBoundary(cursor: StandaloneCommentCursor, boundaryExclusive: number): string {
+    private static renderStandaloneBeforeBoundary(
+        cursor: StandaloneCommentCursor,
+        boundaryExclusive: number,
+        includeRootOnly: boolean
+    ): string {
         let html = '';
         while (cursor.index < cursor.groups.length && cursor.groups[cursor.index].line < boundaryExclusive) {
             const group = cursor.groups[cursor.index];
+            if (group.rootOnly && !includeRootOnly) {
+                break;
+            }
             html += `<div class="tree-item tree-standalone-comment">${this.renderCommentIcon(group.comments)}</div>`;
             cursor.index += 1;
         }
@@ -2031,6 +2182,24 @@ export class CodePreviewProvider {
 
     private static resolveBoundaryLine(line: number, fallback: number): number {
         return line >= 0 ? line : fallback;
+    }
+
+    private static constrainBoundaryForJsonContainer(
+        fileType: FileType,
+        line: number,
+        boundaryExclusive: number,
+        jsonCloseLineLocator: JsonCloseLineLocator | null
+    ): number {
+        if (fileType !== 'json' || !jsonCloseLineLocator || line < 0) {
+            return boundaryExclusive;
+        }
+
+        const closeLine = jsonCloseLineLocator.next(line);
+        if (closeLine < 0) {
+            return boundaryExclusive;
+        }
+
+        return Math.min(boundaryExclusive, closeLine + 1);
     }
 
     /**
@@ -2061,6 +2230,7 @@ export class CodePreviewProvider {
         boundaryExclusive: number,
         fileType: FileType,
         sourceLines: string[],
+        jsonCloseLineLocator: JsonCloseLineLocator | null,
         xmlConsumedLines: Set<number> | null,
         parentPath: string[]
     ): string {
@@ -2081,13 +2251,14 @@ export class CodePreviewProvider {
                     ? this.resolveBoundaryLine(items[i + 1].line, boundaryExclusive)
                     : boundaryExclusive;
 
-                html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary);
+                html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary, false);
 
                 if (this.isCompound(itemInfo.value)) {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, parentPath)}</details></div>`;
+                    const childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, parentPath)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -2110,20 +2281,20 @@ export class CodePreviewProvider {
                     ? this.resolveBoundaryLine(entries[i + 1].line, boundaryExclusive)
                     : boundaryExclusive;
 
-                html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary);
+                html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary, false);
 
                 if (this.isCompound(entry.value)) {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, entryPath)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, entryPath)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }
             }
         }
 
-        html += this.renderStandaloneBeforeBoundary(standaloneCursor, boundaryExclusive);
+        html += this.renderStandaloneBeforeBoundary(standaloneCursor, boundaryExclusive, false);
         html += '</div>';
         return html;
     }
@@ -2166,16 +2337,17 @@ export class CodePreviewProvider {
         commentLines: CommentLineIndex,
         standaloneGroups: StandaloneCommentGroup[],
         fileType: FileType,
-        sourceLines: string[]
+        sourceLines: string[],
+        jsonCloseLineLocator: JsonCloseLineLocator | null
     ): string {
         const cursor = this.createStandaloneCursor(standaloneGroups);
         const xmlConsumedLines = fileType === 'xml' ? new Set<number>() : null;
         const rootBoundary = Number.POSITIVE_INFINITY;
 
         if (!this.isCompound(data)) {
-            let html = this.renderStandaloneBeforeBoundary(cursor, rootBoundary);
+            let html = this.renderStandaloneBeforeBoundary(cursor, rootBoundary, true);
             html += this.renderPrimitive(data);
-            html += this.renderStandaloneBeforeBoundary(cursor, rootBoundary);
+            html += this.renderStandaloneBeforeBoundary(cursor, rootBoundary, true);
             return html;
         }
 
@@ -2196,13 +2368,14 @@ export class CodePreviewProvider {
                     ? this.resolveBoundaryLine(items[i + 1].line, rootBoundary)
                     : rootBoundary;
 
-                html += this.renderStandaloneBeforeBoundary(cursor, itemBoundary);
+                html += this.renderStandaloneBeforeBoundary(cursor, itemBoundary, true);
 
                 if (this.isCompound(itemInfo.value)) {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, [])}</details></div>`;
+                    const childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, [])}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -2224,20 +2397,20 @@ export class CodePreviewProvider {
                     ? this.resolveBoundaryLine(entries[i + 1].line, rootBoundary)
                     : rootBoundary;
 
-                html += this.renderStandaloneBeforeBoundary(cursor, itemBoundary);
+                html += this.renderStandaloneBeforeBoundary(cursor, itemBoundary, true);
 
                 if (this.isCompound(entry.value)) {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, [entry.key])}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, [entry.key])}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }
             }
         }
 
-        html += this.renderStandaloneBeforeBoundary(cursor, rootBoundary);
+        html += this.renderStandaloneBeforeBoundary(cursor, rootBoundary, true);
         return html;
     }
 }
