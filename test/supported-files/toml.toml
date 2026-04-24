@@ -21,7 +21,7 @@ compression = ["tower-http/compression-full"] # enable response compression [D]
 tracing = ["tracing-subscriber", "tracing-opentelemetry"]
 full = ["tls", "compression", "tracing"]
 
-# Dependency relationship [E]
+# dependencies section header [E]
 [dependencies]
 tokio = { version = "1.36", features = ["full"] }
 axum = { version = "0.7", features = ["macros", "multipart"] }
@@ -45,9 +45,9 @@ rustls = { version = "0.22", optional = true }
 tokio-rustls = { version = "0.25", optional = true }
 tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter", "json"] }
 tracing-opentelemetry = { version = "0.22", optional = true }
-# append to dev-dependency or prepend to dependencies [H]
+# boundary comment between dependency groups [H]
 
-# DEV Dependency relationship [I]
+# dev-dependencies section header [I]
 [dev-dependencies]
 reqwest = { version = "0.12", features = ["json"] }
 mockall = "0.12"
@@ -89,4 +89,4 @@ tag-message = "Release {{tag_name}}"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-# item is out of object [L]
+# trailing root-level comment [L]

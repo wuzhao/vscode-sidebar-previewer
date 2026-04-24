@@ -47,6 +47,89 @@ function extractCommentPayloads(html) {
   });
 }
 
+function extractCommentOwners(html) {
+  const owners = [];
+  let ownerId = 0;
+
+  const keyPattern = /<span class="tree-key"[^>]*>([^<]*)<\/span><span class="tree-comment-icon[^>]*data-comments="([^"]+)"/g;
+  const indexPattern = /<span class="tree-index"[^>]*>([^<]*)<\/span><span class="tree-comment-icon[^>]*data-comments="([^"]+)"/g;
+  const standalonePattern = /<div class="tree-item tree-standalone-comment">\s*<span class="tree-comment-icon[^>]*data-comments="([^"]+)"/g;
+
+  let match;
+  while ((match = keyPattern.exec(html)) !== null) {
+    owners.push({
+      id: ownerId,
+      kind: 'key',
+      target: decodeHtmlAttr(match[1]),
+      comments: JSON.parse(decodeHtmlAttr(match[2])),
+    });
+    ownerId += 1;
+  }
+
+  while ((match = indexPattern.exec(html)) !== null) {
+    owners.push({
+      id: ownerId,
+      kind: 'index',
+      target: decodeHtmlAttr(match[1]),
+      comments: JSON.parse(decodeHtmlAttr(match[2])),
+    });
+    ownerId += 1;
+  }
+
+  while ((match = standalonePattern.exec(html)) !== null) {
+    owners.push({
+      id: ownerId,
+      kind: 'standalone',
+      target: 'standalone',
+      comments: JSON.parse(decodeHtmlAttr(match[1])),
+    });
+    ownerId += 1;
+  }
+
+  return owners;
+}
+
+function buildLabelOwnerMap(owners) {
+  const labelOwners = new Map();
+
+  for (const owner of owners) {
+    for (const comment of owner.comments) {
+      const match = /\[([A-Z])\]/.exec(comment.text);
+      if (!match) {
+        continue;
+      }
+      const label = match[1];
+      const current = labelOwners.get(label) ?? [];
+      current.push(owner);
+      labelOwners.set(label, current);
+    }
+  }
+
+  return labelOwners;
+}
+
+function getSingleLabelOwner(labelOwners, label) {
+  const owners = labelOwners.get(label) ?? [];
+  assert.equal(owners.length, 1, `label [${label}] should map to exactly one owner`);
+  return owners[0];
+}
+
+function assertLabelOwner(labelOwners, label, expectedKind, expectedTarget) {
+  const owner = getSingleLabelOwner(labelOwners, label);
+  assert.equal(owner.kind, expectedKind, `label [${label}] should bind to ${expectedKind}`);
+  assert.equal(owner.target, expectedTarget, `label [${label}] should bind to ${expectedTarget}`);
+  return owner;
+}
+
+function assertSameOwner(labelOwners, labels) {
+  const owners = labels.map(label => getSingleLabelOwner(labelOwners, label));
+  const firstOwnerId = owners[0].id;
+  owners.forEach((owner, index) => {
+    assert.equal(owner.id, firstOwnerId, `labels ${labels[0]} and ${labels[index]} should share one popup entry`);
+  });
+  return owners[0];
+}
+
 function readSupportedFixture(name) {
     const filePath = path.join(__dirname, '..', 'supported-files', name);
     return fs.readFileSync(filePath, 'utf8');
@@ -412,8 +495,29 @@ test('JSON comment before object key keeps binding across blank lines', () => {
   assert.equal(result.html.includes('tree-standalone-comment'), false);
 });
 
+test('JSON leading block comment binds to same-line key', () => {
+  const source = [
+    '{',
+    '  "meta": {',
+    '    /* maintainer docs */ "maintainer": "Preview Team",',
+    '    "flags": {}',
+    '  }',
+    '}',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'json');
+  const payloads = extractCommentPayloads(result.html);
+
+  assert.ok(/<span class="tree-key" data-line="\d+">maintainer<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
+  assert.equal(/<span class="tree-key" data-line="\d+">flags<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
+  assert.ok(payloads.some(payload => payload.some(item => item.marker === '*' && item.text === 'maintainer docs')));
+});
+
 test('TOML comment before object key keeps binding across blank lines', () => {
   const source = [
+    '[base]',
+    'enabled = true',
+    '',
     '# server object',
     '',
     '[server]',
@@ -549,6 +653,131 @@ test('Trailing array comment without next element becomes standalone icon', () =
   assert.ok(result.html.includes('tree-standalone-comment'));
   assert.ok(payloads.some(payload => payload.length === 1 && payload[0].marker === '/' && payload[0].text === 'tail comment'));
   assert.equal(/<span class="tree-key" data-line="\d+">next<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
+});
+
+test('Task G JSON fixture label ownership mapping is correct', () => {
+  const source = readSupportedFixture('json.jsonc');
+  const result = CodePreviewProvider.parse(source, 'json');
+  const owners = extractCommentOwners(result.html);
+  const labelOwners = buildLabelOwnerMap(owners);
+
+  assertLabelOwner(labelOwners, 'A', 'standalone', 'standalone');
+
+  assertLabelOwner(labelOwners, 'B', 'key', 'meta');
+  assertLabelOwner(labelOwners, 'C', 'key', 'meta');
+  assertSameOwner(labelOwners, ['B', 'C']);
+
+  const dOwner = assertLabelOwner(labelOwners, 'D', 'key', 'name');
+  assert.ok(dOwner.comments.some(comment => comment.marker === '/' && /triple slash note \[D\]$/.test(comment.text)));
+
+  const eOwner = assertLabelOwner(labelOwners, 'E', 'key', 'version');
+  assert.ok(eOwner.comments.some(comment => comment.marker === '/' && comment.text === '! bang-style line comment [E]'));
+
+  const fOwner = assertLabelOwner(labelOwners, 'F', 'key', 'url');
+  assert.ok(fOwner.comments.some(comment => comment.text === 'ensure // in string is preserved [F]'));
+
+  assertLabelOwner(labelOwners, 'G', 'key', 'maintainer');
+
+  assertLabelOwner(labelOwners, 'H', 'key', 'experimental');
+  assertLabelOwner(labelOwners, 'I', 'key', 'experimental');
+  assertLabelOwner(labelOwners, 'J', 'key', 'experimental');
+  assertSameOwner(labelOwners, ['H', 'I', 'J']);
+
+  const kOwner = assertLabelOwner(labelOwners, 'K', 'key', 'strict');
+  assert.ok(kOwner.comments.some(comment => comment.marker === '/' && comment.text === '// slash-heavy non-mainstream line comment [K]'));
+
+  assertLabelOwner(labelOwners, 'L', 'key', 'records');
+  assertLabelOwner(labelOwners, 'M', 'index', '0');
+  assertLabelOwner(labelOwners, 'N', 'key', 'score');
+  assertLabelOwner(labelOwners, 'O', 'index', '1');
+  assertLabelOwner(labelOwners, 'P', 'key', 'name');
+  assertLabelOwner(labelOwners, 'Q', 'key', 'score');
+
+  const rOwner = assertLabelOwner(labelOwners, 'R', 'index', '0');
+  assert.ok(rOwner.comments.some(comment => comment.marker === '*' && comment.text === 'inline block item [R]'));
+
+  const sOwner = assertLabelOwner(labelOwners, 'S', 'index', '1');
+  assert.ok(sOwner.comments.some(comment => comment.marker === '/' && /triple slash list item \[S\]$/.test(comment.text)));
+
+  assertLabelOwner(labelOwners, 'T', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'U', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'V', 'key', 'commentStyles');
+  assertLabelOwner(labelOwners, 'W', 'index', '2');
+  assertLabelOwner(labelOwners, 'X', 'key', 'note');
+  assertLabelOwner(labelOwners, 'Y', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'Z', 'standalone', 'standalone');
+});
+
+test('Task G TOML fixture label ownership mapping is correct', () => {
+  const source = readSupportedFixture('toml.toml');
+  const result = CodePreviewProvider.parse(source, 'toml');
+  const owners = extractCommentOwners(result.html);
+  const labelOwners = buildLabelOwnerMap(owners);
+
+  assertLabelOwner(labelOwners, 'A', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'B', 'standalone', 'standalone');
+  assertSameOwner(labelOwners, ['A', 'B']);
+
+  assertLabelOwner(labelOwners, 'C', 'key', 'name');
+  assertLabelOwner(labelOwners, 'D', 'key', 'compression');
+  assertLabelOwner(labelOwners, 'E', 'key', 'dependencies');
+  assertLabelOwner(labelOwners, 'F', 'key', 'serde_json');
+  assertLabelOwner(labelOwners, 'G', 'key', 'rustls');
+
+  assertLabelOwner(labelOwners, 'H', 'key', 'dev-dependencies');
+  assertLabelOwner(labelOwners, 'I', 'key', 'dev-dependencies');
+  assertSameOwner(labelOwners, ['H', 'I']);
+
+  assertLabelOwner(labelOwners, 'J', 'key', 'lto');
+  assertLabelOwner(labelOwners, 'K', 'key', 'bench');
+  assertLabelOwner(labelOwners, 'L', 'standalone', 'standalone');
+});
+
+test('Task G XML fixture label ownership mapping is correct', () => {
+  const source = readSupportedFixture('xml.xml');
+  const result = CodePreviewProvider.parse(source, 'xml');
+  const owners = extractCommentOwners(result.html);
+  const labelOwners = buildLabelOwnerMap(owners);
+
+  assertLabelOwner(labelOwners, 'A', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'B', 'key', 'catalog');
+  assertLabelOwner(labelOwners, 'C', 'key', 'products');
+  assertLabelOwner(labelOwners, 'D', 'key', 'name');
+  assertLabelOwner(labelOwners, 'E', 'key', 'tag');
+  assertLabelOwner(labelOwners, 'F', 'key', 'meta:statistics');
+  assertLabelOwner(labelOwners, 'G', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'H', 'standalone', 'standalone');
+});
+
+test('Task G YAML fixture label ownership mapping is correct', () => {
+  const source = readSupportedFixture('yaml.yaml');
+  const result = CodePreviewProvider.parse(source, 'yaml');
+  const owners = extractCommentOwners(result.html);
+  const labelOwners = buildLabelOwnerMap(owners);
+
+  assertLabelOwner(labelOwners, 'A', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'B', 'standalone', 'standalone');
+  assertSameOwner(labelOwners, ['A', 'B']);
+
+  assertLabelOwner(labelOwners, 'C', 'key', 'name');
+  assertLabelOwner(labelOwners, 'D', 'key', 'app');
+  assertLabelOwner(labelOwners, 'E', 'key', 'app');
+  assertLabelOwner(labelOwners, 'F', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'G', 'key', 'template');
+  assertLabelOwner(labelOwners, 'H', 'key', 'containers');
+  assertLabelOwner(labelOwners, 'I', 'key', 'containers');
+  assertSameOwner(labelOwners, ['H', 'I']);
+  assertLabelOwner(labelOwners, 'J', 'key', 'name');
+  assertLabelOwner(labelOwners, 'K', 'key', 'value');
+  assertLabelOwner(labelOwners, 'L', 'key', 'name');
+  assertLabelOwner(labelOwners, 'M', 'key', 'memory');
+  assertLabelOwner(labelOwners, 'N', 'key', 'preferredDuringSchedulingIgnoredDuringExecution');
+  assertLabelOwner(labelOwners, 'O', 'key', 'key');
+  assertLabelOwner(labelOwners, 'P', 'key', 'apiVersion');
+  assertLabelOwner(labelOwners, 'Q', 'key', 'apiVersion');
+  assertLabelOwner(labelOwners, 'R', 'key', 'apiVersion');
+  assertLabelOwner(labelOwners, 'S', 'standalone', 'standalone');
+  assertLabelOwner(labelOwners, 'T', 'standalone', 'standalone');
 });
 
 test('MarkdownProvider escapes front matter HTML content', () => {

@@ -30,7 +30,7 @@
       <name>Compact Keyboard</name>
       <price currency="USD">129.50</price>
       <tags>
-    <!-- product tags [E] -->
+    <!-- tags for second product [E] -->
         <tag>peripheral</tag>
         <tag>wireless</tag>
       </tags>
@@ -45,12 +45,12 @@
     </product>
   </products>
 
-<!-- statistics properties [F] -->
+<!-- statistics section [F] -->
   <meta:statistics>
     <meta:count type="products">2</meta:count>
     <meta:count type="warehouses">2</meta:count>
     <meta:lastSync timezone="UTC">2026-04-21T12:30:45Z</meta:lastSync>
-    <!-- last meta [G] -->
+    <!-- trailing statistics comment [G] -->
   </meta:statistics>
 </catalog>
 

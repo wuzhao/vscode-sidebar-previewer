@@ -70,7 +70,8 @@ export class CodePreviewProvider {
                 arrayItemLineLocator,
                 commentMetadata.lineComments,
                 commentMetadata.standaloneGroups,
-                fileType
+                fileType,
+                lines
             );
             const wrappedHtml = `<div class="data-tree">${html}</div>`;
 
@@ -664,10 +665,20 @@ export class CodePreviewProvider {
 
     private static buildPrimaryKeyLineIndex(lines: string[], fileType: FileType): Map<string, number[]> {
         const index = new Map<string, number[]>();
+        const xmlLastPushed = new Map<string, { line: number; indent: number }>();
 
         for (let i = 0; i < lines.length; i++) {
             const keys = this.extractKeysFromLine(lines[i], fileType);
             for (const key of keys) {
+                if (fileType === 'xml' && !this.isXmlAttributeKey(key)) {
+                    const currentIndent = this.getIndentation(lines[i]);
+                    const previous = xmlLastPushed.get(key);
+                    if (previous && previous.line === i - 1 && previous.indent === currentIndent) {
+                        previous.line = i;
+                        continue;
+                    }
+                    xmlLastPushed.set(key, { line: i, indent: currentIndent });
+                }
                 this.pushIndexedLine(index, key, i);
             }
         }
@@ -731,7 +742,7 @@ export class CodePreviewProvider {
     }
 
     private static extractJsonKeys(line: string): string[] {
-        const match = line.match(/^\s*"((?:\\.|[^"\\])*)"\s*(?:(?:\/\*.*?\*\/)\s*)*:/);
+        const match = line.match(/^\s*(?:\/\*.*?\*\/\s*)*"((?:\\.|[^"\\])*)"\s*(?:(?:\/\*.*?\*\/)\s*)*:/);
         if (!match) {
             return [];
         }
@@ -1125,6 +1136,54 @@ export class CodePreviewProvider {
                     if (onlyComment) {
                         pushCommentForCurrentContext('*', onlyComment, i, currentArrayDepth, currentObjectDepth);
                     }
+
+                    const trailing = rest.slice(end + 2);
+                    if (trailing.trim().length === 0) {
+                        continue;
+                    }
+
+                    const trailingKeyExists = this.extractJsonKeys(trailing).length > 0;
+                    const trailingArrayItemExists = arrayItemLines.has(i);
+                    const trailingBindableLine = trailingKeyExists || trailingArrayItemExists;
+                    const trailingInlineComments = this.findJsonInlineComments(trailing);
+
+                    if (!hasBoundNode && trailingBindableLine && preamble.length > 0) {
+                        pending.push(...preamble);
+                        pendingLine = pendingLine >= 0 ? pendingLine : preambleLine;
+                        pendingArrayDepth = currentArrayDepth;
+                        pendingObjectDepth = currentObjectDepth;
+                        preamble.length = 0;
+                        preambleLine = -1;
+                    }
+
+                    if (trailingBindableLine) {
+                        if (pending.length > 0 && pendingObjectDepth >= 0 && currentObjectDepth < pendingObjectDepth) {
+                            flushPendingStandalone();
+                        }
+
+                        if (pending.length > 0 && pendingArrayDepth > 0 && !trailingArrayItemExists && currentArrayDepth < pendingArrayDepth) {
+                            flushPendingStandalone();
+                        }
+
+                        const comments = [...pending, ...trailingInlineComments].filter(comment => !!comment.text);
+                        if (comments.length > 0) {
+                            lineComments.set(i, comments);
+                        }
+                        pending.length = 0;
+                        pendingLine = -1;
+                        pendingArrayDepth = -1;
+                        pendingObjectDepth = -1;
+                        hasBoundNode = true;
+                        continue;
+                    }
+
+                    if (!hasBoundNode && trailingInlineComments.length > 0) {
+                        if (preamble.length === 0) {
+                            preambleLine = i;
+                        }
+                        preamble.push(...trailingInlineComments);
+                    }
+
                     continue;
                 }
 
@@ -1276,22 +1335,41 @@ export class CodePreviewProvider {
             if (commentOnlyMatch) {
                 const text = this.cleanCommentText(commentOnlyMatch[1]);
                 if (text) {
+                    if (fileType === 'yaml' && pending.length > 0 && currentIndent < pendingIndent) {
+                        flushPendingStandalone();
+                    }
+
+                    if (fileType === 'yaml' && hasBoundNode) {
+                        const previousBindableLine = this.findYamlPreviousBindableLine(lines, i, arrayItemLines);
+                        const nextBindableLine = this.findYamlNextBindableLine(lines, i, arrayItemLines);
+                        const previousIndent = previousBindableLine >= 0 ? this.getIndentation(lines[previousBindableLine]) : -1;
+                        const nextIndent = nextBindableLine >= 0 ? this.getIndentation(lines[nextBindableLine]) : -1;
+                        const previousHasInlineValue = previousBindableLine >= 0
+                            ? this.yamlLineHasInlineValue(lines[previousBindableLine])
+                            : false;
+
+                        const shouldFollowPrevious =
+                            nextIndent >= 0 &&
+                            currentIndent > nextIndent &&
+                            previousIndent >= 0 &&
+                            currentIndent > previousIndent &&
+                            previousHasInlineValue;
+
+                        if (shouldFollowPrevious) {
+                            const existing = lineComments.get(previousBindableLine) ?? [];
+                            this.pushComment(existing, '#', text);
+                            lineComments.set(previousBindableLine, existing);
+                            continue;
+                        }
+                    }
+
                     pushCommentForCurrentContext(text, i, currentIndent, currentArrayDepth);
                 }
                 continue;
             }
 
             if (!hasBoundNode && bindableLine) {
-                if (fileType === 'toml' && preamble.length > 0) {
-                    pending.push(...preamble);
-                    pendingLine = pendingLine >= 0 ? pendingLine : preambleLine;
-                    pendingIndent = currentIndent;
-                    pendingFromArray = currentArrayDepth > 0;
-                    preamble.length = 0;
-                    preambleLine = -1;
-                } else {
-                    flushPreamble();
-                }
+                flushPreamble();
             }
 
             if (bindableLine) {
@@ -1723,6 +1801,52 @@ export class CodePreviewProvider {
         return false;
     }
 
+    private static findYamlPreviousBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
+        for (let i = lineIndex - 1; i >= 0; i--) {
+            const trimmed = lines[i].trim();
+            if (trimmed.length === 0 || /^#/.test(trimmed)) {
+                continue;
+            }
+
+            if (arrayItemLines.has(i) || this.extractYamlKeys(lines[i]).length > 0) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static findYamlNextBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
+        for (let i = lineIndex + 1; i < lines.length; i++) {
+            const trimmed = lines[i].trim();
+            if (trimmed.length === 0 || /^#/.test(trimmed)) {
+                continue;
+            }
+
+            if (arrayItemLines.has(i) || this.extractYamlKeys(lines[i]).length > 0) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static yamlLineHasInlineValue(line: string): boolean {
+        const code = this.stripHashCommentText(line).trim();
+        if (code.length === 0) {
+            return false;
+        }
+
+        const withoutArrayPrefix = code.replace(/^-\s+/, '');
+        const colonIndex = withoutArrayPrefix.indexOf(':');
+        if (colonIndex < 0) {
+            return false;
+        }
+
+        const rhs = withoutArrayPrefix.slice(colonIndex + 1).trim();
+        return rhs.length > 0;
+    }
+
     private static getIndentation(line: string): number {
         const match = line.match(/^\s*/);
         return match ? match[0].length : 0;
@@ -1773,9 +1897,19 @@ export class CodePreviewProvider {
         commentLines: CommentLineIndex,
         fileType: FileType,
         entryKey: string | null,
+        sourceLines: string[],
         xmlConsumedLines: Set<number> | null
     ): string {
         if (line < 0 || !commentLines.has(line)) {
+            return '';
+        }
+
+        if (
+            entryKey === null &&
+            (fileType === 'yaml' || fileType === 'toml') &&
+            line < sourceLines.length &&
+            this.extractKeysFromLine(sourceLines[line], fileType).length > 0
+        ) {
             return '';
         }
 
@@ -1844,6 +1978,7 @@ export class CodePreviewProvider {
         standaloneCursor: StandaloneCommentCursor,
         boundaryExclusive: number,
         fileType: FileType,
+        sourceLines: string[],
         xmlConsumedLines: Set<number> | null
     ): string {
         let html = '<div class="tree-children">';
@@ -1857,7 +1992,7 @@ export class CodePreviewProvider {
                 const itemInfo = items[i];
                 const line = itemInfo.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
-                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, null, xmlConsumedLines);
+                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
                 const nextBoundary = i + 1 < items.length
                     ? this.resolveBoundaryLine(items[i + 1].line, boundaryExclusive)
@@ -1869,7 +2004,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -1885,7 +2020,7 @@ export class CodePreviewProvider {
                 const entry = entries[i];
                 const line = entry.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
-                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, xmlConsumedLines);
+                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
                 const nextBoundary = i + 1 < entries.length
                     ? this.resolveBoundaryLine(entries[i + 1].line, boundaryExclusive)
@@ -1897,7 +2032,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }
@@ -1946,7 +2081,8 @@ export class CodePreviewProvider {
         arrayItemLineLocator: ArrayItemLineLocator,
         commentLines: CommentLineIndex,
         standaloneGroups: StandaloneCommentGroup[],
-        fileType: FileType
+        fileType: FileType,
+        sourceLines: string[]
     ): string {
         const cursor = this.createStandaloneCursor(standaloneGroups);
         const xmlConsumedLines = fileType === 'xml' ? new Set<number>() : null;
@@ -1970,7 +2106,7 @@ export class CodePreviewProvider {
                 const itemInfo = items[i];
                 const line = itemInfo.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
-                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, null, xmlConsumedLines);
+                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, rootBoundary);
                 const nextBoundary = i + 1 < items.length
                     ? this.resolveBoundaryLine(items[i + 1].line, rootBoundary)
@@ -1982,7 +2118,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -1998,7 +2134,7 @@ export class CodePreviewProvider {
                 const entry = entries[i];
                 const line = entry.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
-                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, xmlConsumedLines);
+                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, rootBoundary);
                 const nextBoundary = i + 1 < entries.length
                     ? this.resolveBoundaryLine(entries[i + 1].line, rootBoundary)
@@ -2010,7 +2146,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }

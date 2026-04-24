@@ -27,8 +27,8 @@ spec:
     matchLabels:
       # app comment [E]
       app: web-app
-      # lasy comment of matchLabels [F]
-  # template comment [G]
+      # trailing comment of matchLabels [F]
+  # comment before template [G]
   template:
     metadata:
       labels:
@@ -45,7 +45,7 @@ spec:
             requests:
               cpu: 10m
               memory: 16Mi
-  # indentation is not aligned [H]
+  # intentionally misaligned indentation [H]
       # containers comment [I]
       containers:
         - name: web-server
@@ -61,7 +61,7 @@ spec:
             - containerPort: 8443
               protocol: TCP
               name: https
-                  # indentation is not aligned [J]
+                  # intentionally misaligned indentation [J]
           env:
             - name: NODE_ENV
               value: production # runtime mode [K]
@@ -372,6 +372,6 @@ spec:
   selector:
     matchLabels:
       app: web-app
-    # last selector of matchLabels [S]
+    # trailing comment under selector.matchLabels [S]
 
 # END [T]
