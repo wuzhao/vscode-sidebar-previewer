@@ -16,6 +16,14 @@ interface JsonCloseLineLocator {
     next(line: number): number;
 }
 
+interface YamlCloseLineLocator {
+    next(line: number): number;
+}
+
+interface XmlCloseLineLocator {
+    next(line: number): number;
+}
+
 interface XmlTagMatch {
     tagName: string;
     attributesSource: string;
@@ -68,8 +76,10 @@ export class CodePreviewProvider {
             const lines = content.split('\n');
             const commentMetadata = this.buildCommentMetadata(lines, fileType);
             const lineLocator = this.createKeyLineLocator(lines, fileType);
-            const arrayItemLineLocator = this.createArrayItemLineLocator(lines, fileType);
+            const arrayItemLineLocator = this.createArrayItemLineLocator(lines, fileType, parsed);
             const jsonCloseLineLocator = fileType === 'json' ? this.createJsonCloseLineLocator(lines) : null;
+            const yamlCloseLineLocator = fileType === 'yaml' ? this.createYamlCloseLineLocator(lines) : null;
+            const xmlCloseLineLocator = fileType === 'xml' ? this.createXmlCloseLineLocator(lines) : null;
             const html = this.renderTree(
                 parsed,
                 lineLocator,
@@ -78,7 +88,9 @@ export class CodePreviewProvider {
                 commentMetadata.standaloneGroups,
                 fileType,
                 lines,
-                jsonCloseLineLocator
+                jsonCloseLineLocator,
+                yamlCloseLineLocator,
+                xmlCloseLineLocator
             );
             const wrappedHtml = `<div class="data-tree">${html}</div>`;
 
@@ -161,19 +173,24 @@ export class CodePreviewProvider {
     }
 
     private static buildTomlPathLineIndex(lines: string[]): Map<string, number[]> {
-        const index = new Map<string, number[]>();
+        const explicitIndex = new Map<string, number[]>();
+        const implicitIndex = new Map<string, number[]>();
         let currentTablePath: string[] = [];
 
-        const pushPath = (segments: string[], line: number): void => {
+        const pushPath = (segments: string[], line: number, explicit: boolean): void => {
             if (segments.length === 0) {
                 return;
             }
-            this.pushIndexedLine(index, segments.join('.'), line);
+            this.pushIndexedLine(explicit ? explicitIndex : implicitIndex, segments.join('.'), line);
         };
 
         const pushTablePathPrefixes = (segments: string[], line: number): void => {
+            if (segments.length === 0) {
+                return;
+            }
+
             for (let depth = 1; depth <= segments.length; depth++) {
-                pushPath(segments.slice(0, depth), line);
+                pushPath(segments.slice(0, depth), line, depth === segments.length);
             }
         };
 
@@ -211,14 +228,26 @@ export class CodePreviewProvider {
                 continue;
             }
 
-            pushPath([...currentTablePath, ...relativePath], i);
+            pushPath([...currentTablePath, ...relativePath], i, true);
+        }
+
+        const index = new Map<string, number[]>();
+        const allKeys = new Set<string>([
+            ...explicitIndex.keys(),
+            ...implicitIndex.keys(),
+        ]);
+
+        for (const key of allKeys) {
+            const explicitLines = explicitIndex.get(key) ?? [];
+            const implicitLines = implicitIndex.get(key) ?? [];
+            index.set(key, [...explicitLines, ...implicitLines]);
         }
 
         return index;
     }
 
-    private static createArrayItemLineLocator(lines: string[], fileType: FileType): ArrayItemLineLocator {
-        const itemLines = this.buildArrayItemLineIndex(lines, fileType);
+    private static createArrayItemLineLocator(lines: string[], fileType: FileType, parsedData: unknown): ArrayItemLineLocator {
+        const itemLines = this.buildArrayItemLineIndex(lines, fileType, parsedData);
         let cursor = 0;
 
         return {
@@ -230,6 +259,95 @@ export class CodePreviewProvider {
                 cursor += 1;
                 return line;
             }
+        };
+    }
+
+    private static createYamlCloseLineLocator(lines: string[]): YamlCloseLineLocator {
+        const cache = new Map<number, number>();
+
+        return {
+            next: (line: number): number => {
+                if (line < 0 || line >= lines.length) {
+                    return -1;
+                }
+
+                const cached = cache.get(line);
+                if (cached !== undefined) {
+                    return cached;
+                }
+
+                const startIndent = this.getIndentation(lines[line]);
+                for (let row = line + 1; row < lines.length; row++) {
+                    const trimmed = lines[row].trim();
+                    if (trimmed.length === 0) {
+                        continue;
+                    }
+
+                    const indent = this.getIndentation(lines[row]);
+                    if (indent <= startIndent) {
+                        cache.set(line, row);
+                        return row;
+                    }
+                }
+
+                cache.set(line, -1);
+                return -1;
+            }
+        };
+    }
+
+    private static createXmlCloseLineLocator(lines: string[]): XmlCloseLineLocator {
+        const closeLineMap = new Map<number, number>();
+        const stack: Array<{ tagName: string; line: number }> = [];
+        const scanState: XmlCommentScanState = {
+            inComment: false,
+            parts: [],
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+            const scan = this.scanXmlLineComments(lines[i], scanState);
+            const code = scan.nonCommentText;
+            const pattern = /<\s*(\/)?\s*([A-Za-z_:][\w:.-]*)([^<>]*?)>/g;
+
+            let match: RegExpExecArray | null;
+            while ((match = pattern.exec(code)) !== null) {
+                const raw = match[0];
+                const isClosing = Boolean(match[1]);
+                const tagName = match[2];
+
+                if (raw.startsWith('<?') || raw.startsWith('<!')) {
+                    continue;
+                }
+
+                if (isClosing) {
+                    for (let j = stack.length - 1; j >= 0; j--) {
+                        if (stack[j].tagName !== tagName) {
+                            continue;
+                        }
+
+                        const open = stack.splice(j, 1)[0];
+                        if (!closeLineMap.has(open.line)) {
+                            closeLineMap.set(open.line, i);
+                        }
+                        break;
+                    }
+                    continue;
+                }
+
+                const isSelfClosing = /\/\s*>$/.test(raw);
+                if (isSelfClosing) {
+                    if (!closeLineMap.has(i)) {
+                        closeLineMap.set(i, i);
+                    }
+                    continue;
+                }
+
+                stack.push({ tagName, line: i });
+            }
+        }
+
+        return {
+            next: (line: number): number => closeLineMap.get(line) ?? -1,
         };
     }
 
@@ -364,12 +482,12 @@ export class CodePreviewProvider {
         return null;
     }
 
-    private static buildArrayItemLineIndex(lines: string[], fileType: FileType): number[] {
+    private static buildArrayItemLineIndex(lines: string[], fileType: FileType, parsedData: unknown): number[] {
         switch (fileType) {
             case 'json':
                 return this.buildJsonArrayItemLineIndex(lines);
             case 'yaml':
-                return this.buildYamlArrayItemLineIndex(lines);
+                return this.buildYamlArrayItemLineIndex(lines, this.shouldUseYamlDocumentArrayLines(parsedData, lines));
             case 'toml':
                 return this.buildTomlArrayItemLineIndex(lines);
             case 'xml':
@@ -377,6 +495,14 @@ export class CodePreviewProvider {
             default:
                 return [];
         }
+    }
+
+    private static shouldUseYamlDocumentArrayLines(parsedData: unknown, lines: string[]): boolean {
+        if (!Array.isArray(parsedData)) {
+            return false;
+        }
+
+        return lines.some(line => /^\s*---(?:\s+#.*)?\s*$/.test(line));
     }
 
     private static buildJsonArrayItemLineIndex(lines: string[]): number[] {
@@ -459,8 +585,12 @@ export class CodePreviewProvider {
         return /[0-9]/.test(token);
     }
 
-    private static buildYamlArrayItemLineIndex(lines: string[]): number[] {
+    private static buildYamlArrayItemLineIndex(lines: string[], includeDocumentRootItems: boolean): number[] {
         const result: number[] = [];
+
+        if (includeDocumentRootItems) {
+            result.push(...this.findYamlDocumentStartLines(lines));
+        }
 
         for (let i = 0; i < lines.length; i++) {
             const trimmed = lines[i].trim();
@@ -472,7 +602,37 @@ export class CodePreviewProvider {
             }
         }
 
-        return result;
+        return [...new Set(result)].sort((a, b) => a - b);
+    }
+
+    private static findYamlDocumentStartLines(lines: string[]): number[] {
+        const starts: number[] = [];
+
+        const pushFirstBindableFrom = (start: number): void => {
+            for (let i = start; i < lines.length; i++) {
+                const trimmed = lines[i].trim();
+                if (
+                    trimmed.length === 0
+                    || trimmed.startsWith('#')
+                    || trimmed === '---'
+                    || trimmed === '...'
+                ) {
+                    continue;
+                }
+
+                starts.push(i);
+                return;
+            }
+        };
+
+        pushFirstBindableFrom(0);
+        for (let i = 0; i < lines.length; i++) {
+            if (/^\s*---(?:\s+#.*)?\s*$/.test(lines[i])) {
+                pushFirstBindableFrom(i + 1);
+            }
+        }
+
+        return starts;
     }
 
     private static buildTomlArrayItemLineIndex(lines: string[]): number[] {
@@ -1066,7 +1226,7 @@ export class CodePreviewProvider {
     }
 
     private static buildCommentMetadata(lines: string[], fileType: FileType): CommentMetadata {
-        const arrayItemLines = new Set(this.buildArrayItemLineIndex(lines, fileType));
+        const arrayItemLines = new Set(this.buildArrayItemLineIndex(lines, fileType, null));
 
         switch (fileType) {
             case 'json':
@@ -2143,7 +2303,16 @@ export class CodePreviewProvider {
             return this.renderCommentIcon(commentLines.get(line) as CommentEntry[]);
         }
 
-        if (!entryKey || this.isXmlAttributeKey(entryKey)) {
+        if (entryKey === null) {
+            if (!xmlConsumedLines || xmlConsumedLines.has(line)) {
+                return '';
+            }
+
+            xmlConsumedLines.add(line);
+            return this.renderCommentIcon(commentLines.get(line) as CommentEntry[]);
+        }
+
+        if (this.isXmlAttributeKey(entryKey)) {
             return '';
         }
 
@@ -2202,6 +2371,42 @@ export class CodePreviewProvider {
         return Math.min(boundaryExclusive, closeLine + 1);
     }
 
+    private static constrainBoundaryForYamlContainer(
+        fileType: FileType,
+        line: number,
+        boundaryExclusive: number,
+        yamlCloseLineLocator: YamlCloseLineLocator | null
+    ): number {
+        if (fileType !== 'yaml' || !yamlCloseLineLocator || line < 0) {
+            return boundaryExclusive;
+        }
+
+        const closeLine = yamlCloseLineLocator.next(line);
+        if (closeLine < 0) {
+            return boundaryExclusive;
+        }
+
+        return Math.min(boundaryExclusive, closeLine);
+    }
+
+    private static constrainBoundaryForXmlContainer(
+        fileType: FileType,
+        line: number,
+        boundaryExclusive: number,
+        xmlCloseLineLocator: XmlCloseLineLocator | null
+    ): number {
+        if (fileType !== 'xml' || !xmlCloseLineLocator || line < 0) {
+            return boundaryExclusive;
+        }
+
+        const closeLine = xmlCloseLineLocator.next(line);
+        if (closeLine < 0) {
+            return boundaryExclusive;
+        }
+
+        return Math.min(boundaryExclusive, closeLine + 1);
+    }
+
     /**
      * 判断值是否为复合类型（对象或非空数组）
      */
@@ -2231,8 +2436,11 @@ export class CodePreviewProvider {
         fileType: FileType,
         sourceLines: string[],
         jsonCloseLineLocator: JsonCloseLineLocator | null,
+        yamlCloseLineLocator: YamlCloseLineLocator | null,
+        xmlCloseLineLocator: XmlCloseLineLocator | null,
         xmlConsumedLines: Set<number> | null,
-        parentPath: string[]
+        parentPath: string[],
+        xmlDeferredFirstItemComments: CommentEntry[] | null = null
     ): string {
         let html = '<div class="tree-children">';
         if (Array.isArray(data)) {
@@ -2245,7 +2453,14 @@ export class CodePreviewProvider {
                 const itemInfo = items[i];
                 const line = itemInfo.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
-                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines);
+                const deferredXmlIcon =
+                    fileType === 'xml'
+                    && i === 0
+                    && xmlDeferredFirstItemComments
+                    && xmlDeferredFirstItemComments.length > 0
+                        ? this.renderCommentIcon(xmlDeferredFirstItemComments)
+                        : '';
+                const commentIcon = deferredXmlIcon || this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
                 const nextBoundary = i + 1 < items.length
                     ? this.resolveBoundaryLine(items[i + 1].line, boundaryExclusive)
@@ -2257,8 +2472,10 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    const childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, parentPath)}</details></div>`;
+                    let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
+                    childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
+                    childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, parentPath, null)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -2275,7 +2492,21 @@ export class CodePreviewProvider {
                 const line = entry.line;
                 const entryPath = [...parentPath, entry.key];
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
-                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, sourceLines, xmlConsumedLines);
+                const shouldDeferXmlArrayLineComment =
+                    fileType === 'xml'
+                    && Array.isArray(entry.value)
+                    && line >= 0
+                    && commentLines.has(line)
+                    && !this.isXmlAttributeKey(entry.key);
+                const deferredXmlArrayComments = shouldDeferXmlArrayLineComment
+                    ? [...(commentLines.get(line) as CommentEntry[])]
+                    : null;
+                if (shouldDeferXmlArrayLineComment && xmlConsumedLines) {
+                    xmlConsumedLines.add(line);
+                }
+                const commentIcon = shouldDeferXmlArrayLineComment
+                    ? ''
+                    : this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
                 const nextBoundary = i + 1 < entries.length
                     ? this.resolveBoundaryLine(entries[i + 1].line, boundaryExclusive)
@@ -2287,7 +2518,9 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, entryPath)}</details></div>`;
+                    let childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, nextBoundary, yamlCloseLineLocator);
+                    childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, entryPath, Array.isArray(entry.value) ? deferredXmlArrayComments : null)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }
@@ -2338,7 +2571,9 @@ export class CodePreviewProvider {
         standaloneGroups: StandaloneCommentGroup[],
         fileType: FileType,
         sourceLines: string[],
-        jsonCloseLineLocator: JsonCloseLineLocator | null
+        jsonCloseLineLocator: JsonCloseLineLocator | null,
+        yamlCloseLineLocator: YamlCloseLineLocator | null,
+        xmlCloseLineLocator: XmlCloseLineLocator | null
     ): string {
         const cursor = this.createStandaloneCursor(standaloneGroups);
         const xmlConsumedLines = fileType === 'xml' ? new Set<number>() : null;
@@ -2353,9 +2588,15 @@ export class CodePreviewProvider {
 
         let html = '';
         if (Array.isArray(data)) {
-            const items = data.map(item => ({
+            const yamlDocumentRootLines = (fileType === 'yaml' && this.shouldUseYamlDocumentArrayLines(data, sourceLines))
+                ? this.findYamlDocumentStartLines(sourceLines)
+                : null;
+            const isYamlDocumentRootArray = fileType === 'yaml' && yamlDocumentRootLines !== null;
+            const items = data.map((item, index) => ({
                 value: item,
-                line: arrayItemLineLocator.next(),
+                line: (yamlDocumentRootLines && index < yamlDocumentRootLines.length)
+                    ? yamlDocumentRootLines[index]
+                    : arrayItemLineLocator.next(),
             }));
 
             for (let i = 0; i < items.length; i++) {
@@ -2374,8 +2615,12 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    const childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, [])}</details></div>`;
+                    let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
+                    if (!isYamlDocumentRootArray) {
+                        childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
+                    }
+                    childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [], null)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -2391,7 +2636,21 @@ export class CodePreviewProvider {
                 const entry = entries[i];
                 const line = entry.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
-                const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, sourceLines, xmlConsumedLines);
+                const shouldDeferXmlArrayLineComment =
+                    fileType === 'xml'
+                    && Array.isArray(entry.value)
+                    && line >= 0
+                    && commentLines.has(line)
+                    && !this.isXmlAttributeKey(entry.key);
+                const deferredXmlArrayComments = shouldDeferXmlArrayLineComment
+                    ? [...(commentLines.get(line) as CommentEntry[])]
+                    : null;
+                if (shouldDeferXmlArrayLineComment && xmlConsumedLines) {
+                    xmlConsumedLines.add(line);
+                }
+                const commentIcon = shouldDeferXmlArrayLineComment
+                    ? ''
+                    : this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, rootBoundary);
                 const nextBoundary = i + 1 < entries.length
                     ? this.resolveBoundaryLine(entries[i + 1].line, rootBoundary)
@@ -2403,7 +2662,9 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, jsonCloseLineLocator, xmlConsumedLines, [entry.key])}</details></div>`;
+                    let childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, nextBoundary, yamlCloseLineLocator);
+                    childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [entry.key], Array.isArray(entry.value) ? deferredXmlArrayComments : null)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }

@@ -875,7 +875,7 @@ test('Task G XML fixture label ownership mapping is correct', () => {
   assertLabelOwner(labelOwners, 'B', 'key', 'catalog');
   assertLabelOwner(labelOwners, 'C', 'key', 'products');
   assertLabelOwner(labelOwners, 'D', 'key', 'name');
-  assertLabelOwner(labelOwners, 'E', 'key', 'tag');
+  assertLabelOwner(labelOwners, 'E', 'index', '0');
   assertLabelOwner(labelOwners, 'F', 'key', 'meta:statistics');
   assertLabelOwner(labelOwners, 'G', 'standalone', 'standalone');
   assertLabelOwner(labelOwners, 'H', 'standalone', 'standalone');
@@ -954,6 +954,57 @@ test('Task J TOML final standalone comment [L] renders at document root tail', (
   const lEvent = getLabelEvent(events, 'L');
   assert.equal(lEvent.ownerKind, 'standalone');
   assert.equal(lEvent.path, '');
+});
+
+test('Task K TOML parent path uses explicit table line even when child table appears first', () => {
+  const source = [
+    '[package.metadata.docs]',
+    'format = "markdown"',
+    '',
+    '# parent metadata comment [L]',
+    '[package.metadata]',
+    'owner = "docs-team"',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'toml');
+  const metadataLines = extractKeyLines(result.html, 'metadata');
+
+  assert.deepEqual(metadataLines, [4]);
+  assertLineContains(source, '[package.metadata]', metadataLines[0]);
+
+  const owners = extractCommentOwners(result.html);
+  const labelOwners = buildLabelOwnerMap(owners);
+  assertLabelOwner(labelOwners, 'L', 'key', 'metadata');
+});
+
+test('Task K YAML standalone comments [F] and [S] render in expected parent scopes', () => {
+  const source = readSupportedFixture('yaml.yaml');
+  const result = CodePreviewProvider.parse(source, 'yaml');
+  const events = extractCommentRenderEvents(result.html);
+
+  const fEvent = getLabelEvent(events, 'F');
+  const sEvent = getLabelEvent(events, 'S');
+
+  assert.equal(fEvent.ownerKind, 'standalone');
+  assert.equal(fEvent.path, '[0] > spec > selector > matchLabels');
+
+  assert.equal(sEvent.ownerKind, 'standalone');
+  assert.equal(sEvent.path, '[3] > spec > selector');
+});
+
+test('Task K XML comment [E] follows tag[0] and [G] stays under meta:statistics scope', () => {
+  const source = readSupportedFixture('xml.xml');
+  const result = CodePreviewProvider.parse(source, 'xml');
+  const owners = extractCommentOwners(result.html);
+  const labelOwners = buildLabelOwnerMap(owners);
+  const events = extractCommentRenderEvents(result.html);
+
+  const gEvent = getLabelEvent(events, 'G');
+
+  assertLabelOwner(labelOwners, 'E', 'index', '0');
+
+  assert.equal(gEvent.ownerKind, 'standalone');
+  assert.equal(gEvent.path, 'catalog > meta:statistics');
 });
 
 test('MarkdownProvider escapes front matter HTML content', () => {
