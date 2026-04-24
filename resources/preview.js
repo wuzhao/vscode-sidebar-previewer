@@ -186,7 +186,7 @@ function updateContent(data) {
     }
 
     // 数据树类型：绑定 key 点击定位
-    if (currentFileType === 'json' || currentFileType === 'yaml' || currentFileType === 'toml') {
+    if (currentFileType === 'json' || currentFileType === 'yaml' || currentFileType === 'toml' || currentFileType === 'xml') {
         bindCommentTooltipInteractionGuard();
         bindTreeKeyClicks();
         bindCommentTooltips();

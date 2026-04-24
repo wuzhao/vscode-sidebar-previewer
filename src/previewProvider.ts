@@ -6,6 +6,7 @@ import { getFileType, FileType, HeadingInfo, isDataTreeType, PreviewResult } fro
 import { CodePreviewProvider } from './codePreviewProvider';
 import { LatexPreviewProvider } from './latexPreviewProvider';
 import { MermaidPreviewProvider } from './mermaidPreviewProvider';
+import { TablePreviewProvider } from './tablePreviewProvider';
 import { i18n } from './i18n';
 import { escapeHtml } from './utils';
 
@@ -421,7 +422,13 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 case 'json':
                 case 'yaml':
                 case 'toml':
+                case 'xml':
                     result = CodePreviewProvider.parse(content, fileType);
+                    this._currentHeadings = [];
+                    break;
+                case 'csv':
+                case 'tsv':
+                    result = TablePreviewProvider.parse(content, fileType);
                     this._currentHeadings = [];
                     break;
                 default:

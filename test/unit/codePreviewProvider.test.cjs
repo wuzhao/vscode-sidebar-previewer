@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { CodePreviewProvider } = require('../../out/codePreviewProvider');
+const { TablePreviewProvider } = require('../../out/tablePreviewProvider');
 const { MarkdownProvider } = require('../../out/markdownProvider');
 const { LatexPreviewProvider } = require('../../out/latexPreviewProvider');
 const { MermaidPreviewProvider } = require('../../out/mermaidPreviewProvider');
@@ -100,16 +101,25 @@ test('Provider locate capabilities stay consistent with file type capabilities',
     const latexResult = LatexPreviewProvider.parse('\\section{Intro}');
     const mermaidResult = MermaidPreviewProvider.parse('graph TD\nA-->B');
     const jsonResult = CodePreviewProvider.parse('{"k": 1}', 'json');
+  const xmlResult = CodePreviewProvider.parse('<root><k>1</k></root>', 'xml');
+  const csvResult = TablePreviewProvider.parse('name,age\nAlice,20', 'csv');
 
     assert.equal(latexResult.supportsLocate, supportsLocate('latex'));
     assert.equal(mermaidResult.supportsLocate, supportsLocate('mermaid'));
     assert.equal(jsonResult.supportsLocate, supportsLocate('json'));
+  assert.equal(xmlResult.supportsLocate, supportsLocate('xml'));
+  assert.equal(csvResult.supportsLocate, supportsLocate('csv'));
 
     assert.equal(isDataTreeType('json'), true);
     assert.equal(isDataTreeType('yaml'), true);
     assert.equal(isDataTreeType('toml'), true);
+  assert.equal(isDataTreeType('xml'), true);
+  assert.equal(isDataTreeType('csv'), false);
     assert.equal(isDataTreeType('markdown'), false);
     assert.equal(getFileType('settings.jsonc'), 'json');
+  assert.equal(getFileType('report.xml'), 'xml');
+  assert.equal(getFileType('dataset.csv'), 'csv');
+  assert.equal(getFileType('dataset.tsv'), 'tsv');
 });
 
 test('CodePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
@@ -149,6 +159,37 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(Array.isArray(jsonPayloads));
     assert.ok(yamlPayloads.some(payload => payload.some(item => item.marker === '#')));
     assert.ok(tomlPayloads.some(payload => payload.some(item => item.marker === '#')));
+  });
+
+  test('Supported XML fixture parses successfully', () => {
+    const xmlSource = readSupportedFixture('xml.xml');
+    const result = CodePreviewProvider.parse(xmlSource, 'xml');
+
+    assert.equal(result.fileType, 'xml');
+    assert.equal(result.supportsLocate, false);
+    assert.equal(result.html.includes('Failed to parse XML content.'), false);
+    assert.ok(result.html.includes('catalog'));
+    assert.ok(result.html.includes('@generatedAt'));
+  });
+
+  test('TablePreviewProvider parses CSV/TSV fixtures as HTML tables', () => {
+    const csvSource = readSupportedFixture('csv.csv');
+    const tsvSource = readSupportedFixture('tsv.tsv');
+
+    const csvResult = TablePreviewProvider.parse(csvSource, 'csv');
+    const tsvResult = TablePreviewProvider.parse(tsvSource, 'tsv');
+
+    assert.equal(csvResult.fileType, 'csv');
+    assert.equal(tsvResult.fileType, 'tsv');
+    assert.equal(csvResult.supportsLocate, false);
+    assert.equal(tsvResult.supportsLocate, false);
+
+    assert.ok(csvResult.html.includes('<table class="tabular-table">'));
+    assert.ok(tsvResult.html.includes('<table class="tabular-table">'));
+    assert.ok(csvResult.html.includes('Monitor, 27&quot; 4K'));
+    assert.ok(tsvResult.html.includes('contains'));
+    assert.equal(csvResult.html.includes('Failed to parse CSV content.'), false);
+    assert.equal(tsvResult.html.includes('Failed to parse TSV content.'), false);
   });
 
   test('Supported JSONC fixture with mixed comment styles parses successfully', () => {

@@ -21,7 +21,10 @@
     "mermaid",
     "json",
     "yaml",
-    "toml"
+    "toml",
+    "xml",
+    "csv",
+    "tsv"
   ],
   "engines": {
     "vscode": "^1.85.0"
@@ -181,6 +184,7 @@
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.45",
+    "fast-xml-parser": "^5.7.1",
     "highlight.js": "^11.11.1",
     "js-yaml": "^4.1.1",
     "katex": "^0.16.45",

@@ -395,6 +395,29 @@ table tr:nth-child(2n) {
     background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 35%, transparent 65%);
 }
 
+.table-preview {
+    padding-top: 8px;
+}
+
+.table-preview table {
+    display: table;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.table-preview .table-index-column {
+    width: 1%;
+    min-width: 48px;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--vscode-descriptionForeground);
+}
+
+.table-preview .table-empty-cell {
+    color: var(--vscode-descriptionForeground);
+}
+
 hr {
     height: 0.25em;
     padding: 0;

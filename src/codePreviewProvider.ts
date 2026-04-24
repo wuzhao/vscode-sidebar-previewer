@@ -1,5 +1,6 @@
 import * as yaml from 'js-yaml';
 import * as toml from 'toml';
+import { XMLParser } from 'fast-xml-parser';
 import { FileType, PreviewResult } from './fileTypes';
 import { escapeHtml, escapeRegex } from './utils';
 
@@ -9,6 +10,11 @@ interface KeyLineLocator {
 
 interface ArrayItemLineLocator {
     next(): number;
+}
+
+interface XmlTagMatch {
+    tagName: string;
+    attributesSource: string;
 }
 
 type CommentMarker = '/' | '*' | '#';
@@ -93,6 +99,8 @@ export class CodePreviewProvider {
             }
             case 'toml':
                 return toml.parse(content);
+            case 'xml':
+                return this.parseXml(content);
             default:
                 throw new Error(`Unsupported file type: ${fileType}`);
         }
@@ -145,6 +153,8 @@ export class CodePreviewProvider {
                 return this.buildYamlArrayItemLineIndex(lines);
             case 'toml':
                 return this.buildTomlArrayItemLineIndex(lines);
+            case 'xml':
+                return this.buildXmlArrayItemLineIndex(lines);
             default:
                 return [];
         }
@@ -299,6 +309,19 @@ export class CodePreviewProvider {
         return result;
     }
 
+    private static buildXmlArrayItemLineIndex(lines: string[]): number[] {
+        const result: number[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const tagMatches = this.extractXmlTagMatches(lines[i]);
+            for (let j = 0; j < tagMatches.length; j++) {
+                result.push(i);
+            }
+        }
+
+        return result;
+    }
+
     private static findTomlArrayItemFirstToken(line: string): string | null {
         for (let i = 0; i < line.length; i++) {
             const ch = line[i];
@@ -413,6 +436,71 @@ export class CodePreviewProvider {
         } catch (_error) {
             return JSON.parse(this.sanitizeJsonc(content));
         }
+    }
+
+    private static parseXml(content: string): unknown {
+        const parser = new XMLParser({
+            ignoreAttributes: false,
+            attributeNamePrefix: '@',
+            textNodeName: '#text',
+            cdataPropName: '#cdata',
+            parseTagValue: false,
+            parseAttributeValue: false,
+            trimValues: true,
+            removeNSPrefix: false,
+            processEntities: true,
+            ignoreDeclaration: false,
+            ignorePiTags: false,
+        });
+
+        const parsed = parser.parse(content) as unknown;
+        return this.normalizeXmlValue(parsed);
+    }
+
+    private static normalizeXmlValue(value: unknown): unknown {
+        if (Array.isArray(value)) {
+            const normalizedItems = value
+                .map(item => this.normalizeXmlValue(item))
+                .filter(item => item !== undefined);
+            return normalizedItems;
+        }
+
+        if (value === null || value === undefined) {
+            return value;
+        }
+
+        if (typeof value !== 'object') {
+            return value;
+        }
+
+        const normalized: Record<string, unknown> = {};
+        for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+            const next = this.normalizeXmlValue(raw);
+
+            if (this.isXmlTextLikeKey(key)) {
+                const text = typeof next === 'string' ? next.trim() : String(next ?? '').trim();
+                if (text.length > 0) {
+                    normalized[key] = text;
+                }
+                continue;
+            }
+
+            if (Array.isArray(next) && next.length === 0) {
+                continue;
+            }
+
+            if (next === undefined) {
+                continue;
+            }
+
+            normalized[key] = next;
+        }
+
+        return normalized;
+    }
+
+    private static isXmlTextLikeKey(key: string): boolean {
+        return key === '#text' || key === '#cdata';
     }
 
     private static sanitizeJsonc(content: string): string {
@@ -577,6 +665,15 @@ export class CodePreviewProvider {
                 patterns.push(new RegExp(`\\[(?:[^\\]]*\\.)?${escaped}\\]`));
                 patterns.push(new RegExp(`\\[\\[(?:[^\\]]*\\.)?${escaped}\\]\\]`));
                 break;
+            case 'xml': {
+                if (key.startsWith('@')) {
+                    const attr = escapeRegex(key.slice(1));
+                    patterns.push(new RegExp(`<[^>]*\\b${attr}\\s*=\\s*["']`));
+                } else if (key !== '#text' && key !== '#cdata') {
+                    patterns.push(new RegExp(`<\\s*${escaped}\\b`));
+                }
+                break;
+            }
         }
 
         if (patterns.length === 0) {
@@ -600,6 +697,8 @@ export class CodePreviewProvider {
                 return this.extractYamlKeys(line);
             case 'toml':
                 return this.extractTomlKeys(line);
+            case 'xml':
+                return this.extractXmlKeys(line);
             default:
                 return [];
         }
@@ -642,6 +741,51 @@ export class CodePreviewProvider {
             line.match(/^\s*'([^']+)'\s*=/);
         if (assignMatch) {
             keys.push(...this.splitTomlPath(assignMatch[1]));
+        }
+
+        return keys;
+    }
+
+    private static extractXmlKeys(line: string): string[] {
+        const keys: string[] = [];
+        const matches = this.extractXmlTagMatches(line);
+
+        for (const match of matches) {
+            keys.push(match.tagName);
+            keys.push(...this.extractXmlAttributeKeys(match.attributesSource));
+        }
+
+        return keys;
+    }
+
+    private static extractXmlTagMatches(line: string): XmlTagMatch[] {
+        const tagMatches: XmlTagMatch[] = [];
+        const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
+        const pattern = /<\s*([A-Za-z_:][\w:.-]*)([^<>]*?)\/?>/g;
+
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(lineWithoutComments)) !== null) {
+            const raw = match[0];
+            if (raw.startsWith('</') || raw.startsWith('<?') || raw.startsWith('<!')) {
+                continue;
+            }
+
+            tagMatches.push({
+                tagName: match[1],
+                attributesSource: match[2] || '',
+            });
+        }
+
+        return tagMatches;
+    }
+
+    private static extractXmlAttributeKeys(attributesSource: string): string[] {
+        const keys: string[] = [];
+        const pattern = /([A-Za-z_:][\w:.-]*)\s*=\s*("[^"]*"|'[^']*')/g;
+
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(attributesSource)) !== null) {
+            keys.push(`@${match[1]}`);
         }
 
         return keys;

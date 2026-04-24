@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?preview mode="strict" version="2026.04"?>
+<!-- catalog fixture with namespaces, comments, CDATA, attributes and repeated nodes -->
+<catalog xmlns="https://example.com/catalog" xmlns:meta="https://example.com/meta" generatedAt="2026-04-21T12:00:00Z">
+  <meta:source system="erp" batch="B-0421">
+    <meta:owner><![CDATA[Ops & "QA" Team]]></meta:owner>
+    <meta:flags>
+      <meta:flag name="preview.enabled">true</meta:flag>
+      <meta:flag name="strict-mode">false</meta:flag>
+    </meta:flags>
+  </meta:source>
+
+  <!-- primary products -->
+  <products>
+    <product id="P-1001" sku="SKU-001" available="true">
+      <name>4K Monitor 27&quot;</name>
+      <price currency="USD">399.99</price>
+      <tags>
+        <tag>display</tag>
+        <tag>ips</tag>
+        <tag>usb-c</tag>
+      </tags>
+      <dimensions unit="mm" width="613" height="366" depth="46" />
+      <description><![CDATA[Supports HDR10, USB-C, and "Picture-in-Picture".]]></description>
+    </product>
+
+    <product id="P-1002" sku="SKU-002" available="false">
+      <name>Compact Keyboard</name>
+      <price currency="USD">129.50</price>
+      <tags>
+        <tag>peripheral</tag>
+        <tag>wireless</tag>
+      </tags>
+      <stock>
+        <warehouse code="SZ-01">0</warehouse>
+        <warehouse code="LA-07">42</warehouse>
+      </stock>
+      <notes>
+        <note priority="high">Backordered for 2-3 weeks &amp; requires allocation.</note>
+        <note priority="low">Packaging updated in revision R4.</note>
+      </notes>
+    </product>
+  </products>
+
+  <meta:statistics>
+    <meta:count type="products">2</meta:count>
+    <meta:count type="warehouses">2</meta:count>
+    <meta:lastSync timezone="UTC">2026-04-21T12:30:45Z</meta:lastSync>
+  </meta:statistics>
+</catalog>

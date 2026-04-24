@@ -18,7 +18,10 @@ const supportedExtensions = [
     'Mermaid (.mmd / .mermaid)',
     'JSON (.json / .jsonc)',
     'YAML (.yaml / .yml)',
-    'TOML (.toml)'
+    'TOML (.toml)',
+    'XML (.xml)',
+    'CSV (.csv)',
+    'TSV (.tsv)'
 ];
 
 const supportedList = supportedExtensions.map(ext => `<li>${ext}</li>`).join('');

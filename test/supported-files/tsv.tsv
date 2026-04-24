@@ -1,0 +1,6 @@
+id	service	region	latency_ms	p95_ms	error_rate	status	owner	notes	raw_payload
+svc-001	gateway	us-east-1	12.4	34.1	0.002	healthy	platform	"contains	tab inside quotes"	"{""retry"":3,""timeoutMs"":800}"
+svc-002	search	eu-west-1	28.7	75.4	0.018	degraded	search-team	"multi-line note line 1
+multi-line note line 2"	"{""retry"":5,""timeoutMs"":1500,""cache"":false}"
+svc-003	worker	ap-southeast-1	95.2	210.5	0.073	unhealthy	data	"empty payload follows"	
+svc-004	ingest	us-west-2	18.0	44.2	0.004	healthy	etl	"quoted ""double quotes"" and comma, too"	"{""batchSize"":1000,""parallelism"":8}"

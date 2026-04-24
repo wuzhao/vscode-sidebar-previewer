@@ -1,7 +1,7 @@
 /**
  * 文件预览类型
  */
-export type FileType = 'markdown' | 'latex' | 'mermaid' | 'json' | 'yaml' | 'toml';
+export type FileType = 'markdown' | 'latex' | 'mermaid' | 'json' | 'yaml' | 'toml' | 'xml' | 'csv' | 'tsv';
 
 /**
  * 标题/节点信息（用于定位）
@@ -68,6 +68,21 @@ const fileTypeCapabilities: Record<FileType, FileTypeCapabilities> = {
         extensions: ['.toml'],
         supportsLocate: false,
         isDataTree: true,
+    },
+    xml: {
+        extensions: ['.xml'],
+        supportsLocate: false,
+        isDataTree: true,
+    },
+    csv: {
+        extensions: ['.csv'],
+        supportsLocate: false,
+        isDataTree: false,
+    },
+    tsv: {
+        extensions: ['.tsv'],
+        supportsLocate: false,
+        isDataTree: false,
     },
 };
 
