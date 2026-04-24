@@ -184,6 +184,25 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(result.html.includes('"The Great Gatsby"'));
   });
 
+  test('XML attributes are rendered before non-attribute keys', () => {
+    const source = '<book id="101" category="fiction"><title>The Great Gatsby</title><author>Fitzgerald</author></book>';
+    const result = CodePreviewProvider.parse(source, 'xml');
+
+    const idPos = result.html.indexOf('>@id</span>');
+    const categoryPos = result.html.indexOf('>@category</span>');
+    const titlePos = result.html.indexOf('>title</span>');
+    const authorPos = result.html.indexOf('>author</span>');
+
+    assert.ok(idPos >= 0);
+    assert.ok(categoryPos >= 0);
+    assert.ok(titlePos >= 0);
+    assert.ok(authorPos >= 0);
+    assert.ok(idPos < titlePos);
+    assert.ok(categoryPos < titlePos);
+    assert.ok(idPos < authorPos);
+    assert.ok(categoryPos < authorPos);
+  });
+
   test('TablePreviewProvider parses CSV/TSV fixtures as HTML tables', () => {
     const csvSource = readSupportedFixture('csv.csv');
     const tsvSource = readSupportedFixture('tsv.tsv');
@@ -266,6 +285,19 @@ test('XML comment groups use hyphen marker in popup payload', () => {
   assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'list heading')));
   assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'inline marker')));
   assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'multi-line\nxml comment')));
+});
+
+test('XML comments follow node keys but not @ attributes', () => {
+  const source = [
+    '<!-- book node comment -->',
+    '<book id="101" category="fiction"><title>The Great Gatsby</title></book>',
+  ].join('\n');
+
+  const result = CodePreviewProvider.parse(source, 'xml');
+
+  assert.ok(/<span class="tree-key" data-line="\d+">book<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
+  assert.equal(/<span class="tree-key" data-line="\d+">@id<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
+  assert.equal(/<span class="tree-key" data-line="\d+">@category<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
 });
 
 test('JSON comment before object key keeps binding across blank lines', () => {

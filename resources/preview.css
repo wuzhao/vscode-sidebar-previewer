@@ -856,7 +856,7 @@ pre:hover .copy-btn {
     font-size: 12px;
     text-align: center;
     transition: transform 0.15s;
-    color: var(--vscode-descriptionForeground);
+    color: color-mix(in srgb, var(--vscode-foreground) 35%, transparent 65%);
     margin-right: 4px;
 }
 
@@ -893,15 +893,16 @@ pre:hover .copy-btn {
     margin: -1px 2px 0 4px;
     padding: 3px;
     border-radius: 50%;
-    color: var(--vscode-foreground);
-    background-color: color-mix(in srgb, var(--vscode-foreground) 25%, transparent 75%);
+    color: color-mix(in srgb, var(--vscode-foreground) 35%, transparent 65%);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     vertical-align: text-top;
 }
 
 .data-tree .tree-comment-icon:hover {
+    color: color-mix(in srgb, var(--vscode-foreground) 65%, transparent 35%);
+    background-color: color-mix(in srgb, var(--vscode-foreground) 15%, transparent 85%);
     opacity: 1;
 }
 
