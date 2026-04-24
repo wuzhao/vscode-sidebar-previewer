@@ -5,7 +5,7 @@ import { FileType, PreviewResult } from './fileTypes';
 import { escapeHtml, escapeRegex } from './utils';
 
 interface KeyLineLocator {
-    next(key: string): number;
+    next(key: string, parentPath?: string[]): number;
 }
 
 interface ArrayItemLineLocator {
@@ -121,13 +121,25 @@ export class CodePreviewProvider {
     private static createKeyLineLocator(lines: string[], fileType: FileType): KeyLineLocator {
         const primaryIndex = this.buildPrimaryKeyLineIndex(lines, fileType);
         const primaryCursor = new Map<string, number>();
+        const tomlPathIndex = fileType === 'toml' ? this.buildTomlPathLineIndex(lines) : null;
+        const tomlPathCursor = new Map<string, number>();
 
         // 对少数主索引未覆盖的 key 做按需兜底，避免极端格式丢定位
         const fallbackIndex = new Map<string, number[]>();
         const fallbackCursor = new Map<string, number>();
 
         return {
-            next: (key: string): number => {
+            next: (key: string, parentPath: string[] = []): number => {
+                if (tomlPathIndex) {
+                    const path = [...parentPath, key].filter(Boolean).join('.');
+                    if (path.length > 0) {
+                        const fromTomlPath = this.consumeIndexedLine(tomlPathIndex, tomlPathCursor, path);
+                        if (fromTomlPath >= 0) {
+                            return fromTomlPath;
+                        }
+                    }
+                }
+
                 const fromPrimary = this.consumeIndexedLine(primaryIndex, primaryCursor, key);
                 if (fromPrimary >= 0) {
                     return fromPrimary;
@@ -139,6 +151,63 @@ export class CodePreviewProvider {
                 return this.consumeIndexedLine(fallbackIndex, fallbackCursor, key);
             }
         };
+    }
+
+    private static buildTomlPathLineIndex(lines: string[]): Map<string, number[]> {
+        const index = new Map<string, number[]>();
+        let currentTablePath: string[] = [];
+
+        const pushPath = (segments: string[], line: number): void => {
+            if (segments.length === 0) {
+                return;
+            }
+            this.pushIndexedLine(index, segments.join('.'), line);
+        };
+
+        const pushTablePathPrefixes = (segments: string[], line: number): void => {
+            for (let depth = 1; depth <= segments.length; depth++) {
+                pushPath(segments.slice(0, depth), line);
+            }
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+            const codeLine = this.stripHashCommentText(lines[i]);
+            const trimmed = codeLine.trim();
+            if (trimmed.length === 0) {
+                continue;
+            }
+
+            const tableArrayMatch = trimmed.match(/^\[\[\s*([^\]]+?)\s*\]\]$/);
+            if (tableArrayMatch) {
+                currentTablePath = this.splitTomlPath(tableArrayMatch[1]);
+                pushTablePathPrefixes(currentTablePath, i);
+                continue;
+            }
+
+            const tableMatch = trimmed.match(/^\[\s*([^\]]+?)\s*\]$/);
+            if (tableMatch) {
+                currentTablePath = this.splitTomlPath(tableMatch[1]);
+                pushTablePathPrefixes(currentTablePath, i);
+                continue;
+            }
+
+            const assignMatch =
+                codeLine.match(/^\s*([A-Za-z0-9_.-]+)\s*=/) ||
+                codeLine.match(/^\s*"([^"]+)"\s*=/) ||
+                codeLine.match(/^\s*'([^']+)'\s*=/);
+            if (!assignMatch) {
+                continue;
+            }
+
+            const relativePath = this.splitTomlPath(assignMatch[1]);
+            if (relativePath.length === 0) {
+                continue;
+            }
+
+            pushPath([...currentTablePath, ...relativePath], i);
+        }
+
+        return index;
     }
 
     private static createArrayItemLineLocator(lines: string[], fileType: FileType): ArrayItemLineLocator {
@@ -925,6 +994,10 @@ export class CodePreviewProvider {
                 return;
             }
 
+            if (pending.length > 0 && pendingDepth >= 0 && pendingDepth !== depth) {
+                flushPendingStandalone();
+            }
+
             if (pending.length === 0) {
                 pendingLine = line;
                 pendingDepth = depth;
@@ -1062,6 +1135,15 @@ export class CodePreviewProvider {
                 }
                 this.pushComment(preamble, marker, text);
                 return;
+            }
+
+            if (
+                pending.length > 0
+                && pendingArrayDepth >= 0
+                && pendingObjectDepth >= 0
+                && (pendingArrayDepth !== arrayDepth || pendingObjectDepth !== objectDepth)
+            ) {
+                flushPendingStandalone();
             }
 
             if (pending.length === 0) {
@@ -1979,7 +2061,8 @@ export class CodePreviewProvider {
         boundaryExclusive: number,
         fileType: FileType,
         sourceLines: string[],
-        xmlConsumedLines: Set<number> | null
+        xmlConsumedLines: Set<number> | null,
+        parentPath: string[]
     ): string {
         let html = '<div class="tree-children">';
         if (Array.isArray(data)) {
@@ -2004,7 +2087,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, parentPath)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -2013,12 +2096,13 @@ export class CodePreviewProvider {
             const entries = Object.entries(data as Record<string, unknown>).map(([key, value]) => ({
                 key,
                 value,
-                line: lineLocator.next(key),
+                line: lineLocator.next(key, parentPath),
             }));
 
             for (let i = 0; i < entries.length; i++) {
                 const entry = entries[i];
                 const line = entry.line;
+                const entryPath = [...parentPath, entry.key];
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, entry.key, sourceLines, xmlConsumedLines);
                 const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
@@ -2032,7 +2116,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, entryPath)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }
@@ -2118,7 +2202,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(itemInfo.value)
                         ? `[${itemInfo.value.length}]`
                         : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, [])}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
                 }
@@ -2127,7 +2211,7 @@ export class CodePreviewProvider {
             const entries = Object.entries(data as Record<string, unknown>).map(([key, value]) => ({
                 key,
                 value,
-                line: lineLocator.next(key),
+                line: lineLocator.next(key, []),
             }));
 
             for (let i = 0; i < entries.length; i++) {
@@ -2146,7 +2230,7 @@ export class CodePreviewProvider {
                     const bracket = Array.isArray(entry.value)
                         ? `[${entry.value.length}]`
                         : `{${Object.keys(entry.value as Record<string, unknown>).length}}`;
-                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, nextBoundary, fileType, sourceLines, xmlConsumedLines, [entry.key])}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                 }

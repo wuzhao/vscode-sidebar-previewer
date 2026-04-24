@@ -701,6 +701,11 @@ test('Task G JSON fixture label ownership mapping is correct', () => {
 
   assertLabelOwner(labelOwners, 'T', 'standalone', 'standalone');
   assertLabelOwner(labelOwners, 'U', 'standalone', 'standalone');
+  assert.notEqual(
+    getSingleLabelOwner(labelOwners, 'T').id,
+    getSingleLabelOwner(labelOwners, 'U').id,
+    'labels [T] and [U] should not share one popup entry'
+  );
   assertLabelOwner(labelOwners, 'V', 'key', 'commentStyles');
   assertLabelOwner(labelOwners, 'W', 'index', '2');
   assertLabelOwner(labelOwners, 'X', 'key', 'note');
@@ -731,6 +736,21 @@ test('Task G TOML fixture label ownership mapping is correct', () => {
   assertLabelOwner(labelOwners, 'J', 'key', 'lto');
   assertLabelOwner(labelOwners, 'K', 'key', 'bench');
   assertLabelOwner(labelOwners, 'L', 'standalone', 'standalone');
+});
+
+test('TOML fixture nested duplicate keys map to correct section lines', () => {
+  const source = readSupportedFixture('toml.toml');
+  const result = CodePreviewProvider.parse(source, 'toml');
+
+  const benchLines = extractKeyLines(result.html, 'bench');
+  assert.deepEqual(benchLines, [69, 78]);
+  assertLineContains(source, '[profile.bench]', benchLines[0]);
+  assertLineContains(source, '[[bench]]', benchLines[1]);
+
+  const metadataLines = extractKeyLines(result.html, 'metadata');
+  assert.deepEqual(metadataLines, [87, 82]);
+  assertLineContains(source, '[package.metadata.docs.rs]', metadataLines[0]);
+  assertLineContains(source, '[workspace.metadata.release]', metadataLines[1]);
 });
 
 test('Task G XML fixture label ownership mapping is correct', () => {
