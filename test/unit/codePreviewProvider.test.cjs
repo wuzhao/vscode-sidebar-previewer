@@ -481,6 +481,17 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(/\.table-preview tbody tr:nth-child\(2n\) \.table-index-column\s*\{[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
   });
 
+  test('Task G zoom keeps tooltip and table viewport behavior stable', () => {
+    const previewJsPath = path.join(__dirname, '..', '..', 'resources', 'preview.js');
+    const previewJs = fs.readFileSync(previewJsPath, 'utf8');
+
+    assert.ok(previewJs.includes('const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;'));
+    assert.ok(/function applyTablePreviewViewportHeight\(\)\s*\{[\s\S]*?\.table-preview-scroll[\s\S]*?maxHeight\s*=\s*`calc\(\(100vh - \$\{TABLE_PREVIEW_VIEWPORT_OFFSET_PX\}px\) \/ \$\{zoomScale\}\)`;/s.test(previewJs));
+    assert.ok(/function applyCommentTooltipZoom\(\)\s*\{[\s\S]*?commentTooltip\.style\.zoom\s*=\s*String\(getZoomScale\(\)\);/s.test(previewJs));
+    assert.ok(/function applyZoom\(\)\s*\{[\s\S]*?applyTablePreviewViewportHeight\(\);[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?positionCommentTooltip\(\);/s.test(previewJs));
+    assert.ok(/function showCommentTooltip\(target\)\s*\{[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?tooltip\.classList\.add\('is-visible'\);/s.test(previewJs));
+  });
+
   test('Task F comment and global constant conventions are enforced', () => {
     const srcDir = path.join(__dirname, '..', '..', 'src');
     const tsFiles = fs.readdirSync(srcDir).filter(name => name.endsWith('.ts'));

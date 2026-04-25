@@ -29,9 +29,11 @@ const MERMAID_ZOOM_MULTIPLIER = 2;
 // Mermaid 渲染超时时间（毫秒）
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
 // 注释提示框离开后延迟隐藏时间（毫秒）
-const COMMENT_TOOLTIP_HIDE_DELAY_MS = 240;
+const COMMENT_TOOLTIP_HIDE_DELAY_MS = 200;
 // 注释提示框点击后屏蔽 hover 的时间窗口（毫秒）
-const COMMENT_TOOLTIP_CLICK_BLOCK_WINDOW_MS = 260;
+const COMMENT_TOOLTIP_CLICK_BLOCK_WINDOW_MS = 200;
+// 表格预览容器与视口高度差值（像素）
+const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;
 // Mermaid 拖拽平移过程中的全局状态
 const MERMAID_DRAG_STATE = {
     container: null,
@@ -344,26 +346,69 @@ function scrollToHeading(headingId) {
 }
 
 /**
+ * 获取当前缩放比例
+ * @returns 返回当前缩放比例
+ */
+function getZoomScale() {
+    return zoomLevel / 100;
+}
+
+/**
+ * 按缩放比例修正表格预览容器高度
+ * 让视觉高度始终保持在 100vh - 24px
+ */
+function applyTablePreviewViewportHeight() {
+    const zoomScale = getZoomScale();
+    if (!(zoomScale > 0)) {
+        return;
+    }
+
+    const tablePreviewContainers = document.querySelectorAll('.table-preview-scroll');
+    tablePreviewContainers.forEach(container => {
+        container.style.maxHeight = `calc((100vh - ${TABLE_PREVIEW_VIEWPORT_OFFSET_PX}px) / ${zoomScale})`;
+    });
+}
+
+/**
+ * 按缩放比例同步注释提示框尺寸
+ */
+function applyCommentTooltipZoom() {
+    if (!commentTooltip) {
+        return;
+    }
+
+    commentTooltip.style.zoom = String(getZoomScale());
+}
+
+/**
  * 缩放功能
  * 处理缩放相关逻辑并返回结果
  */
 function applyZoom() {
     const content = document.getElementById('content');
+    const zoomScale = getZoomScale();
     // 只对预览内容应用缩放，不影响 loading、空状态和报错
     const hasSpecialState = content.querySelector('.loading-state, .empty-state, .error-state');
     if (hasSpecialState) {
         content.style.zoom = '';
+        applyCommentTooltipZoom();
+        positionCommentTooltip();
         return;
     }
 
     if (currentFileType === 'mermaid') {
         content.style.zoom = '';
         applyMermaidZoom();
+        applyCommentTooltipZoom();
+        positionCommentTooltip();
         return;
     }
 
     content.classList.remove('is-mermaid-preview');
-    content.style.zoom = zoomLevel / 100;
+    content.style.zoom = zoomScale;
+    applyTablePreviewViewportHeight();
+    applyCommentTooltipZoom();
+    positionCommentTooltip();
 }
 
 /**
@@ -1200,6 +1245,7 @@ function showCommentTooltip(target) {
     const tooltip = ensureCommentTooltip();
     renderCommentTooltipItems(tooltip, comments);
     commentTooltipTarget = target;
+    applyCommentTooltipZoom();
     tooltip.classList.add('is-visible');
     updateCommentTooltipFocusClass();
     positionCommentTooltip();
