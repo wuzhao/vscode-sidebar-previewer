@@ -106,11 +106,13 @@ export class MarkdownProvider {
             return `<pre><code class="hljs${langClass}">${highlighted}\n</code></pre>\n`;
         };
 
-        // Math Extension for $$...$$
+        // 扩展：支持 $$...$$ 行内数学语法
         const mathExtension: any = {
             name: 'mathInline',
             level: 'inline',
+            /** 定位行内数学公式的起始位置。 */
             start(src: string) { return src.match(/\$\$/)?.index; },
+            /** 将 $$...$$ 片段解析为行内数学标记。 */
             tokenizer(src: string, tokens: any) {
                 const rule = /^\$\$([\s\S]+?)\$\$/;
                 const match = rule.exec(src);
@@ -122,16 +124,19 @@ export class MarkdownProvider {
                     };
                 }
             },
+            /** 输出行内 KaTeX 占位标记，交由前端统一渲染。 */
             renderer(token: any) {
                 return `<span class="katex-inline" data-katex-display="false">${escapeHtml(token.text)}</span>`;
             }
         };
 
-        // Math Extension for \begin{...}...\end{...}
+        // 扩展：支持 \begin{...}...\end{...} 块级数学语法
         const mathBlockExtension: any = {
             name: 'mathBlock',
             level: 'block',
+            /** 定位块级数学公式的起始位置。 */
             start(src: string) { return src.match(/\\begin\{([a-zA-Z*]+)\}/)?.index; },
+            /** 将 begin/end 包裹的片段解析为块级数学标记。 */
             tokenizer(src: string, tokens: any) {
                 const rule = /^\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/;
                 const match = rule.exec(src);
@@ -143,6 +148,7 @@ export class MarkdownProvider {
                     };
                 }
             },
+            /** 输出块级 KaTeX 占位标记，交由前端统一渲染。 */
             renderer(token: any) {
                 return `<div class="katex-block" data-katex-display="true">${escapeHtml(token.text)}</div>\n`;
             }
@@ -167,9 +173,14 @@ export class MarkdownProvider {
             html = frontMatterHtml + html;
         }
 
-        return { html, headings };
+        const locateHeadings = frontMatterHtml
+            ? [{ level: 1, text: 'frontmatter-table', line: 0, id: 'frontmatter-table' }, ...headings]
+            : headings;
+
+        return { html, headings: locateHeadings };
     }
 
+    /** 收集任务列表复选框在原文中的行号。 */
     private static collectTaskListLineNumbers(lines: string[]): number[] {
         const taskLines: number[] = [];
         const taskPattern = /^\s*[-*+]\s+\[([ xX])\]/;
@@ -210,7 +221,7 @@ export class MarkdownProvider {
             const valueHtml = this.renderFrontMatterValue(value);
             rows += `<tr><td class="fm-key">${escapeHtml(key)}</td><td class="fm-value">${valueHtml}</td></tr>`;
         }
-        return `<table class="frontmatter-table"><tbody>${rows}</tbody></table>`;
+        return `<table id="frontmatter-table" class="frontmatter-table"><tbody>${rows}</tbody></table>`;
     }
 
     /**
@@ -256,7 +267,7 @@ export class MarkdownProvider {
 
         for (const [type, { icon, label }] of Object.entries(alertTypes)) {
             const typeLower = type.toLowerCase();
-            // Match blockquote whose first <p> starts with [!TYPE]
+            // 匹配首个段落以 [!TYPE] 开头的 blockquote
             const regex = new RegExp(
                 `<blockquote>\\s*<p>\\[!${type}\\]\\s*(?:<br>)?\\s*([\\s\\S]*?)</p>([\\s\\S]*?)</blockquote>`,
                 'gi'

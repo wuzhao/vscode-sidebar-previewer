@@ -59,7 +59,7 @@ export class LatexPreviewProvider {
                 continue;
             }
 
-            // LaTeX 命令处理
+            // 处理 LaTeX 命令
             const trimmed = line.trim();
 
             // 跳过空行
@@ -132,6 +132,7 @@ export class LatexPreviewProvider {
         return parts.join('\n');
     }
 
+    /** 处理当前场景相关逻辑并返回结果。 */
     private static slugify(text: string): string {
         return text
             .toLowerCase()

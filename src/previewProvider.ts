@@ -59,6 +59,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         );
     }
 
+    /** 解析资源路径并返回最终结果。 */
     private _resolveAssetPath(preferredPath: string, fallbackPath: string): string {
         if (fs.existsSync(preferredPath)) {
             return preferredPath;
@@ -208,6 +209,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }, delayMs);
     }
 
+    /** 清理加载超时计时器，避免脏数据残留。 */
     private _clearLoadingTimeout(): void {
         if (!this._loadingTimeout) {
             return;
@@ -216,6 +218,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this._loadingTimeout = null;
     }
 
+    /** 处理活动编辑器预览相关逻辑并返回结果。 */
     private _refreshPreviewForActiveEditor(): void {
         if (!this._view || !this._view.visible || !this._webviewReady) {
             return;
@@ -300,10 +303,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         });
     }
 
+    /** 查找当前标题并返回匹配结果。 */
     private _findCurrentHeading(startLine: number): HeadingInfo | null {
         return MarkdownProvider.findCurrentHeading(this._currentHeadings, startLine);
     }
 
+    /** 获取滚动目标标题ID并返回结果。 */
     private _getScrollTargetHeadingId(document: vscode.TextDocument): string | null | undefined {
         if (!this._supportsLocate || !this._followEditorScroll) {
             return undefined;
@@ -354,7 +359,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             }
             this._view.webview.postMessage({ type: 'loading' });
         } catch (error) {
-            // ignore
+            // 忽略 loading 消息发送异常，避免影响后续刷新流程
         }
     }
 
@@ -483,7 +488,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                     message.baseUri = base.endsWith('/') ? base : base + '/';
                 }
             } catch (_e) {
-                // ignore
+                // 忽略 baseUri 构造异常，前端仍可渲染绝对路径内容
             }
 
             this._view.webview.postMessage(message);
@@ -493,6 +498,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
     }
 
+    /** 获取编辑器选区范围并返回结果。 */
     private _getEditorSelectionRange(document: vscode.TextDocument): { startLine: number; endLine: number } | null {
         const editor = vscode.window.activeTextEditor;
         if (!editor || editor.document !== document || editor.selections.length === 0) {
@@ -505,6 +511,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         return { startLine, endLine };
     }
 
+    /** 处理数据树选区范围相关逻辑并返回结果。 */
     private _postDataTreeSelectionRange(editor: vscode.TextEditor | undefined): void {
         if (!this._view || !editor) {
             return;
@@ -630,10 +637,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         });
     }
 
+    /** 处理跟随滚动相关逻辑并返回结果。 */
     public enableFollowScroll(): void {
         this._setFollowEditorScroll(true);
     }
 
+    /** 处理跟随滚动相关逻辑并返回结果。 */
     public disableFollowScroll(): void {
         this._setFollowEditorScroll(false);
     }
@@ -743,12 +752,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
     }
 
+    /** 处理下一次自动滚动抑制状态相关逻辑并返回结果。 */
     private _consumeSuppressNextAutoScroll(): boolean {
         const suppress = this._suppressNextAutoScroll;
         this._suppressNextAutoScroll = false;
         return suppress;
     }
 
+    /** 设置编辑器滚动跟随并保持一致性。 */
     private _setFollowEditorScroll(enabled: boolean): void {
         if (this._followEditorScroll === enabled) {
             return;
@@ -766,6 +777,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
     }
 
+    /** 更新跟随滚动上下文并同步相关结果。 */
     private _updateFollowScrollContext(): void {
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.followScrollEnabled', this._followEditorScroll);
     }
@@ -829,6 +841,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 </html>`;
     }
 
+    /** 处理当前场景相关逻辑并返回结果。 */
     public dispose(): void {
         this._clearLoadingTimeout();
         if (this._visibleRangesListener) {

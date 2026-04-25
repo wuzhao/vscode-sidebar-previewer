@@ -137,6 +137,7 @@ export class CodePreviewProvider {
         }
     }
 
+    /** 创建键行定位器并返回可复用实例。 */
     private static createKeyLineLocator(lines: string[], fileType: FileType): KeyLineLocator {
         const primaryIndex = this.buildPrimaryKeyLineIndex(lines, fileType);
         const primaryCursor = new Map<string, number>();
@@ -172,6 +173,7 @@ export class CodePreviewProvider {
         };
     }
 
+    /** 构建TOML路径行索引供后续流程复用。 */
     private static buildTomlPathLineIndex(lines: string[]): Map<string, number[]> {
         const explicitIndex = new Map<string, number[]>();
         const implicitIndex = new Map<string, number[]>();
@@ -246,6 +248,7 @@ export class CodePreviewProvider {
         return index;
     }
 
+    /** 创建数组元素行定位器并返回可复用实例。 */
     private static createArrayItemLineLocator(lines: string[], fileType: FileType, parsedData: unknown): ArrayItemLineLocator {
         const itemLines = this.buildArrayItemLineIndex(lines, fileType, parsedData);
         let cursor = 0;
@@ -262,6 +265,7 @@ export class CodePreviewProvider {
         };
     }
 
+    /** 创建YAML 结束行定位器并返回可复用实例。 */
     private static createYamlCloseLineLocator(lines: string[]): YamlCloseLineLocator {
         const cache = new Map<number, number>();
 
@@ -296,6 +300,7 @@ export class CodePreviewProvider {
         };
     }
 
+    /** 创建XML 结束行定位器并返回可复用实例。 */
     private static createXmlCloseLineLocator(lines: string[]): XmlCloseLineLocator {
         const closeLineMap = new Map<number, number>();
         const stack: Array<{ tagName: string; line: number }> = [];
@@ -351,6 +356,7 @@ export class CodePreviewProvider {
         };
     }
 
+    /** 创建JSON 结束行定位器并返回可复用实例。 */
     private static createJsonCloseLineLocator(lines: string[]): JsonCloseLineLocator {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
         const cache = new Map<number, number>();
@@ -428,6 +434,7 @@ export class CodePreviewProvider {
         };
     }
 
+    /** 查找JSON 复合起始行并返回匹配结果。 */
     private static findJsonCompoundStartInLine(line: string): { char: '{' | '['; column: number } | null {
         let inString = false;
         let escape = false;
@@ -482,6 +489,7 @@ export class CodePreviewProvider {
         return null;
     }
 
+    /** 构建数组元素行索引供后续流程复用。 */
     private static buildArrayItemLineIndex(lines: string[], fileType: FileType, parsedData: unknown): number[] {
         switch (fileType) {
             case 'json':
@@ -497,6 +505,7 @@ export class CodePreviewProvider {
         }
     }
 
+    /** 处理YAML 文档数组行集合相关逻辑并返回结果。 */
     private static shouldUseYamlDocumentArrayLines(parsedData: unknown, lines: string[]): boolean {
         if (!Array.isArray(parsedData)) {
             return false;
@@ -505,6 +514,7 @@ export class CodePreviewProvider {
         return lines.some(line => /^\s*---(?:\s+#.*)?\s*$/.test(line));
     }
 
+    /** 构建JSON数组元素行索引供后续流程复用。 */
     private static buildJsonArrayItemLineIndex(lines: string[]): number[] {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
         const result: number[] = [];
@@ -562,6 +572,7 @@ export class CodePreviewProvider {
         return result;
     }
 
+    /** 查找JSON 行首标记并返回匹配结果。 */
     private static findJsonLineFirstToken(line: string): string | null {
         for (let i = 0; i < line.length; i++) {
             const ch = line[i];
@@ -573,6 +584,7 @@ export class CodePreviewProvider {
         return null;
     }
 
+    /** 判断JSON 数组值起始是否成立。 */
     private static isJsonArrayValueStart(token: string | null): boolean {
         if (!token) {
             return false;
@@ -585,6 +597,7 @@ export class CodePreviewProvider {
         return /[0-9]/.test(token);
     }
 
+    /** 构建YAML数组元素行索引供后续流程复用。 */
     private static buildYamlArrayItemLineIndex(lines: string[], includeDocumentRootItems: boolean): number[] {
         const result: number[] = [];
 
@@ -605,6 +618,7 @@ export class CodePreviewProvider {
         return [...new Set(result)].sort((a, b) => a - b);
     }
 
+    /** 查找YAML 文档起始行集合并返回匹配结果。 */
     private static findYamlDocumentStartLines(lines: string[]): number[] {
         const starts: number[] = [];
 
@@ -635,6 +649,7 @@ export class CodePreviewProvider {
         return starts;
     }
 
+    /** 构建TOML数组元素行索引供后续流程复用。 */
     private static buildTomlArrayItemLineIndex(lines: string[]): number[] {
         const result: number[] = [];
         let arrayDepth = 0;
@@ -688,6 +703,7 @@ export class CodePreviewProvider {
         return result;
     }
 
+    /** 构建XML数组元素行索引供后续流程复用。 */
     private static buildXmlArrayItemLineIndex(lines: string[]): number[] {
         const result: number[] = [];
 
@@ -701,6 +717,7 @@ export class CodePreviewProvider {
         return result;
     }
 
+    /** 查找TOML 数组元素首个标记并返回匹配结果。 */
     private static findTomlArrayItemFirstToken(line: string): string | null {
         for (let i = 0; i < line.length; i++) {
             const ch = line[i];
@@ -712,6 +729,7 @@ export class CodePreviewProvider {
         return null;
     }
 
+    /** 查找TOML 数组起始并返回匹配结果。 */
     private static findTomlArrayStart(text: string): number {
         let inSingle = false;
         let inDouble = false;
@@ -758,6 +776,7 @@ export class CodePreviewProvider {
         return -1;
     }
 
+    /** 统计方括号深度增量用于流程判断。 */
     private static countSquareBracketDelta(line: string): number {
         let inSingle = false;
         let inDouble = false;
@@ -809,6 +828,7 @@ export class CodePreviewProvider {
         return delta;
     }
 
+    /** 解析JSON 或 JSONC并返回结构化结果。 */
     private static parseJsonOrJsonc(content: string): unknown {
         try {
             return JSON.parse(content);
@@ -817,6 +837,7 @@ export class CodePreviewProvider {
         }
     }
 
+    /** 解析XML并返回结构化结果。 */
     private static parseXml(content: string): unknown {
         const parser = new XMLParser({
             ignoreAttributes: false,
@@ -836,6 +857,7 @@ export class CodePreviewProvider {
         return this.normalizeXmlValue(parsed);
     }
 
+    /** 归一化XML值以统一后续处理。 */
     private static normalizeXmlValue(value: unknown): unknown {
         if (Array.isArray(value)) {
             const normalizedItems = value
@@ -889,19 +911,23 @@ export class CodePreviewProvider {
         return normalized;
     }
 
+    /** 判断XML 类文本键是否成立。 */
     private static isXmlTextLikeKey(key: string): boolean {
         return key === '#text' || key === '#cdata';
     }
 
+    /** 判断XML 属性键是否成立。 */
     private static isXmlAttributeKey(key: string): boolean {
         return key.startsWith('@');
     }
 
+    /** 处理JSONC相关逻辑并返回结果。 */
     private static sanitizeJsonc(content: string): string {
         const withoutComments = this.stripJsoncComments(content);
         return this.stripJsonTrailingCommas(withoutComments);
     }
 
+    /** 去除JSONC注释集合以保留有效信息。 */
     private static stripJsoncComments(content: string): string {
         let out = '';
         let inString = false;
@@ -967,6 +993,7 @@ export class CodePreviewProvider {
         return out;
     }
 
+    /** 去除JSON 尾随逗号以保留有效信息。 */
     private static stripJsonTrailingCommas(content: string): string {
         let out = '';
         let inString = false;
@@ -1030,6 +1057,7 @@ export class CodePreviewProvider {
         return candidates[current];
     }
 
+    /** 构建主键行索引供后续流程复用。 */
     private static buildPrimaryKeyLineIndex(lines: string[], fileType: FileType): Map<string, number[]> {
         const index = new Map<string, number[]>();
         const xmlLastPushed = new Map<string, { line: number; indent: number }>();
@@ -1053,6 +1081,7 @@ export class CodePreviewProvider {
         return index;
     }
 
+    /** 构建兜底键行集合供后续流程复用。 */
     private static buildFallbackKeyLines(key: string, lines: string[], fileType: FileType): number[] {
         const escaped = escapeRegex(key);
         const patterns: RegExp[] = [];
@@ -1093,6 +1122,7 @@ export class CodePreviewProvider {
         return matches;
     }
 
+    /** 提取行中的键供后续逻辑使用。 */
     private static extractKeysFromLine(line: string, fileType: FileType): string[] {
         switch (fileType) {
             case 'json':
@@ -1108,6 +1138,7 @@ export class CodePreviewProvider {
         }
     }
 
+    /** 提取JSON 键供后续逻辑使用。 */
     private static extractJsonKeys(line: string): string[] {
         const match = line.match(/^\s*(?:\/\*.*?\*\/\s*)*"((?:\\.|[^"\\])*)"\s*(?:(?:\/\*.*?\*\/)\s*)*:/);
         if (!match) {
@@ -1116,6 +1147,7 @@ export class CodePreviewProvider {
         return [this.decodeJsonString(match[1])];
     }
 
+    /** 提取YAML 键供后续逻辑使用。 */
     private static extractYamlKeys(line: string): string[] {
         const match = line.match(/^\s*(?:-\s+)?(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|([^:#][^:]*?))\s*:(?:\s|$)/);
         if (!match) {
@@ -1126,6 +1158,7 @@ export class CodePreviewProvider {
         return key ? [key] : [];
     }
 
+    /** 提取TOML 键供后续逻辑使用。 */
     private static extractTomlKeys(line: string): string[] {
         const keys: string[] = [];
 
@@ -1150,6 +1183,7 @@ export class CodePreviewProvider {
         return keys;
     }
 
+    /** 提取XML 键供后续逻辑使用。 */
     private static extractXmlKeys(line: string): string[] {
         const keys: string[] = [];
         const matches = this.extractXmlTagMatches(line);
@@ -1162,6 +1196,7 @@ export class CodePreviewProvider {
         return keys;
     }
 
+    /** 提取XML 标签匹配供后续逻辑使用。 */
     private static extractXmlTagMatches(line: string): XmlTagMatch[] {
         const tagMatches: XmlTagMatch[] = [];
         const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
@@ -1183,6 +1218,7 @@ export class CodePreviewProvider {
         return tagMatches;
     }
 
+    /** 提取XML 属性键供后续逻辑使用。 */
     private static extractXmlAttributeKeys(attributesSource: string): string[] {
         const keys: string[] = [];
         const pattern = /([A-Za-z_:][\w:.-]*)\s*=\s*("[^"]*"|'[^']*')/g;
@@ -1195,6 +1231,7 @@ export class CodePreviewProvider {
         return keys;
     }
 
+    /** 拆分TOML路径并返回片段集合。 */
     private static splitTomlPath(pathExpr: string): string[] {
         return pathExpr
             .split('.')
@@ -1202,6 +1239,7 @@ export class CodePreviewProvider {
             .filter(Boolean);
     }
 
+    /** 解码JSON 字符串并还原可读数据。 */
     private static decodeJsonString(raw: string): string {
         try {
             return JSON.parse(`"${raw}"`) as string;
@@ -1210,6 +1248,7 @@ export class CodePreviewProvider {
         }
     }
 
+    /** 向目标集合追加带索引行。 */
     private static pushIndexedLine(index: Map<string, number[]>, key: string, line: number): void {
         const normalizedKey = key.trim();
         if (!normalizedKey) {
@@ -1225,6 +1264,7 @@ export class CodePreviewProvider {
         index.set(normalizedKey, [line]);
     }
 
+    /** 构建注释元数据供后续流程复用。 */
     private static buildCommentMetadata(lines: string[], fileType: FileType): CommentMetadata {
         const arrayItemLines = new Set(this.buildArrayItemLineIndex(lines, fileType, null));
 
@@ -1245,6 +1285,7 @@ export class CodePreviewProvider {
         }
     }
 
+    /** 构建XML注释元数据供后续流程复用。 */
     private static buildXmlCommentMetadata(lines: string[]): CommentMetadata {
         const lineComments = new Map<number, CommentEntry[]>();
         const standaloneGroups: StandaloneCommentGroup[] = [];
@@ -1381,6 +1422,7 @@ export class CodePreviewProvider {
         return { lineComments, standaloneGroups };
     }
 
+    /** 构建JSON注释元数据供后续流程复用。 */
     private static buildJsonCommentMetadata(lines: string[], arrayItemLines: Set<number>): CommentMetadata {
         const lineComments = new Map<number, CommentEntry[]>();
         const standaloneGroups: StandaloneCommentGroup[] = [];
@@ -1832,6 +1874,7 @@ export class CodePreviewProvider {
         return { lineComments, standaloneGroups };
     }
 
+    /** 向目标集合追加注释。 */
     private static pushComment(target: CommentEntry[], marker: CommentMarker, text: string): void {
         if (!text) {
             return;
@@ -1839,6 +1882,7 @@ export class CodePreviewProvider {
         target.push({ marker, text });
     }
 
+    /** 查找JSON 行内注释集合并返回匹配结果。 */
     private static findJsonInlineComments(line: string): CommentEntry[] {
         const comments: CommentEntry[] = [];
         let inString = false;
@@ -1890,6 +1934,7 @@ export class CodePreviewProvider {
         return comments;
     }
 
+    /** 查找井号行内注释集合并返回匹配结果。 */
     private static findHashInlineComments(line: string): CommentEntry[] {
         const codePart = this.stripHashCommentText(line);
         if (codePart.length === line.length) {
@@ -1901,6 +1946,7 @@ export class CodePreviewProvider {
         return text ? [{ marker: '#', text }] : [];
     }
 
+    /** 扫描XML行注释集合并提取片段。 */
     private static scanXmlLineComments(line: string, state: XmlCommentScanState): XmlLineCommentScanResult {
         const comments: string[] = [];
         let nonCommentText = '';
@@ -1957,6 +2003,7 @@ export class CodePreviewProvider {
         };
     }
 
+    /** 去除井号注释文本以保留有效信息。 */
     private static stripHashCommentText(line: string): string {
         let inSingle = false;
         let inDouble = false;
@@ -2004,6 +2051,7 @@ export class CodePreviewProvider {
         return line;
     }
 
+    /** 构建JSON 数组起始行深度供后续流程复用。 */
     private static buildJsonArrayDepthAtLineStart(lines: string[]): number[] {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
         const depthAtLineStart: number[] = [];
@@ -2050,6 +2098,7 @@ export class CodePreviewProvider {
         return depthAtLineStart;
     }
 
+    /** 构建JSON 对象起始行深度供后续流程复用。 */
     private static buildJsonObjectDepthAtLineStart(lines: string[]): number[] {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
         const depthAtLineStart: number[] = [];
@@ -2096,6 +2145,7 @@ export class CodePreviewProvider {
         return depthAtLineStart;
     }
 
+    /** 统计XML 元素深度增量用于流程判断。 */
     private static countXmlElementDepthDelta(nonCommentText: string): number {
         let delta = 0;
         const pattern = /<\s*(\/)?\s*([A-Za-z_:][\w:.-]*)([^<>]*?)>/g;
@@ -2119,6 +2169,7 @@ export class CodePreviewProvider {
         return delta;
     }
 
+    /** 构建TOML 数组起始行深度供后续流程复用。 */
     private static buildTomlArrayDepthAtLineStart(lines: string[]): number[] {
         const depthAtLineStart: number[] = [];
         let arrayDepth = 0;
@@ -2160,6 +2211,7 @@ export class CodePreviewProvider {
         return depthAtLineStart;
     }
 
+    /** 根据上下文推断YAML 待绑定数组。 */
     private static inferYamlPendingFromArray(lines: string[], lineIndex: number, arrayItemLines: Set<number>): boolean {
         for (let i = lineIndex - 1; i >= 0; i--) {
             const trimmed = lines[i].trim();
@@ -2181,6 +2233,7 @@ export class CodePreviewProvider {
         return false;
     }
 
+    /** 查找YAML 前一个可绑定行并返回匹配结果。 */
     private static findYamlPreviousBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
         for (let i = lineIndex - 1; i >= 0; i--) {
             const trimmed = lines[i].trim();
@@ -2196,6 +2249,7 @@ export class CodePreviewProvider {
         return -1;
     }
 
+    /** 查找YAML 下一个可绑定行并返回匹配结果。 */
     private static findYamlNextBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
         for (let i = lineIndex + 1; i < lines.length; i++) {
             const trimmed = lines[i].trim();
@@ -2211,6 +2265,7 @@ export class CodePreviewProvider {
         return -1;
     }
 
+    /** 处理行内注释标记值相关逻辑并返回结果。 */
     private static yamlLineHasInlineValue(line: string): boolean {
         const code = this.stripHashCommentText(line).trim();
         if (code.length === 0) {
@@ -2227,6 +2282,7 @@ export class CodePreviewProvider {
         return rhs.length > 0;
     }
 
+    /** 获取缩进并返回结果。 */
     private static getIndentation(line: string): number {
         const match = line.match(/^\s*/);
         return match ? match[0].length : 0;
@@ -2249,6 +2305,7 @@ export class CodePreviewProvider {
         });
     }
 
+    /** 处理注释文本相关逻辑并返回结果。 */
     private static cleanCommentText(text: string): string {
         return text
             .split('\n')
@@ -2257,6 +2314,7 @@ export class CodePreviewProvider {
             .trim();
     }
 
+    /** 处理XML注释文本相关逻辑并返回结果。 */
     private static cleanXmlCommentText(text: string): string {
         return text
             .split('\n')
@@ -2265,12 +2323,14 @@ export class CodePreviewProvider {
             .trim();
     }
 
+    /** 渲染注释图标并返回可展示内容。 */
     private static renderCommentIcon(comments: CommentEntry[]): string {
         const encodedComments = escapeHtml(JSON.stringify(comments));
         const ariaLabel = escapeHtml(comments.map(comment => `${comment.marker} ${comment.text}`).join('\n')).replace(/\n/g, '&#10;');
         return `<span class="tree-comment-icon codicon codicon-note" data-comments="${encodedComments}" aria-label="${ariaLabel}" tabindex="0"></span>`;
     }
 
+    /** 渲染注释指定行图标并返回可展示内容。 */
     private static renderCommentIconForLine(line: number, commentLines: CommentLineIndex): string {
         if (line < 0 || !commentLines.has(line)) {
             return '';
@@ -2324,6 +2384,7 @@ export class CodePreviewProvider {
         return this.renderCommentIcon(commentLines.get(line) as CommentEntry[]);
     }
 
+    /** 创建独立注释游标并返回可复用实例。 */
     private static createStandaloneCursor(groups: StandaloneCommentGroup[]): StandaloneCommentCursor {
         const sortedGroups = [...groups].sort((a, b) => a.line - b.line);
         return {
@@ -2349,6 +2410,7 @@ export class CodePreviewProvider {
         return html;
     }
 
+    /** 解析边界行并返回最终结果。 */
     private static resolveBoundaryLine(line: number, fallback: number): number {
         return line >= 0 ? line : fallback;
     }

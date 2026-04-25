@@ -1093,3 +1093,33 @@ test('MarkdownProvider heading extraction ignores fenced code headings', () => {
       [0, 5]
     );
 });
+
+test('MarkdownProvider injects frontmatter-table locate anchor at document top', () => {
+  const source = [
+    '---',
+    'title: Demo',
+    'owner: Team',
+    '---',
+    '# Heading',
+  ].join('\n');
+
+  const result = MarkdownProvider.parse(source);
+
+  assert.ok(result.html.includes('<table id="frontmatter-table" class="frontmatter-table">'));
+  assert.equal(result.headings[0]?.id, 'frontmatter-table');
+  assert.equal(result.headings[0]?.line, 0);
+});
+
+test('Supported markdown fixture keeps middle divider and heading locate metadata', () => {
+  const source = readSupportedFixture('markdown.md');
+  const result = MarkdownProvider.parse(source);
+
+  assert.ok(result.html.includes('<table id="frontmatter-table" class="frontmatter-table">'));
+  const middleHeading = result.headings.find(item => item.id === 'middle-divider-locate-check');
+
+  assert.ok(middleHeading);
+  assert.ok(/id="middle-divider-locate-check">Middle Divider Locate Check<\/h2>[\s\S]*?<hr>/.test(result.html));
+
+  const located = MarkdownProvider.findCurrentHeading(result.headings, middleHeading.line + 2);
+  assert.equal(located?.id, 'middle-divider-locate-check');
+});

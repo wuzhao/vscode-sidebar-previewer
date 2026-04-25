@@ -137,6 +137,12 @@ Autolink: https://github.com
 
 ---
 
+## Middle Divider Locate Check
+
+This section verifies that a middle horizontal rule is rendered correctly and can be used as a stable locate boundary.
+
+---
+
 ## Code Blocks
 
 ### JavaScript
