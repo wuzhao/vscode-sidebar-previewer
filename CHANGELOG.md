@@ -2,6 +2,16 @@
 
 ## 0.3.6 - 2026-04-25
 
+- Fixed the first separator `hr (---)` cannot be displayed.
+
+～～～
+
+- 修复第一个内容分隔符 `hr (---)` 不能显示的问题。
+
+---
+
+## 0.3.6 - 2026-04-25
+
 - Unified project docs and metadata consistency (README badges, localized descriptions, architecture notes, naming normalization).
 - Hardened webview message handling with defensive normalization for zoom/line payloads and render payload shape checks.
 - Fixed Markdown fenced-code interference in task checkbox line mapping and heading extraction.
@@ -19,6 +29,8 @@
 - 优化 Mermaid 预检逻辑，支持「前置注释 + 图声明」的文件结构。
 - CSV/TSV 预览新增首行与首列固定，长表格浏览更稳定。
 - 修复数据树注释弹窗在缩放后的表现，使弹窗缩放与锚点位置始终跟随注释图标。
+
+---
 
 ## 0.3.5 - 2026-04-24
 
