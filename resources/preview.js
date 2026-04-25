@@ -254,7 +254,10 @@ window.addEventListener('mouseup', stopMermaidDragging);
 window.addEventListener('blur', stopMermaidDragging);
 window.addEventListener('resize', positionCommentTooltip);
 document.addEventListener('scroll', positionCommentTooltip, true);
-window.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    return false;
+}, true);
 
 /**
  * 通知扩展缩放级别变化
@@ -1682,7 +1685,8 @@ document.addEventListener('keydown', (e) => {
                     brs.forEach(br => br.replaceWith('\n'));
                     
                     let val = tempDiv.textContent || '';
-                    if (val.includes('\t') || val.includes('\n') || val.includes('"')) {
+                    // 包含空格、制表符、换行符或引号时，使用引号包裹并转义内部引号，以确保 Excel 兼容性
+                    if (val.includes('\t') || val.includes('\n') || val.includes('"') || val.includes(' ')) {
                         val = '"' + val.replace(/"/g, '""') + '"';
                     }
                     return val;
