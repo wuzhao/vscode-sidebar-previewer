@@ -22,4 +22,5 @@ CLAUDE.md
 # PROJECT FILES
 issues/
 tasks/
-checklist/
+checklist/*
+!checklist/0.3.6.md
