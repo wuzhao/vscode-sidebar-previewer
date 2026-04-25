@@ -317,6 +317,54 @@ test('Provider locate capabilities stay consistent with file type capabilities',
   assert.equal(getFileType('dataset.tsv'), 'tsv');
 });
 
+test('MermaidPreviewProvider supports leading comments before diagram declaration', () => {
+  const source = [
+    '%% setup comment',
+    '',
+    'graph TD',
+    'A-->B',
+  ].join('\n');
+
+  const result = MermaidPreviewProvider.parse(source);
+
+  assert.equal(result.fileType, 'mermaid');
+  assert.equal(result.supportsLocate, false);
+  assert.ok(result.html.includes('<pre class="mermaid">'));
+});
+
+test('MermaidPreviewProvider validates first non-comment declaration line', () => {
+  const source = [
+    '%% setup comment',
+    '',
+    'invalidDiagramType',
+  ].join('\n');
+
+  assert.throws(
+    () => MermaidPreviewProvider.parse(source),
+    /Invalid Mermaid syntax: unrecognized diagram type/
+  );
+});
+
+test('MarkdownProvider task checkbox line mapping ignores fenced code blocks', () => {
+  const source = [
+    '# Tasks',
+    '',
+    '```md',
+    '- [ ] pseudo task in code block',
+    '```',
+    '- [x] real task',
+    '- [ ] second real task',
+  ].join('\n');
+
+  const result = MarkdownProvider.parse(source);
+  const lineMatches = Array.from(
+    result.html.matchAll(/<input type="checkbox"(?: checked="")? data-line="(\d+)">/g),
+    match => Number(match[1])
+  );
+
+  assert.deepEqual(lineMatches, [5, 6]);
+});
+
 test('CodePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
     const source = `{
   "name": "Alice", // profile name
@@ -1022,4 +1070,26 @@ test('MarkdownProvider escapes front matter HTML content', () => {
     assert.ok(result.html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
     assert.ok(result.html.includes('Tom &amp; Jerry'));
     assert.equal(result.html.includes('<script>alert(1)</script>'), false);
+});
+
+test('MarkdownProvider heading extraction ignores fenced code headings', () => {
+    const source = [
+      '# Real Heading',
+      '',
+      '```md',
+      '## Fake Heading In Code Fence',
+      '```',
+      '## Another Real Heading',
+    ].join('\n');
+
+    const result = MarkdownProvider.parse(source);
+
+    assert.deepEqual(
+      result.headings.map(item => item.text),
+      ['Real Heading', 'Another Real Heading']
+    );
+    assert.deepEqual(
+      result.headings.map(item => item.line),
+      [0, 5]
+    );
 });

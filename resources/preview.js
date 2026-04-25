@@ -16,6 +16,7 @@ const VALID_MESSAGE_TYPES = new Set([
     'collapseAll',
     'highlightDataTreeRange',
 ]);
+const DATA_TREE_FILE_TYPES = new Set(['json', 'yaml', 'toml', 'xml']);
 const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
 const MERMAID_ZOOM_MULTIPLIER = 2;
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
@@ -58,6 +59,49 @@ function getErrorMessage(error) {
     return String(error || 'Unknown error');
 }
 
+function normalizeOptionalString(value) {
+    return typeof value === 'string' ? value : null;
+}
+
+function normalizeLineValue(value) {
+    if (value === null || value === undefined) {
+        return null;
+    }
+    const parsed = Number.parseInt(String(value), 10);
+    return Number.isNaN(parsed) ? null : parsed;
+}
+
+function normalizeMessageLineRange(startLine, endLine) {
+    const start = normalizeLineValue(startLine);
+    if (start === null) {
+        return null;
+    }
+
+    const end = endLine === null || endLine === undefined
+        ? start
+        : normalizeLineValue(endLine);
+
+    if (end === null) {
+        return null;
+    }
+
+    return { start, end };
+}
+
+function normalizeZoomLevel(level) {
+    const parsed = Number(level);
+    if (!Number.isFinite(parsed)) {
+        return null;
+    }
+
+    return ZOOM_STEPS.reduce((nearest, step) => {
+        if (Math.abs(step - parsed) < Math.abs(nearest - parsed)) {
+            return step;
+        }
+        return nearest;
+    }, ZOOM_STEPS[0]);
+}
+
 window.addEventListener('message', event => {
     const message = event.data;
     if (!message || typeof message.type !== 'string' || !VALID_MESSAGE_TYPES.has(message.type)) {
@@ -72,13 +116,19 @@ window.addEventListener('message', event => {
             showLoading();
             break;
         case 'scrollToHeading':
-            scrollToHeading(message.headingId);
+            scrollToHeading(normalizeOptionalString(message.headingId));
             break;
         case 'getVisibleHeading':
             reportVisibleHeading();
             break;
         case 'zoom':
-            zoomLevel = message.level;
+            {
+                const nextZoom = normalizeZoomLevel(message.level);
+                if (nextZoom === null) {
+                    break;
+                }
+                zoomLevel = nextZoom;
+            }
             applyZoom();
             break;
         case 'expandAll':
@@ -88,7 +138,13 @@ window.addEventListener('message', event => {
             collapseAllNodes();
             break;
         case 'highlightDataTreeRange':
-            highlightTreeRange(message.startLine, message.endLine);
+            {
+                const range = normalizeMessageLineRange(message.startLine, message.endLine);
+                if (!range) {
+                    break;
+                }
+                highlightTreeRange(range.start, range.end);
+            }
             break;
     }
 });
@@ -147,6 +203,11 @@ function notifyZoomChange() {
 
 function updateContent(data) {
     const content = document.getElementById('content');
+    if (!content) {
+        return;
+    }
+
+    const messageData = (data && typeof data === 'object') ? data : {};
     const previousScrollTop = content.scrollTop;
     hideCommentTooltip(true);
     teardownMermaidPan();
@@ -154,23 +215,23 @@ function updateContent(data) {
     content.classList.remove('is-loading');
     
     // 如果后端传来 baseUri，则在 head 中设置 <base>，使相对路径（如 screenshots/xxx.png）能被解析为 webview 资源
-    if (data.baseUri) {
+    if (typeof messageData.baseUri === 'string' && messageData.baseUri.length > 0) {
         let base = document.querySelector('base');
         if (!base) {
             base = document.createElement('base');
             document.head.appendChild(base);
         }
-        base.setAttribute('href', data.baseUri.endsWith('/') ? data.baseUri : data.baseUri + '/');
+        base.setAttribute('href', messageData.baseUri.endsWith('/') ? messageData.baseUri : messageData.baseUri + '/');
     }
 
-    content.innerHTML = data.content;
-    currentHeadings = data.headings || [];
-    currentFileType = data.fileType || null;
+    content.innerHTML = typeof messageData.content === 'string' ? messageData.content : '';
+    currentHeadings = Array.isArray(messageData.headings) ? messageData.headings : [];
+    currentFileType = typeof messageData.fileType === 'string' ? messageData.fileType : null;
 
     // 根据文件类型执行客户端渲染
-    if (data.clientRender === 'katex') {
+    if (messageData.clientRender === 'katex') {
         renderKatex();
-    } else if (data.clientRender === 'mermaid') {
+    } else if (messageData.clientRender === 'mermaid') {
         renderMermaid();
     } else if (currentFileType === 'markdown' || !currentFileType) {
         renderKatex();
@@ -186,28 +247,29 @@ function updateContent(data) {
     }
 
     // 数据树类型：绑定 key 点击定位
-    if (currentFileType === 'json' || currentFileType === 'yaml' || currentFileType === 'toml' || currentFileType === 'xml') {
+    if (DATA_TREE_FILE_TYPES.has(currentFileType)) {
         bindCommentTooltipInteractionGuard();
         bindTreeKeyClicks();
         bindCommentTooltips();
-        highlightTreeRange(data.selectionStartLine, data.selectionEndLine);
+        highlightTreeRange(messageData.selectionStartLine, messageData.selectionEndLine);
 
         // 编辑时自动展开到修改行
-        if (data.editedLine !== null && data.editedLine !== undefined) {
-            expandToLine(data.editedLine);
+        const editedLine = normalizeLineValue(messageData.editedLine);
+        if (editedLine !== null) {
+            expandToLine(editedLine);
         }
     }
 
     // 应用当前缩放级别
     applyZoom();
 
-    if (data.preserveScrollPosition) {
+    if (messageData.preserveScrollPosition) {
         requestAnimationFrame(() => {
             content.scrollTop = previousScrollTop;
         });
-    } else if (Object.prototype.hasOwnProperty.call(data, 'scrollToHeadingId')) {
+    } else if (Object.prototype.hasOwnProperty.call(messageData, 'scrollToHeadingId')) {
         requestAnimationFrame(() => {
-            scrollToHeading(data.scrollToHeadingId);
+            scrollToHeading(normalizeOptionalString(messageData.scrollToHeadingId));
         });
     }
 }
@@ -637,6 +699,11 @@ function showLoading() {
 
 // 展开树形视图到指定行
 function expandToLine(targetLine) {
+    const normalizedTargetLine = normalizeLineValue(targetLine);
+    if (normalizedTargetLine === null) {
+        return;
+    }
+
     // 查找所有带 data-line 的 key 元素
     const keys = document.querySelectorAll('.data-tree .tree-key[data-line]');
     if (keys.length === 0) {
@@ -648,7 +715,7 @@ function expandToLine(targetLine) {
     let bestLine = -1;
     keys.forEach(key => {
         const line = parseInt(key.getAttribute('data-line'), 10);
-        if (!isNaN(line) && line <= targetLine && line > bestLine) {
+        if (!isNaN(line) && line <= normalizedTargetLine && line > bestLine) {
             bestLine = line;
             best = key;
         }
@@ -660,7 +727,7 @@ function expandToLine(targetLine) {
         keys.forEach(key => {
             const line = parseInt(key.getAttribute('data-line'), 10);
             if (!isNaN(line)) {
-                const dist = Math.abs(line - targetLine);
+                const dist = Math.abs(line - normalizedTargetLine);
                 if (dist < closestDist) {
                     closestDist = dist;
                     best = key;

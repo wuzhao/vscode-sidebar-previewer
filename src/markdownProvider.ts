@@ -30,7 +30,26 @@ export class MarkdownProvider {
         // 先提取标题信息
         const usedIds = new Map<string, number>();
         const lines = content.split('\n');
+        let headingFenceMarker: string | null = null;
         lines.forEach((line, index) => {
+            const fenceMatch = line.match(/^\s*([`~]{3,})/);
+            if (fenceMatch) {
+                const marker = fenceMatch[1];
+                if (!headingFenceMarker) {
+                    headingFenceMarker = marker;
+                    return;
+                }
+
+                if (marker[0] === headingFenceMarker[0] && marker.length >= headingFenceMarker.length) {
+                    headingFenceMarker = null;
+                    return;
+                }
+            }
+
+            if (headingFenceMarker) {
+                return;
+            }
+
             const match = line.match(/^(#{1,6})\s+(.+)$/);
             if (match) {
                 const level = match[1].length;
@@ -40,13 +59,8 @@ export class MarkdownProvider {
             }
         });
 
-        // 扫描 task list 行号
-        const taskLines: number[] = [];
-        lines.forEach((line, index) => {
-            if (/^\s*[-*+]\s+\[([ xX])\]/.test(line)) {
-                taskLines.push(index);
-            }
-        });
+        // 扫描 task list 行号（忽略 fenced code block 内的伪 task）
+        const taskLines = this.collectTaskListLineNumbers(lines);
 
         // 配置 marked
         const renderer = new Renderer();
@@ -154,6 +168,37 @@ export class MarkdownProvider {
         }
 
         return { html, headings };
+    }
+
+    private static collectTaskListLineNumbers(lines: string[]): number[] {
+        const taskLines: number[] = [];
+        const taskPattern = /^\s*[-*+]\s+\[([ xX])\]/;
+
+        let fenceMarker: string | null = null;
+
+        for (let index = 0; index < lines.length; index++) {
+            const line = lines[index];
+            const fenceMatch = line.match(/^\s*([`~]{3,})/);
+
+            if (fenceMatch) {
+                const marker = fenceMatch[1];
+                if (!fenceMarker) {
+                    fenceMarker = marker;
+                    continue;
+                }
+
+                if (marker[0] === fenceMarker[0] && marker.length >= fenceMarker.length) {
+                    fenceMarker = null;
+                    continue;
+                }
+            }
+
+            if (!fenceMarker && taskPattern.test(line)) {
+                taskLines.push(index);
+            }
+        }
+
+        return taskLines;
     }
 
     /**
