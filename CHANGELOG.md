@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.6 - 2026-04-25
+## 0.3.7 - 2026-04-26
 
 - Fixed the first separator `hr (---)` cannot be displayed.
 
