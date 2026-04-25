@@ -6,17 +6,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 
-// 解析仓库根目录并返回最终结果。
+// 解析仓库根目录并返回最终结果
 function resolveFromRoot(relativePath) {
     return path.join(root, relativePath);
 }
 
-// 处理父目录相关逻辑并返回结果。
+// 处理父目录相关逻辑并返回结果
 function ensureParentDir(filePath) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
 }
 
-// 处理文件相关逻辑并返回结果。
+// 处理文件相关逻辑并返回结果
 function copyFile(relativeSource, relativeTarget) {
     const source = resolveFromRoot(relativeSource);
     const target = resolveFromRoot(relativeTarget);
@@ -29,7 +29,7 @@ function copyFile(relativeSource, relativeTarget) {
     fs.copyFileSync(source, target);
 }
 
-// 处理目录相关逻辑并返回结果。
+// 处理目录相关逻辑并返回结果
 function copyDirectory(relativeSource, relativeTarget) {
     const source = resolveFromRoot(relativeSource);
     const target = resolveFromRoot(relativeTarget);
@@ -42,7 +42,7 @@ function copyDirectory(relativeSource, relativeTarget) {
     fs.cpSync(source, target, { recursive: true });
 }
 
-// 处理目录相关逻辑并返回结果。
+// 处理目录相关逻辑并返回结果
 function resetDirectory(relativeTarget) {
     const target = resolveFromRoot(relativeTarget);
     fs.rmSync(target, { recursive: true, force: true });

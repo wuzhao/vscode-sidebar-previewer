@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { PreviewProvider } from './previewProvider';
 import { initI18n } from './i18n';
 
-// 激活扩展并注册侧边栏预览能力。
+// 激活扩展并注册侧边栏预览能力
 export function activate(context: vscode.ExtensionContext) {
     // 初始化国际化
     initI18n();
@@ -36,5 +36,5 @@ export function activate(context: vscode.ExtensionContext) {
     }
 }
 
-// 释放扩展生命周期中的资源与状态。
+// 释放扩展生命周期中的资源与状态
 export function deactivate() {}

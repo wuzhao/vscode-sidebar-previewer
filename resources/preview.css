@@ -24,7 +24,7 @@ body {
 .content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 16px 32px;
+    padding: 8px 16px 16px;
     scroll-behavior: smooth;
 }
 
@@ -395,13 +395,11 @@ table tr:nth-child(2n) {
     background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 35%, transparent 65%);
 }
 
-.table-preview {
-    padding-top: 8px;
-}
-
 .table-preview-scroll {
     max-width: 100%;
+    max-height: calc(100vh - 24px);
     overflow: auto;
+    position: relative;
     border: 1px solid var(--vscode-panel-border);
     border-radius: 6px;
 }
@@ -420,7 +418,7 @@ table tr:nth-child(2n) {
     position: sticky;
     top: 0;
     z-index: 3;
-    background-color: var(--vscode-sideBarSectionHeader-background);
+    background-color: var(--vscode-editor-background);
 }
 
 .table-preview .table-index-column {
@@ -440,8 +438,7 @@ table tr:nth-child(2n) {
 }
 
 .table-preview tbody tr:nth-child(2n) .table-index-column {
-    background-color: rgba(127, 127, 127, 0.12);
-    background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 35%, transparent 65%);
+    background-color: var(--vscode-editor-background);
 }
 
 .table-preview .table-empty-cell {

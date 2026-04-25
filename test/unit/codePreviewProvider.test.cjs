@@ -470,6 +470,17 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.equal(tsvResult.html.includes('Failed to parse TSV content.'), false);
   });
 
+  test('CSV/TSV sticky styles use opaque frozen row and column backgrounds', () => {
+    const cssPath = path.join(__dirname, '..', '..', 'resources', 'preview.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    assert.ok(css.includes('.table-preview-scroll'));
+    assert.ok(css.includes('max-height: 70vh;'));
+    assert.ok(/\.table-preview thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
+    assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
+    assert.ok(/\.table-preview tbody tr:nth-child\(2n\) \.table-index-column\s*\{[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
+  });
+
   test('Supported JSONC fixture with mixed comment styles parses successfully', () => {
     const jsoncSource = readSupportedFixture('json.jsonc');
     const result = CodePreviewProvider.parse(jsoncSource, 'json');

@@ -3,10 +3,16 @@ import { escapeHtml } from './utils';
 
 /**
  * 提供 MermaidPreview 相关预览能力
+ * @param input - 无输入参数
+ * @returns 无返回值
+ * @throws {Error} 处理失败时抛出异常
  */
 export class MermaidPreviewProvider {
     /**
      * 解析 Mermaid 内容，返回需要客户端 mermaid.js 渲染的 HTML
+     * @param content - content 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     static parse(content: string): PreviewResult {
         // 基本语法验证：检查是否以已知的 mermaid 图表类型开头
@@ -39,7 +45,10 @@ export class MermaidPreviewProvider {
     }
 
     /**
-     * 查找首个指令行并返回匹配结果。
+     * 查找首个指令行并返回匹配结果
+     * @param content - content 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private static findFirstDirectiveLine(content: string): string {
         const lines = content
@@ -52,7 +61,7 @@ export class MermaidPreviewProvider {
             return '';
         }
 
-        // 允许文件开头有 Mermaid 注释（%%），优先定位后续真实图声明。
+        // 允许文件开头有 Mermaid 注释（%%），优先定位后续真实图声明
         for (const line of lines) {
             if (!line.startsWith('%%')) {
                 return line;

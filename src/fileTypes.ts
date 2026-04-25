@@ -1,7 +1,12 @@
 // 文件预览类型
 export type FileType = 'markdown' | 'latex' | 'mermaid' | 'json' | 'yaml' | 'toml' | 'xml' | 'csv' | 'tsv';
 
-// 标题/节点信息（用于定位）
+/**
+ * 标题/节点信息（用于定位）
+ * @param input - 无输入参数
+ * @returns 无返回值
+ * @throws {Error} 处理失败时抛出异常
+ */
 export interface HeadingInfo {
     level: number;
     text: string;
@@ -9,7 +14,12 @@ export interface HeadingInfo {
     id: string;
 }
 
-// 预览结果
+/**
+ * 预览结果
+ * @param input - 无输入参数
+ * @returns 无返回值
+ * @throws {Error} 处理失败时抛出异常
+ */
 export interface PreviewResult {
     // 渲染后的 HTML
     html: string;
@@ -23,7 +33,12 @@ export interface PreviewResult {
     clientRender?: 'katex' | 'mermaid';
 }
 
-// 支持的文件扩展名映射
+/**
+ * 支持的文件扩展名映射
+ * @param input - 无输入参数
+ * @returns 无返回值
+ * @throws {Error} 处理失败时抛出异常
+ */
 interface FileTypeCapabilities {
     extensions: readonly string[];
     supportsLocate: boolean;

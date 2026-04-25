@@ -44,7 +44,7 @@ let commentTooltipFocusLocked = false;
 let commentTooltipInteractionGuardBound = false;
 let commentTooltipInteractionDismissedAt = 0;
 
-// 处理HTML相关逻辑并返回结果。
+// 处理HTML相关逻辑并返回结果
 function escapeHtml(value) {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -53,7 +53,7 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;');
 }
 
-// 获取错误消息并返回结果。
+// 获取错误消息并返回结果
 function getErrorMessage(error) {
     if (error && typeof error === 'object' && 'message' in error) {
         return String(error.message);
@@ -61,12 +61,12 @@ function getErrorMessage(error) {
     return String(error || 'Unknown error');
 }
 
-// 归一化可选字符串以统一后续处理。
+// 归一化可选字符串以统一后续处理
 function normalizeOptionalString(value) {
     return typeof value === 'string' ? value : null;
 }
 
-// 归一化行值以统一后续处理。
+// 归一化行值以统一后续处理
 function normalizeLineValue(value) {
     if (value === null || value === undefined) {
         return null;
@@ -75,7 +75,7 @@ function normalizeLineValue(value) {
     return Number.isNaN(parsed) ? null : parsed;
 }
 
-// 归一化消息行范围以统一后续处理。
+// 归一化消息行范围以统一后续处理
 function normalizeMessageLineRange(startLine, endLine) {
     const start = normalizeLineValue(startLine);
     if (start === null) {
@@ -93,7 +93,7 @@ function normalizeMessageLineRange(startLine, endLine) {
     return { start, end };
 }
 
-// 归一化缩放级别以统一后续处理。
+// 归一化缩放级别以统一后续处理
 function normalizeZoomLevel(level) {
     const parsed = Number(level);
     if (!Number.isFinite(parsed)) {
@@ -200,7 +200,7 @@ window.addEventListener('resize', positionCommentTooltip);
 document.addEventListener('scroll', positionCommentTooltip, true);
 
 // 通知扩展缩放级别变化
-// 处理缩放变更相关逻辑并返回结果。
+// 处理缩放变更相关逻辑并返回结果
 function notifyZoomChange() {
     vscode.postMessage({
         type: 'zoomChange',
@@ -208,7 +208,7 @@ function notifyZoomChange() {
     });
 }
 
-// 更新内容并同步相关结果。
+// 更新内容并同步相关结果
 function updateContent(data) {
     const content = document.getElementById('content');
     if (!content) {
@@ -282,7 +282,7 @@ function updateContent(data) {
     }
 }
 
-// 将预览滚动到指定锚点，缺省时回到顶部。
+// 将预览滚动到指定锚点，缺省时回到顶部
 function scrollToHeading(headingId) {
     if (!headingId) {
         document.getElementById('content').scrollTop = 0;
@@ -300,7 +300,7 @@ function scrollToHeading(headingId) {
 }
 
 // 缩放功能
-// 处理缩放相关逻辑并返回结果。
+// 处理缩放相关逻辑并返回结果
 function applyZoom() {
     const content = document.getElementById('content');
     // 只对预览内容应用缩放，不影响 loading、空状态和报错
@@ -320,7 +320,7 @@ function applyZoom() {
     content.style.zoom = zoomLevel / 100;
 }
 
-// 根据当前缩放级别调整 Mermaid 图表尺寸与滚动位置。
+// 根据当前缩放级别调整 Mermaid 图表尺寸与滚动位置
 function applyMermaidZoom() {
     const content = document.getElementById('content');
     const container = content.querySelector('.mermaid-container');
@@ -359,7 +359,7 @@ function applyMermaidZoom() {
     });
 }
 
-// 获取 Mermaid SVG 的基础尺寸，用于后续缩放计算。
+// 获取 Mermaid SVG 的基础尺寸，用于后续缩放计算
 function getMermaidSvgBaseSize(svg) {
     const cachedWidth = parseFloat(svg.dataset.baseWidth || '');
     const cachedHeight = parseFloat(svg.dataset.baseHeight || '');
@@ -414,7 +414,7 @@ function getMermaidSvgBaseSize(svg) {
     return { width, height };
 }
 
-// 绑定 Mermaid 画布的拖拽平移能力。
+// 绑定 Mermaid 画布的拖拽平移能力
 function bindMermaidPan(container) {
     if (mermaidDragState.container === container) {
         updateMermaidPannableState(container);
@@ -431,7 +431,7 @@ function bindMermaidPan(container) {
     updateMermaidPannableState(container);
 }
 
-// 解除 Mermaid 画布拖拽平移绑定并重置状态。
+// 解除 Mermaid 画布拖拽平移绑定并重置状态
 function teardownMermaidPan() {
     stopMermaidDragging();
     if (mermaidDragState.container) {
@@ -441,12 +441,12 @@ function teardownMermaidPan() {
     }
 }
 
-// 更新 Mermaid 画布是否可拖拽的视觉状态。
+// 更新 Mermaid 画布是否可拖拽的视觉状态
 function updateMermaidPannableState(container) {
     container.classList.add('is-pannable');
 }
 
-// 记录拖拽起点并进入 Mermaid 画布拖拽状态。
+// 记录拖拽起点并进入 Mermaid 画布拖拽状态
 function onMermaidMouseDown(e) {
     if (e.button !== 0) {
         return;
@@ -468,7 +468,7 @@ function onMermaidMouseDown(e) {
     e.preventDefault();
 }
 
-// 根据鼠标位移更新 Mermaid 画布滚动位置。
+// 根据鼠标位移更新 Mermaid 画布滚动位置
 function onMermaidMouseMove(e) {
     if (!mermaidDragState.dragging || !mermaidDragState.container) {
         return;
@@ -481,7 +481,7 @@ function onMermaidMouseMove(e) {
     mermaidDragState.container.scrollTop = mermaidDragState.startScrollTop - deltaY;
 }
 
-// 结束 Mermaid 画布拖拽并清理交互状态。
+// 结束 Mermaid 画布拖拽并清理交互状态
 function stopMermaidDragging() {
     if (!mermaidDragState.dragging) {
         return;
@@ -495,7 +495,7 @@ function stopMermaidDragging() {
 }
 
 // 代码块复制按钮
-// 处理代码块按钮相关逻辑并返回结果。
+// 处理代码块按钮相关逻辑并返回结果
 function addCodeBlockButtons() {
     const preBlocks = document.querySelectorAll('pre');
     preBlocks.forEach(pre => {
@@ -507,7 +507,7 @@ function addCodeBlockButtons() {
     });
 }
 
-// 处理复制按钮相关逻辑并返回结果。
+// 处理复制按钮相关逻辑并返回结果
 function addCopyButton(pre) {
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy-btn';
@@ -556,7 +556,7 @@ function addCopyButton(pre) {
 }
 
 // 绑定任务列表复选框事件
-// 绑定任务列表复选框变更事件，并同步回编辑器。
+// 绑定任务列表复选框变更事件，并同步回编辑器
 function bindCheckboxEvents() {
     const checkboxes = document.querySelectorAll('li.task-list-item input[type="checkbox"]');
     checkboxes.forEach(cb => {
@@ -574,7 +574,7 @@ function bindCheckboxEvents() {
 }
 
 // 报告当前预览中可见的标题
-// 计算当前可见锚点并回传给扩展端。
+// 计算当前可见锚点并回传给扩展端
 function reportVisibleHeading() {
     const content = document.getElementById('content');
     if (!content) {
@@ -584,7 +584,7 @@ function reportVisibleHeading() {
     const contentRect = content.getBoundingClientRect();
     let visibleHeadingId = null;
 
-    // 顶部优先回传 frontmatter-table，保证「定位到顶部」可稳定落点。
+    // 顶部优先回传 frontmatter-table，保证「定位到顶部」可稳定落点
     const frontMatterTable = content.querySelector('#frontmatter-table');
     if (frontMatterTable instanceof HTMLElement) {
         const fmRect = frontMatterTable.getBoundingClientRect();
@@ -615,7 +615,7 @@ function reportVisibleHeading() {
 }
 
 // 渲染 KaTeX
-// 渲染页面中的 KaTeX 占位节点。
+// 渲染页面中的 KaTeX 占位节点
 function renderKatex() {
     if (typeof katex === 'undefined') {
         return;
@@ -660,7 +660,7 @@ function renderKatex() {
 }
 
 // 渲染 Mermaid
-// 渲染页面中的 Mermaid 图表节点。
+// 渲染页面中的 Mermaid 图表节点
 function renderMermaid() {
     if (typeof mermaid === 'undefined') {
         const els = document.querySelectorAll('.mermaid');
@@ -730,7 +730,7 @@ function renderMermaid() {
 }
 
 // 显示 loading 状态
-// 显示加载状态。
+// 显示加载状态
 function showLoading() {
     const content = document.getElementById('content');
     teardownMermaidPan();
@@ -741,7 +741,7 @@ function showLoading() {
 }
 
 // 展开树形视图到指定行
-// 处理目标行相关逻辑并返回结果。
+// 处理目标行相关逻辑并返回结果
 function expandToLine(targetLine) {
     const normalizedTargetLine = normalizeLineValue(targetLine);
     if (normalizedTargetLine === null) {
@@ -802,13 +802,13 @@ function expandToLine(targetLine) {
     best.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// 清理树高亮状态，避免脏数据残留。
+// 清理树高亮状态，避免脏数据残留
 function clearTreeHighlights() {
     const highlightedItems = document.querySelectorAll('.data-tree .tree-item.is-highlight');
     highlightedItems.forEach(item => item.classList.remove('is-highlight'));
 }
 
-// 收集最近树节点元素集合并聚合返回。
+// 收集最近树节点元素集合并聚合返回
 function collectNearestTreeItems(elements) {
     const uniqueItems = new Set();
     elements.forEach(element => {
@@ -820,7 +820,7 @@ function collectNearestTreeItems(elements) {
     return Array.from(uniqueItems);
 }
 
-// 归一化行范围以统一后续处理。
+// 归一化行范围以统一后续处理
 function normalizeLineRange(startLine, endLine) {
     if (startLine === null || startLine === undefined) {
         return null;
@@ -838,7 +838,7 @@ function normalizeLineRange(startLine, endLine) {
     };
 }
 
-// 处理树范围相关逻辑并返回结果。
+// 处理树范围相关逻辑并返回结果
 function highlightTreeRange(startLine, endLine) {
     clearTreeHighlights();
 
@@ -888,7 +888,7 @@ function highlightTreeRange(startLine, endLine) {
     }
 }
 
-// 处理注释提示框相关逻辑并返回结果。
+// 处理注释提示框相关逻辑并返回结果
 function ensureCommentTooltip() {
     if (commentTooltip) {
         return commentTooltip;
@@ -932,7 +932,7 @@ function ensureCommentTooltip() {
     return tooltip;
 }
 
-// 判断元素位于注释提示框是否成立。
+// 判断元素位于注释提示框是否成立
 function isElementWithinCommentTooltip(element) {
     if (!commentTooltip || !(element instanceof Node)) {
         return false;
@@ -940,7 +940,7 @@ function isElementWithinCommentTooltip(element) {
     return element === commentTooltip || commentTooltip.contains(element);
 }
 
-// 判断注释提示框交互锁定是否成立。
+// 判断注释提示框交互锁定是否成立
 function isCommentTooltipInteractionLocked() {
     return Boolean(
         commentTooltipFocusLocked
@@ -949,7 +949,7 @@ function isCommentTooltipInteractionLocked() {
     );
 }
 
-// 判断锁定到不同注释目标是否成立。
+// 判断锁定到不同注释目标是否成立
 function isLockedToDifferentCommentTarget(target) {
     return Boolean(
         isCommentTooltipInteractionLocked()
@@ -958,7 +958,7 @@ function isLockedToDifferentCommentTarget(target) {
     );
 }
 
-// 处理事件相关逻辑并返回结果。
+// 处理事件相关逻辑并返回结果
 function stopEvent(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -967,7 +967,7 @@ function stopEvent(event) {
     }
 }
 
-// 绑定注释提示框交互保护以建立响应逻辑。
+// 绑定注释提示框交互保护以建立响应逻辑
 function bindCommentTooltipInteractionGuard() {
     if (commentTooltipInteractionGuardBound) {
         return;
@@ -1008,7 +1008,7 @@ function bindCommentTooltipInteractionGuard() {
     commentTooltipInteractionGuardBound = true;
 }
 
-// 解析注释载荷并返回结构化结果。
+// 解析注释载荷并返回结构化结果
 function parseCommentPayload(target) {
     const raw = target.getAttribute('data-comments');
     if (!raw) {
@@ -1032,7 +1032,7 @@ function parseCommentPayload(target) {
     }
 }
 
-// 渲染注释提示框元素集合并返回可展示内容。
+// 渲染注释提示框元素集合并返回可展示内容
 function renderCommentTooltipItems(tooltip, comments) {
     tooltip.innerHTML = '';
     const list = document.createElement('div');
@@ -1058,7 +1058,7 @@ function renderCommentTooltipItems(tooltip, comments) {
     tooltip.appendChild(list);
 }
 
-// 显示注释提示框。
+// 显示注释提示框
 function showCommentTooltip(target) {
     const comments = parseCommentPayload(target);
     if (comments.length === 0) {
@@ -1074,7 +1074,7 @@ function showCommentTooltip(target) {
     positionCommentTooltip();
 }
 
-// 清理注释提示框隐藏计时器，避免脏数据残留。
+// 清理注释提示框隐藏计时器，避免脏数据残留
 function clearCommentTooltipHideTimer() {
     if (!commentTooltipHideTimer) {
         return;
@@ -1083,7 +1083,7 @@ function clearCommentTooltipHideTimer() {
     commentTooltipHideTimer = null;
 }
 
-// 延迟隐藏注释提示框，避免光标抖动导致闪烁。
+// 延迟隐藏注释提示框，避免光标抖动导致闪烁
 function scheduleCommentTooltipHide(delayMs = COMMENT_TOOLTIP_HIDE_DELAY_MS) {
     clearCommentTooltipHideTimer();
     commentTooltipHideTimer = setTimeout(() => {
@@ -1095,7 +1095,7 @@ function scheduleCommentTooltipHide(delayMs = COMMENT_TOOLTIP_HIDE_DELAY_MS) {
     }, delayMs);
 }
 
-// 更新注释提示框焦点样式并同步相关结果。
+// 更新注释提示框焦点样式并同步相关结果
 function updateCommentTooltipFocusClass() {
     if (!commentTooltip) {
         clearCommentTooltipTargetFocusClass();
@@ -1105,13 +1105,13 @@ function updateCommentTooltipFocusClass() {
     updateCommentTooltipTargetFocusClass();
 }
 
-// 清理注释提示框目标焦点样式，避免脏数据残留。
+// 清理注释提示框目标焦点样式，避免脏数据残留
 function clearCommentTooltipTargetFocusClass() {
     const focusedIcons = document.querySelectorAll('.data-tree .tree-comment-icon.is-tooltip-focused');
     focusedIcons.forEach(icon => icon.classList.remove('is-tooltip-focused'));
 }
 
-// 更新注释提示框目标焦点样式并同步相关结果。
+// 更新注释提示框目标焦点样式并同步相关结果
 function updateCommentTooltipTargetFocusClass() {
     clearCommentTooltipTargetFocusClass();
 
@@ -1129,7 +1129,7 @@ function updateCommentTooltipTargetFocusClass() {
     }
 }
 
-// 隐藏注释提示框。
+// 隐藏注释提示框
 function hideCommentTooltip(force = false) {
     if (!commentTooltip) {
         return;
@@ -1150,7 +1150,7 @@ function hideCommentTooltip(force = false) {
     commentTooltipTarget = null;
 }
 
-// 处理注释提示框相关逻辑并返回结果。
+// 处理注释提示框相关逻辑并返回结果
 function positionCommentTooltip() {
     if (!commentTooltip || !commentTooltipTarget || !commentTooltip.classList.contains('is-visible')) {
         return;
@@ -1174,7 +1174,7 @@ function positionCommentTooltip() {
     commentTooltip.style.top = `${top}px`;
 }
 
-// 绑定注释提示框以建立响应逻辑。
+// 绑定注释提示框以建立响应逻辑
 function bindCommentTooltips() {
     const icons = document.querySelectorAll('.data-tree .tree-comment-icon[data-comments]');
     icons.forEach(icon => {
@@ -1245,7 +1245,7 @@ function bindCommentTooltips() {
 }
 
 // 绑定树形视图 key 点击事件
-// 绑定数据树键名点击事件并回传导航行号。
+// 绑定数据树键名点击事件并回传导航行号
 function bindTreeKeyClicks() {
     const keys = document.querySelectorAll('.data-tree .tree-key[data-line]');
     keys.forEach(key => {
@@ -1268,14 +1268,14 @@ function bindTreeKeyClicks() {
 }
 
 // 展开所有树形节点
-// 处理全部节点相关逻辑并返回结果。
+// 处理全部节点相关逻辑并返回结果
 function expandAllNodes() {
     const details = document.querySelectorAll('.data-tree details');
     details.forEach(d => d.setAttribute('open', ''));
 }
 
 // 折叠所有树形节点
-// 处理全部节点相关逻辑并返回结果。
+// 处理全部节点相关逻辑并返回结果
 function collapseAllNodes() {
     const details = document.querySelectorAll('.data-tree details');
     details.forEach(d => d.removeAttribute('open'));

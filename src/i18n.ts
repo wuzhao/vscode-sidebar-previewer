@@ -1,5 +1,11 @@
 import * as vscode from 'vscode';
 
+/**
+ * 描述 I18nStrings 接口结构
+ * @param input - 无输入参数
+ * @returns 无返回值
+ * @throws {Error} 处理失败时抛出异常
+ */
 interface I18nStrings {
     emptyStateTitle: string;
     emptyStateText: string;
@@ -88,7 +94,7 @@ type LocaleKey = keyof typeof strings;
 const availableLocales = Object.keys(strings) as LocaleKey[];
 let currentLocale: LocaleKey = 'en_US';
 
-// 归一化语言区域标识以统一后续处理。
+// 归一化语言区域标识以统一后续处理
 function normalizeLocale(locale: string): string {
     return locale.replace('-', '_').toLowerCase();
 }
@@ -97,7 +103,7 @@ const localeLookup = new Map<string, LocaleKey>(
     availableLocales.map(locale => [normalizeLocale(locale), locale])
 );
 
-// 处理i18n相关逻辑并返回结果。
+// 处理i18n相关逻辑并返回结果
 export function initI18n(): void {
     // 获取 VS Code 当前的显示语言
     const vscodeLanguage = normalizeLocale(vscode.env.language);
@@ -116,7 +122,7 @@ export function initI18n(): void {
     currentLocale = matchedLocale ?? 'en_US';
 }
 
-// 获取字符串并返回结果。
+// 获取字符串并返回结果
 function getString(key: keyof I18nStrings): string {
     return strings[currentLocale]?.[key] ?? strings['en_US'][key];
 }
@@ -150,7 +156,7 @@ export const i18n = {
         return getString('previewError');
     },
 
-    // 处理当前场景相关逻辑并返回结果。
+    // 处理当前场景相关逻辑并返回结果
     format(template: string, ...args: string[]): string {
         return template.replace(/{(\d+)}/g, (match, index) => {
             return args[index] ?? match;

@@ -6,10 +6,16 @@ import { escapeHtml } from './utils';
 
 /**
  * 提供 Markdown 相关预览能力
+ * @param input - 无输入参数
+ * @returns 无返回值
+ * @throws {Error} 处理失败时抛出异常
  */
 export class MarkdownProvider {
     /**
      * 解析 Markdown 内容，返回 HTML 和标题信息
+     * @param content - content 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     static parse(content: string): { html: string; headings: HeadingInfo[] } {
         const headings: HeadingInfo[] = [];
@@ -113,9 +119,9 @@ export class MarkdownProvider {
         const mathExtension: any = {
             name: 'mathInline',
             level: 'inline',
-            // 定位行内数学公式的起始位置。
+            // 定位行内数学公式的起始位置
             start(src: string) { return src.match(/\$\$/)?.index; },
-            // 将 $$...$$ 片段解析为行内数学标记。
+            // 将 $$...$$ 片段解析为行内数学标记
             tokenizer(src: string, tokens: any) {
                 const rule = /^\$\$([\s\S]+?)\$\$/;
                 const match = rule.exec(src);
@@ -127,7 +133,7 @@ export class MarkdownProvider {
                     };
                 }
             },
-            // 输出行内 KaTeX 占位标记，交由前端统一渲染。
+            // 输出行内 KaTeX 占位标记，交由前端统一渲染
             renderer(token: any) {
                 return `<span class="katex-inline" data-katex-display="false">${escapeHtml(token.text)}</span>`;
             }
@@ -137,9 +143,9 @@ export class MarkdownProvider {
         const mathBlockExtension: any = {
             name: 'mathBlock',
             level: 'block',
-            // 定位块级数学公式的起始位置。
+            // 定位块级数学公式的起始位置
             start(src: string) { return src.match(/\\begin\{([a-zA-Z*]+)\}/)?.index; },
-            // 将 begin/end 包裹的片段解析为块级数学标记。
+            // 将 begin/end 包裹的片段解析为块级数学标记
             tokenizer(src: string, tokens: any) {
                 const rule = /^\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/;
                 const match = rule.exec(src);
@@ -151,7 +157,7 @@ export class MarkdownProvider {
                     };
                 }
             },
-            // 输出块级 KaTeX 占位标记，交由前端统一渲染。
+            // 输出块级 KaTeX 占位标记，交由前端统一渲染
             renderer(token: any) {
                 return `<div class="katex-block" data-katex-display="true">${escapeHtml(token.text)}</div>\n`;
             }
@@ -184,7 +190,10 @@ export class MarkdownProvider {
     }
 
     /**
-     * 收集任务列表复选框在原文中的行号。
+     * 收集任务列表复选框在原文中的行号
+     * @param lines - lines 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private static collectTaskListLineNumbers(lines: string[]): number[] {
         const taskLines: number[] = [];
@@ -219,6 +228,9 @@ export class MarkdownProvider {
 
     /**
      * 将 front matter 数据渲染为无表头表格
+     * @param data - data 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private static renderFrontMatterTable(data: Record<string, unknown>): string {
         let rows = '';
@@ -231,6 +243,9 @@ export class MarkdownProvider {
 
     /**
      * 渲染 front matter 的值（支持嵌套对象/数组 → ul > li）
+     * @param value - value 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private static renderFrontMatterValue(value: unknown): string {
         if (value === null || value === undefined) {
@@ -260,6 +275,9 @@ export class MarkdownProvider {
      * 转换 GitHub 风格的 alert blockquote
      * > [!NOTE]
      * > Content
+     * @param html - html 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private static transformGitHubAlerts(html: string): string {
         const alertTypes: Record<string, { icon: string; label: string }> = {
@@ -292,6 +310,10 @@ export class MarkdownProvider {
 
     /**
      * 生成标题锚点 ID（同名标题自动追加唯一 hex 后缀）
+     * @param text - text 参数
+     * @param usedIds - usedIds 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private static generateHeadingId(text: string, usedIds: Map<string, number>): string {
         let slug = '';
@@ -315,6 +337,10 @@ export class MarkdownProvider {
 
     /**
      * 根据编辑器可见范围的起始行，找到对应的章节
+     * @param headings - headings 参数
+     * @param visibleStartLine - visibleStartLine 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     static findCurrentHeading(headings: HeadingInfo[], visibleStartLine: number): HeadingInfo | null {
         if (headings.length === 0) {

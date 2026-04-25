@@ -12,6 +12,9 @@ import { escapeHtml } from './utils';
 
 /**
  * 提供 Preview 相关预览能力
+ * @param input - 无输入参数
+ * @returns 无返回值
+ * @throws {Error} 处理失败时抛出异常
  */
 export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     private _view?: vscode.WebviewView;
@@ -35,6 +38,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 初始化 PreviewProvider 实例
+     * @param _extensionContext - _extensionContext 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     constructor(private readonly _extensionContext: vscode.ExtensionContext) {
         const resourcesPath = path.join(_extensionContext.extensionPath, 'resources');
@@ -66,7 +72,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 解析资源路径并返回最终结果。
+     * 解析资源路径并返回最终结果
+     * @param preferredPath - preferredPath 参数
+     * @param fallbackPath - fallbackPath 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private _resolveAssetPath(preferredPath: string, fallbackPath: string): string {
         if (fs.existsSync(preferredPath)) {
@@ -84,6 +94,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * @param webviewView - 参数
      * @param _context - 参数
      * @param _token - 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -219,6 +231,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * 处理 _setLoadingTimeout 相关逻辑
      * @param callback - 参数
      * @param delayMs - 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _setLoadingTimeout(callback: () => void, delayMs: number): void {
         this._clearLoadingTimeout();
@@ -229,7 +243,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 清理加载超时计时器，避免脏数据残留。
+     * 清理加载超时计时器，避免脏数据残留
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _clearLoadingTimeout(): void {
         if (!this._loadingTimeout) {
@@ -240,7 +257,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理活动编辑器预览相关逻辑并返回结果。
+     * 处理活动编辑器预览相关逻辑并返回结果
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _refreshPreviewForActiveEditor(): void {
         if (!this._view || !this._view.visible || !this._webviewReady) {
@@ -269,6 +289,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 更新编辑器可见范围监听器
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _updateVisibleRangesListener(): void {
         // 移除旧的监听器
@@ -290,6 +313,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 处理编辑器滚动
+     * @param visibleRanges - visibleRanges 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _handleEditorScroll(visibleRanges: readonly vscode.Range[]): void {
         if (!this._view || visibleRanges.length === 0) {
@@ -309,6 +335,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 滚动预览到编辑器当前可见位置
+     * @param editor - editor 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _scrollToEditorPosition(editor: vscode.TextEditor): void {
         if (!this._view || !this._supportsLocate || !this._followEditorScroll) {
@@ -327,14 +356,20 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 查找当前标题并返回匹配结果。
+     * 查找当前标题并返回匹配结果
+     * @param startLine - startLine 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private _findCurrentHeading(startLine: number): HeadingInfo | null {
         return MarkdownProvider.findCurrentHeading(this._currentHeadings, startLine);
     }
 
     /**
-     * 获取滚动目标标题ID并返回结果。
+     * 获取滚动目标标题ID并返回结果
+     * @param document - document 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private _getScrollTargetHeadingId(document: vscode.TextDocument): string | null | undefined {
         if (!this._supportsLocate || !this._followEditorScroll) {
@@ -352,6 +387,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 显示空状态
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _showEmptyState(): void {
         this._clearLoadingTimeout();
@@ -377,6 +415,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 显示 loading 状态
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _showLoading(): void {
         this._clearLoadingTimeout();
@@ -392,6 +433,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 获取文档的支持文件类型，不支持则返回 null
+     * @param document - document 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private _getSupportedFileType(document: vscode.TextDocument | undefined): FileType | null {
         if (!document || !document.fileName) {
@@ -409,6 +453,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 更新预览内容
+     * @param document - document 参数
+     * @param editedLine - editedLine 参数
+     * @param options - options 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _updatePreview(
         document: vscode.TextDocument,
@@ -526,7 +575,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 获取编辑器选区范围并返回结果。
+     * 获取编辑器选区范围并返回结果
+     * @param document - document 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private _getEditorSelectionRange(document: vscode.TextDocument): { startLine: number; endLine: number } | null {
         const editor = vscode.window.activeTextEditor;
@@ -541,7 +593,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理数据树选区范围相关逻辑并返回结果。
+     * 处理数据树选区范围相关逻辑并返回结果
+     * @param editor - editor 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _postDataTreeSelectionRange(editor: vscode.TextEditor | undefined): void {
         if (!this._view || !editor) {
@@ -563,6 +618,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 显示错误状态
+     * @param message - message 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _showError(message: string): void {
         this._clearLoadingTimeout();
@@ -587,6 +645,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 滚动到指定标题
+     * @param headingId - headingId 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public scrollToHeading(headingId: string): void {
         if (this._view) {
@@ -599,6 +660,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 放大
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public zoomIn(): void {
         const nextStep = this.ZOOM_STEPS.find(step => step > this._zoomLevel);
@@ -610,6 +674,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 缩小
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public zoomOut(): void {
         const reverseSteps = [...this.ZOOM_STEPS].reverse();
@@ -622,6 +689,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 重置缩放
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public zoomReset(): void {
         this._zoomLevel = 100;
@@ -630,6 +700,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 预览定位：将预览滚动到编辑器当前可见区域对应的位置
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public locatePreview(): void {
         const editor = vscode.window.activeTextEditor;
@@ -653,6 +726,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 编辑定位：请求 webview 报告当前可见标题，然后滚动编辑器（不触发预览滚动）
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public locateEditor(): void {
         if (!this._view || !this._supportsLocate) {
@@ -669,14 +745,20 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理跟随滚动相关逻辑并返回结果。
+     * 处理跟随滚动相关逻辑并返回结果
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public enableFollowScroll(): void {
         this._setFollowEditorScroll(true);
     }
 
     /**
-     * 处理跟随滚动相关逻辑并返回结果。
+     * 处理跟随滚动相关逻辑并返回结果
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public disableFollowScroll(): void {
         this._setFollowEditorScroll(false);
@@ -684,6 +766,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 展开所有树形节点
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public expandAll(): void {
         if (this._view) {
@@ -693,6 +778,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 折叠所有树形节点
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public collapseAll(): void {
         if (this._view) {
@@ -702,6 +790,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 导航到源文件指定行
+     * @param line - line 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _navigateToLine(line: number): void {
         const editor = vscode.window.activeTextEditor;
@@ -729,6 +820,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 处理编辑定位响应
+     * @param headingId - headingId 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _handleLocateEditor(headingId: string | null): void {
         const editor = vscode.window.activeTextEditor;
@@ -756,6 +850,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 处理 checkbox 切换
+     * @param line - line 参数
+     * @param checked - checked 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private async _handleToggleCheckbox(line: number, checked: boolean): Promise<void> {
         const editor = vscode.window.activeTextEditor;
@@ -788,7 +886,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理下一次自动滚动抑制状态相关逻辑并返回结果。
+     * 处理下一次自动滚动抑制状态相关逻辑并返回结果
+     * @param input - 无输入参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private _consumeSuppressNextAutoScroll(): boolean {
         const suppress = this._suppressNextAutoScroll;
@@ -797,7 +898,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 设置编辑器滚动跟随并保持一致性。
+     * 设置编辑器滚动跟随并保持一致性
+     * @param enabled - enabled 参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _setFollowEditorScroll(enabled: boolean): void {
         if (this._followEditorScroll === enabled) {
@@ -817,7 +921,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 更新跟随滚动上下文并同步相关结果。
+     * 更新跟随滚动上下文并同步相关结果
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _updateFollowScrollContext(): void {
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.followScrollEnabled', this._followEditorScroll);
@@ -825,6 +932,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 更新缩放相关的上下文
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _updateZoomContext(): void {
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomOut', this._zoomLevel > this.ZOOM_STEPS[0]);
@@ -834,6 +944,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 应用缩放
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     private _applyZoom(): void {
         if (this._view) {
@@ -849,6 +962,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 生成 WebView HTML 内容
+     * @param webview - webview 参数
+     * @returns 返回处理结果
+     * @throws {Error} 处理失败时抛出异常
      */
     private _getHtmlForWebview(webview: vscode.Webview): string {
         const previewCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewCssPath));
@@ -883,7 +999,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理当前场景相关逻辑并返回结果。
+     * 处理当前场景相关逻辑并返回结果
+     * @param input - 无输入参数
+     * @returns 无返回值
+     * @throws {Error} 处理失败时抛出异常
      */
     public dispose(): void {
         this._clearLoadingTimeout();
