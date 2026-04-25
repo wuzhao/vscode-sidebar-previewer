@@ -8,7 +8,6 @@
 - Fixed Markdown locate behavior at document top by anchoring frontmatter table as `frontmatter-table`.
 - Improved Mermaid precheck to support leading comments before the first diagram declaration.
 - Added sticky first row and first column in CSV/TSV table preview.
-- No breaking changes in this release.
 
 ～～～
 
@@ -18,7 +17,6 @@
 - 修复 Markdown 顶部定位场景，frontmatter 表格新增 `frontmatter-table` 锚点以保证稳定落位。
 - 优化 Mermaid 预检逻辑，支持「前置注释 + 图声明」的文件结构。
 - CSV/TSV 预览新增首行与首列固定，长表格浏览更稳定。
-- 本次版本无破坏性变更。
 
 ## 0.3.5 - 2026-04-24
 
@@ -29,7 +27,6 @@
 - Fixed comment placement at nested scope vs document tail across JSON/YAML/TOML/XML.
 - Fixed JSON/JSONC array/object tail comment ownership.
 - Fixed TOML parent/child table order issue where parent locate/comment could be shadowed by earlier child table.
-- No breaking changes in this release.
 
 ～～～
 
@@ -40,4 +37,3 @@
 - 修复 JSON/YAML/TOML/XML 在「嵌套作用域」和「文档末尾」的注释落位问题。
 - 修复 JSON/JSONC 数组与对象尾部注释归属。
 - 修复 TOML 父子 table 顺序问题，避免父节点被前置子节点错误抢占定位或注释。
-- 本次版本无破坏性变更。

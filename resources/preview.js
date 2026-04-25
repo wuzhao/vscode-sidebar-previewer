@@ -1,11 +1,15 @@
-const vscode = acquireVsCodeApi();
-const l10nSource = document.body ? document.body.dataset : {};
-const l10n = {
-    copySuccess: l10nSource.copySuccess || 'COPIED!',
-    copyCode: l10nSource.copyCode || 'Copy',
-    viewCode: l10nSource.viewCode || 'Code',
-    viewPreview: l10nSource.viewPreview || 'Preview',
+// VS Code Webview 通信对象，用于前后端消息交互
+const VSCODE_API = acquireVsCodeApi();
+// 从 HTML data-* 注入的多语言文案源
+const L10N_SOURCE = document.body ? document.body.dataset : {};
+// Webview 内部使用的本地化文案字典
+const L10N_TEXT = {
+    copySuccess: L10N_SOURCE.copySuccess || 'COPIED!',
+    copyCode: L10N_SOURCE.copyCode || 'Copy',
+    viewCode: L10N_SOURCE.viewCode || 'Code',
+    viewPreview: L10N_SOURCE.viewPreview || 'Preview',
 };
+// 允许接收的消息类型枚举，避免无效消息触发渲染流程
 const VALID_MESSAGE_TYPES = new Set([
     'update',
     'loading',
@@ -16,13 +20,20 @@ const VALID_MESSAGE_TYPES = new Set([
     'collapseAll',
     'highlightDataTreeRange',
 ]);
+// 需要启用数据树交互能力的文件类型枚举
 const DATA_TREE_FILE_TYPES = new Set(['json', 'yaml', 'toml', 'xml']);
+// 预览缩放可选档位配置
 const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
+// Mermaid 额外放大倍数，用于提升图表可读性
 const MERMAID_ZOOM_MULTIPLIER = 2;
+// Mermaid 渲染超时时间（毫秒）
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
+// 注释提示框离开后延迟隐藏时间（毫秒）
 const COMMENT_TOOLTIP_HIDE_DELAY_MS = 240;
+// 注释提示框点击后屏蔽 hover 的时间窗口（毫秒）
 const COMMENT_TOOLTIP_CLICK_BLOCK_WINDOW_MS = 260;
-const mermaidDragState = {
+// Mermaid 拖拽平移过程中的全局状态
+const MERMAID_DRAG_STATE = {
     container: null,
     dragging: false,
     startX: 0,
@@ -44,7 +55,11 @@ let commentTooltipFocusLocked = false;
 let commentTooltipInteractionGuardBound = false;
 let commentTooltipInteractionDismissedAt = 0;
 
-// 处理HTML相关逻辑并返回结果
+/**
+ * 处理HTML相关逻辑并返回结果
+ * @param value - 待转义或待归一化的值
+ * @returns 返回 HTML 转义后的字符串
+ */
 function escapeHtml(value) {
     return String(value)
         .replace(/&/g, '&amp;')
@@ -53,7 +68,11 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;');
 }
 
-// 获取错误消息并返回结果
+/**
+ * 获取错误消息并返回结果
+ * @param error - 待展示的异常对象
+ * @returns 返回可展示的错误消息文本
+ */
 function getErrorMessage(error) {
     if (error && typeof error === 'object' && 'message' in error) {
         return String(error.message);
@@ -61,12 +80,20 @@ function getErrorMessage(error) {
     return String(error || 'Unknown error');
 }
 
-// 归一化可选字符串以统一后续处理
+/**
+ * 归一化可选字符串以统一后续处理
+ * @param value - 待转义或待归一化的值
+ * @returns 返回标准化后的字符串或 null
+ */
 function normalizeOptionalString(value) {
     return typeof value === 'string' ? value : null;
 }
 
-// 归一化行值以统一后续处理
+/**
+ * 归一化行值以统一后续处理
+ * @param value - 待转义或待归一化的值
+ * @returns 返回合法的行号值或 null
+ */
 function normalizeLineValue(value) {
     if (value === null || value === undefined) {
         return null;
@@ -75,7 +102,12 @@ function normalizeLineValue(value) {
     return Number.isNaN(parsed) ? null : parsed;
 }
 
-// 归一化消息行范围以统一后续处理
+/**
+ * 归一化消息行范围以统一后续处理
+ * @param startLine - 起始行号
+ * @param endLine - 结束行号
+ * @returns 返回归一化后的行范围对象
+ */
 function normalizeMessageLineRange(startLine, endLine) {
     const start = normalizeLineValue(startLine);
     if (start === null) {
@@ -93,7 +125,11 @@ function normalizeMessageLineRange(startLine, endLine) {
     return { start, end };
 }
 
-// 归一化缩放级别以统一后续处理
+/**
+ * 归一化缩放级别以统一后续处理
+ * @param level - 目标缩放级别
+ * @returns 返回最近的合法缩放档位
+ */
 function normalizeZoomLevel(level) {
     const parsed = Number(level);
     if (!Number.isFinite(parsed)) {
@@ -155,7 +191,7 @@ window.addEventListener('message', event => {
     }
 });
 
-vscode.postMessage({ type: 'webviewReady' });
+VSCODE_API.postMessage({ type: 'webviewReady' });
 
 // 监听滚轮事件，支持 cmd/ctrl + 轮缩放
 document.addEventListener('wheel', (e) => {
@@ -199,16 +235,21 @@ window.addEventListener('blur', stopMermaidDragging);
 window.addEventListener('resize', positionCommentTooltip);
 document.addEventListener('scroll', positionCommentTooltip, true);
 
-// 通知扩展缩放级别变化
-// 处理缩放变更相关逻辑并返回结果
+/**
+ * 通知扩展缩放级别变化
+ * 处理缩放变更相关逻辑并返回结果
+ */
 function notifyZoomChange() {
-    vscode.postMessage({
+    VSCODE_API.postMessage({
         type: 'zoomChange',
         level: zoomLevel
     });
 }
 
-// 更新内容并同步相关结果
+/**
+ * 更新内容并同步相关结果
+ * @param data - 来自扩展端的渲染消息
+ */
 function updateContent(data) {
     const content = document.getElementById('content');
     if (!content) {
@@ -282,7 +323,10 @@ function updateContent(data) {
     }
 }
 
-// 将预览滚动到指定锚点，缺省时回到顶部
+/**
+ * 将预览滚动到指定锚点，缺省时回到顶部
+ * @param headingId - 目标标题锚点 ID
+ */
 function scrollToHeading(headingId) {
     if (!headingId) {
         document.getElementById('content').scrollTop = 0;
@@ -299,8 +343,10 @@ function scrollToHeading(headingId) {
     }
 }
 
-// 缩放功能
-// 处理缩放相关逻辑并返回结果
+/**
+ * 缩放功能
+ * 处理缩放相关逻辑并返回结果
+ */
 function applyZoom() {
     const content = document.getElementById('content');
     // 只对预览内容应用缩放，不影响 loading、空状态和报错
@@ -320,7 +366,9 @@ function applyZoom() {
     content.style.zoom = zoomLevel / 100;
 }
 
-// 根据当前缩放级别调整 Mermaid 图表尺寸与滚动位置
+/**
+ * 根据当前缩放级别调整 Mermaid 图表尺寸与滚动位置
+ */
 function applyMermaidZoom() {
     const content = document.getElementById('content');
     const container = content.querySelector('.mermaid-container');
@@ -359,7 +407,11 @@ function applyMermaidZoom() {
     });
 }
 
-// 获取 Mermaid SVG 的基础尺寸，用于后续缩放计算
+/**
+ * 获取 Mermaid SVG 的基础尺寸，用于后续缩放计算
+ * @param svg - Mermaid SVG 节点
+ * @returns 返回 Mermaid SVG 的基础宽高
+ */
 function getMermaidSvgBaseSize(svg) {
     const cachedWidth = parseFloat(svg.dataset.baseWidth || '');
     const cachedHeight = parseFloat(svg.dataset.baseHeight || '');
@@ -414,39 +466,50 @@ function getMermaidSvgBaseSize(svg) {
     return { width, height };
 }
 
-// 绑定 Mermaid 画布的拖拽平移能力
+/**
+ * 绑定 Mermaid 画布的拖拽平移能力
+ * @param container - Mermaid 图表滚动容器
+ */
 function bindMermaidPan(container) {
-    if (mermaidDragState.container === container) {
+    if (MERMAID_DRAG_STATE.container === container) {
         updateMermaidPannableState(container);
         return;
     }
 
-    if (mermaidDragState.container) {
-        mermaidDragState.container.removeEventListener('mousedown', onMermaidMouseDown);
-        mermaidDragState.container.classList.remove('is-dragging', 'is-pannable');
+    if (MERMAID_DRAG_STATE.container) {
+        MERMAID_DRAG_STATE.container.removeEventListener('mousedown', onMermaidMouseDown);
+        MERMAID_DRAG_STATE.container.classList.remove('is-dragging', 'is-pannable');
     }
 
-    mermaidDragState.container = container;
+    MERMAID_DRAG_STATE.container = container;
     container.addEventListener('mousedown', onMermaidMouseDown);
     updateMermaidPannableState(container);
 }
 
-// 解除 Mermaid 画布拖拽平移绑定并重置状态
+/**
+ * 解除 Mermaid 画布拖拽平移绑定并重置状态
+ */
 function teardownMermaidPan() {
     stopMermaidDragging();
-    if (mermaidDragState.container) {
-        mermaidDragState.container.removeEventListener('mousedown', onMermaidMouseDown);
-        mermaidDragState.container.classList.remove('is-dragging', 'is-pannable');
-        mermaidDragState.container = null;
+    if (MERMAID_DRAG_STATE.container) {
+        MERMAID_DRAG_STATE.container.removeEventListener('mousedown', onMermaidMouseDown);
+        MERMAID_DRAG_STATE.container.classList.remove('is-dragging', 'is-pannable');
+        MERMAID_DRAG_STATE.container = null;
     }
 }
 
-// 更新 Mermaid 画布是否可拖拽的视觉状态
+/**
+ * 更新 Mermaid 画布是否可拖拽的视觉状态
+ * @param container - Mermaid 图表滚动容器
+ */
 function updateMermaidPannableState(container) {
     container.classList.add('is-pannable');
 }
 
-// 记录拖拽起点并进入 Mermaid 画布拖拽状态
+/**
+ * 记录拖拽起点并进入 Mermaid 画布拖拽状态
+ * @param e - 浏览器事件对象
+ */
 function onMermaidMouseDown(e) {
     if (e.button !== 0) {
         return;
@@ -454,48 +517,55 @@ function onMermaidMouseDown(e) {
     if (e.target && e.target.closest && e.target.closest('.copy-btn')) {
         return;
     }
-    if (!mermaidDragState.container) {
+    if (!MERMAID_DRAG_STATE.container) {
         return;
     }
 
-    mermaidDragState.dragging = true;
-    mermaidDragState.startX = e.clientX;
-    mermaidDragState.startY = e.clientY;
-    mermaidDragState.startScrollLeft = mermaidDragState.container.scrollLeft;
-    mermaidDragState.startScrollTop = mermaidDragState.container.scrollTop;
-    mermaidDragState.container.classList.add('is-dragging');
+    MERMAID_DRAG_STATE.dragging = true;
+    MERMAID_DRAG_STATE.startX = e.clientX;
+    MERMAID_DRAG_STATE.startY = e.clientY;
+    MERMAID_DRAG_STATE.startScrollLeft = MERMAID_DRAG_STATE.container.scrollLeft;
+    MERMAID_DRAG_STATE.startScrollTop = MERMAID_DRAG_STATE.container.scrollTop;
+    MERMAID_DRAG_STATE.container.classList.add('is-dragging');
     document.body.classList.add('mermaid-dragging');
     e.preventDefault();
 }
 
-// 根据鼠标位移更新 Mermaid 画布滚动位置
+/**
+ * 根据鼠标位移更新 Mermaid 画布滚动位置
+ * @param e - 浏览器事件对象
+ */
 function onMermaidMouseMove(e) {
-    if (!mermaidDragState.dragging || !mermaidDragState.container) {
+    if (!MERMAID_DRAG_STATE.dragging || !MERMAID_DRAG_STATE.container) {
         return;
     }
 
-    const deltaX = e.clientX - mermaidDragState.startX;
-    const deltaY = e.clientY - mermaidDragState.startY;
+    const deltaX = e.clientX - MERMAID_DRAG_STATE.startX;
+    const deltaY = e.clientY - MERMAID_DRAG_STATE.startY;
 
-    mermaidDragState.container.scrollLeft = mermaidDragState.startScrollLeft - deltaX;
-    mermaidDragState.container.scrollTop = mermaidDragState.startScrollTop - deltaY;
+    MERMAID_DRAG_STATE.container.scrollLeft = MERMAID_DRAG_STATE.startScrollLeft - deltaX;
+    MERMAID_DRAG_STATE.container.scrollTop = MERMAID_DRAG_STATE.startScrollTop - deltaY;
 }
 
-// 结束 Mermaid 画布拖拽并清理交互状态
+/**
+ * 结束 Mermaid 画布拖拽并清理交互状态
+ */
 function stopMermaidDragging() {
-    if (!mermaidDragState.dragging) {
+    if (!MERMAID_DRAG_STATE.dragging) {
         return;
     }
 
-    mermaidDragState.dragging = false;
-    if (mermaidDragState.container) {
-        mermaidDragState.container.classList.remove('is-dragging');
+    MERMAID_DRAG_STATE.dragging = false;
+    if (MERMAID_DRAG_STATE.container) {
+        MERMAID_DRAG_STATE.container.classList.remove('is-dragging');
     }
     document.body.classList.remove('mermaid-dragging');
 }
 
-// 代码块复制按钮
-// 处理代码块按钮相关逻辑并返回结果
+/**
+ * 代码块复制按钮
+ * 处理代码块按钮相关逻辑并返回结果
+ */
 function addCodeBlockButtons() {
     const preBlocks = document.querySelectorAll('pre');
     preBlocks.forEach(pre => {
@@ -507,11 +577,14 @@ function addCodeBlockButtons() {
     });
 }
 
-// 处理复制按钮相关逻辑并返回结果
+/**
+ * 处理复制按钮相关逻辑并返回结果
+ * @param pre - 目标代码块容器
+ */
 function addCopyButton(pre) {
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy-btn';
-    copyBtn.title = l10n.copyCode;
+    copyBtn.title = L10N_TEXT.copyCode;
     copyBtn.innerHTML = '<i class="codicon codicon-copy"></i>';
 
     let resetTimer = null;
@@ -528,7 +601,7 @@ function addCopyButton(pre) {
         try {
             await navigator.clipboard.writeText(text);
             copyBtn.classList.add('copied');
-            copyBtn.innerHTML = '<i class="codicon codicon-pass-filled"></i>' + l10n.copySuccess;
+            copyBtn.innerHTML = '<i class="codicon codicon-pass-filled"></i>' + L10N_TEXT.copySuccess;
         } catch (err) {
             console.error('Copy failed:', err);
             copyBtn.classList.add('copy-failed');
@@ -555,15 +628,17 @@ function addCopyButton(pre) {
     pre.appendChild(copyBtn);
 }
 
-// 绑定任务列表复选框事件
-// 绑定任务列表复选框变更事件，并同步回编辑器
+/**
+ * 绑定任务列表复选框事件
+ * 绑定任务列表复选框变更事件，并同步回编辑器
+ */
 function bindCheckboxEvents() {
     const checkboxes = document.querySelectorAll('li.task-list-item input[type="checkbox"]');
     checkboxes.forEach(cb => {
         cb.addEventListener('change', (e) => {
             const line = parseInt(e.target.getAttribute('data-line'), 10);
             if (!isNaN(line) && line >= 0) {
-                vscode.postMessage({
+                VSCODE_API.postMessage({
                     type: 'toggleCheckbox',
                     line: line,
                     checked: e.target.checked
@@ -573,8 +648,10 @@ function bindCheckboxEvents() {
     });
 }
 
-// 报告当前预览中可见的标题
-// 计算当前可见锚点并回传给扩展端
+/**
+ * 报告当前预览中可见的标题
+ * 计算当前可见锚点并回传给扩展端
+ */
 function reportVisibleHeading() {
     const content = document.getElementById('content');
     if (!content) {
@@ -608,14 +685,16 @@ function reportVisibleHeading() {
         visibleHeadingId = visibleHeading ? visibleHeading.id : null;
     }
 
-    vscode.postMessage({
+    VSCODE_API.postMessage({
         type: 'visibleHeading',
         headingId: visibleHeadingId
     });
 }
 
-// 渲染 KaTeX
-// 渲染页面中的 KaTeX 占位节点
+/**
+ * 渲染 KaTeX
+ * 渲染页面中的 KaTeX 占位节点
+ */
 function renderKatex() {
     if (typeof katex === 'undefined') {
         return;
@@ -659,8 +738,10 @@ function renderKatex() {
     });
 }
 
-// 渲染 Mermaid
-// 渲染页面中的 Mermaid 图表节点
+/**
+ * 渲染 Mermaid
+ * 渲染页面中的 Mermaid 图表节点
+ */
 function renderMermaid() {
     if (typeof mermaid === 'undefined') {
         const els = document.querySelectorAll('.mermaid');
@@ -729,8 +810,10 @@ function renderMermaid() {
     });
 }
 
-// 显示 loading 状态
-// 显示加载状态
+/**
+ * 显示 loading 状态
+ * 显示加载状态
+ */
 function showLoading() {
     const content = document.getElementById('content');
     teardownMermaidPan();
@@ -740,8 +823,11 @@ function showLoading() {
     content.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div></div>';
 }
 
-// 展开树形视图到指定行
-// 处理目标行相关逻辑并返回结果
+/**
+ * 展开树形视图到指定行
+ * 处理目标行相关逻辑并返回结果
+ * @param targetLine - 目标行号
+ */
 function expandToLine(targetLine) {
     const normalizedTargetLine = normalizeLineValue(targetLine);
     if (normalizedTargetLine === null) {
@@ -802,13 +888,19 @@ function expandToLine(targetLine) {
     best.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// 清理树高亮状态，避免脏数据残留
+/**
+ * 清理树高亮状态，避免脏数据残留
+ */
 function clearTreeHighlights() {
     const highlightedItems = document.querySelectorAll('.data-tree .tree-item.is-highlight');
     highlightedItems.forEach(item => item.classList.remove('is-highlight'));
 }
 
-// 收集最近树节点元素集合并聚合返回
+/**
+ * 收集最近树节点元素集合并聚合返回
+ * @param elements - 待聚合的 DOM 元素集合
+ * @returns 返回去重后的最近树节点集合
+ */
 function collectNearestTreeItems(elements) {
     const uniqueItems = new Set();
     elements.forEach(element => {
@@ -820,7 +912,12 @@ function collectNearestTreeItems(elements) {
     return Array.from(uniqueItems);
 }
 
-// 归一化行范围以统一后续处理
+/**
+ * 归一化行范围以统一后续处理
+ * @param startLine - 起始行号
+ * @param endLine - 结束行号
+ * @returns 返回归一化后的行范围对象
+ */
 function normalizeLineRange(startLine, endLine) {
     if (startLine === null || startLine === undefined) {
         return null;
@@ -838,7 +935,11 @@ function normalizeLineRange(startLine, endLine) {
     };
 }
 
-// 处理树范围相关逻辑并返回结果
+/**
+ * 处理树范围相关逻辑并返回结果
+ * @param startLine - 起始行号
+ * @param endLine - 结束行号
+ */
 function highlightTreeRange(startLine, endLine) {
     clearTreeHighlights();
 
@@ -888,7 +989,10 @@ function highlightTreeRange(startLine, endLine) {
     }
 }
 
-// 处理注释提示框相关逻辑并返回结果
+/**
+ * 处理注释提示框相关逻辑并返回结果
+ * @returns 返回注释提示框元素
+ */
 function ensureCommentTooltip() {
     if (commentTooltip) {
         return commentTooltip;
@@ -932,7 +1036,11 @@ function ensureCommentTooltip() {
     return tooltip;
 }
 
-// 判断元素位于注释提示框是否成立
+/**
+ * 判断元素位于注释提示框是否成立
+ * @param element - 待判断的 DOM 节点
+ * @returns 返回布尔判断结果
+ */
 function isElementWithinCommentTooltip(element) {
     if (!commentTooltip || !(element instanceof Node)) {
         return false;
@@ -940,7 +1048,10 @@ function isElementWithinCommentTooltip(element) {
     return element === commentTooltip || commentTooltip.contains(element);
 }
 
-// 判断注释提示框交互锁定是否成立
+/**
+ * 判断注释提示框交互锁定是否成立
+ * @returns 返回布尔判断结果
+ */
 function isCommentTooltipInteractionLocked() {
     return Boolean(
         commentTooltipFocusLocked
@@ -949,7 +1060,11 @@ function isCommentTooltipInteractionLocked() {
     );
 }
 
-// 判断锁定到不同注释目标是否成立
+/**
+ * 判断锁定到不同注释目标是否成立
+ * @param target - 目标 DOM 节点
+ * @returns 返回布尔判断结果
+ */
 function isLockedToDifferentCommentTarget(target) {
     return Boolean(
         isCommentTooltipInteractionLocked()
@@ -958,7 +1073,10 @@ function isLockedToDifferentCommentTarget(target) {
     );
 }
 
-// 处理事件相关逻辑并返回结果
+/**
+ * 处理事件相关逻辑并返回结果
+ * @param event - 待拦截的事件对象
+ */
 function stopEvent(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -967,7 +1085,9 @@ function stopEvent(event) {
     }
 }
 
-// 绑定注释提示框交互保护以建立响应逻辑
+/**
+ * 绑定注释提示框交互保护以建立响应逻辑
+ */
 function bindCommentTooltipInteractionGuard() {
     if (commentTooltipInteractionGuardBound) {
         return;
@@ -1008,7 +1128,11 @@ function bindCommentTooltipInteractionGuard() {
     commentTooltipInteractionGuardBound = true;
 }
 
-// 解析注释载荷并返回结构化结果
+/**
+ * 解析注释载荷并返回结构化结果
+ * @param target - 目标 DOM 节点
+ * @returns 返回结构化结果
+ */
 function parseCommentPayload(target) {
     const raw = target.getAttribute('data-comments');
     if (!raw) {
@@ -1032,7 +1156,11 @@ function parseCommentPayload(target) {
     }
 }
 
-// 渲染注释提示框元素集合并返回可展示内容
+/**
+ * 渲染注释提示框元素集合并返回可展示内容
+ * @param tooltip - 注释提示框元素
+ * @param comments - 注释项集合
+ */
 function renderCommentTooltipItems(tooltip, comments) {
     tooltip.innerHTML = '';
     const list = document.createElement('div');
@@ -1058,7 +1186,10 @@ function renderCommentTooltipItems(tooltip, comments) {
     tooltip.appendChild(list);
 }
 
-// 显示注释提示框
+/**
+ * 显示注释提示框
+ * @param target - 目标 DOM 节点
+ */
 function showCommentTooltip(target) {
     const comments = parseCommentPayload(target);
     if (comments.length === 0) {
@@ -1074,7 +1205,9 @@ function showCommentTooltip(target) {
     positionCommentTooltip();
 }
 
-// 清理注释提示框隐藏计时器，避免脏数据残留
+/**
+ * 清理注释提示框隐藏计时器，避免脏数据残留
+ */
 function clearCommentTooltipHideTimer() {
     if (!commentTooltipHideTimer) {
         return;
@@ -1083,7 +1216,10 @@ function clearCommentTooltipHideTimer() {
     commentTooltipHideTimer = null;
 }
 
-// 延迟隐藏注释提示框，避免光标抖动导致闪烁
+/**
+ * 延迟隐藏注释提示框，避免光标抖动导致闪烁
+ * @param delayMs - 隐藏延迟时间（毫秒）
+ */
 function scheduleCommentTooltipHide(delayMs = COMMENT_TOOLTIP_HIDE_DELAY_MS) {
     clearCommentTooltipHideTimer();
     commentTooltipHideTimer = setTimeout(() => {
@@ -1095,7 +1231,9 @@ function scheduleCommentTooltipHide(delayMs = COMMENT_TOOLTIP_HIDE_DELAY_MS) {
     }, delayMs);
 }
 
-// 更新注释提示框焦点样式并同步相关结果
+/**
+ * 更新注释提示框焦点样式并同步相关结果
+ */
 function updateCommentTooltipFocusClass() {
     if (!commentTooltip) {
         clearCommentTooltipTargetFocusClass();
@@ -1105,13 +1243,17 @@ function updateCommentTooltipFocusClass() {
     updateCommentTooltipTargetFocusClass();
 }
 
-// 清理注释提示框目标焦点样式，避免脏数据残留
+/**
+ * 清理注释提示框目标焦点样式，避免脏数据残留
+ */
 function clearCommentTooltipTargetFocusClass() {
     const focusedIcons = document.querySelectorAll('.data-tree .tree-comment-icon.is-tooltip-focused');
     focusedIcons.forEach(icon => icon.classList.remove('is-tooltip-focused'));
 }
 
-// 更新注释提示框目标焦点样式并同步相关结果
+/**
+ * 更新注释提示框目标焦点样式并同步相关结果
+ */
 function updateCommentTooltipTargetFocusClass() {
     clearCommentTooltipTargetFocusClass();
 
@@ -1129,7 +1271,10 @@ function updateCommentTooltipTargetFocusClass() {
     }
 }
 
-// 隐藏注释提示框
+/**
+ * 隐藏注释提示框
+ * @param force - 是否强制隐藏提示框
+ */
 function hideCommentTooltip(force = false) {
     if (!commentTooltip) {
         return;
@@ -1150,7 +1295,9 @@ function hideCommentTooltip(force = false) {
     commentTooltipTarget = null;
 }
 
-// 处理注释提示框相关逻辑并返回结果
+/**
+ * 处理注释提示框相关逻辑并返回结果
+ */
 function positionCommentTooltip() {
     if (!commentTooltip || !commentTooltipTarget || !commentTooltip.classList.contains('is-visible')) {
         return;
@@ -1174,7 +1321,9 @@ function positionCommentTooltip() {
     commentTooltip.style.top = `${top}px`;
 }
 
-// 绑定注释提示框以建立响应逻辑
+/**
+ * 绑定注释提示框以建立响应逻辑
+ */
 function bindCommentTooltips() {
     const icons = document.querySelectorAll('.data-tree .tree-comment-icon[data-comments]');
     icons.forEach(icon => {
@@ -1244,8 +1393,10 @@ function bindCommentTooltips() {
     });
 }
 
-// 绑定树形视图 key 点击事件
-// 绑定数据树键名点击事件并回传导航行号
+/**
+ * 绑定树形视图 key 点击事件
+ * 绑定数据树键名点击事件并回传导航行号
+ */
 function bindTreeKeyClicks() {
     const keys = document.querySelectorAll('.data-tree .tree-key[data-line]');
     keys.forEach(key => {
@@ -1258,7 +1409,7 @@ function bindTreeKeyClicks() {
             e.preventDefault();
             const line = parseInt(key.getAttribute('data-line'), 10);
             if (!isNaN(line) && line >= 0) {
-                vscode.postMessage({
+                VSCODE_API.postMessage({
                     type: 'navigateToLine',
                     line: line
                 });
@@ -1267,15 +1418,19 @@ function bindTreeKeyClicks() {
     });
 }
 
-// 展开所有树形节点
-// 处理全部节点相关逻辑并返回结果
+/**
+ * 展开所有树形节点
+ * 处理全部节点相关逻辑并返回结果
+ */
 function expandAllNodes() {
     const details = document.querySelectorAll('.data-tree details');
     details.forEach(d => d.setAttribute('open', ''));
 }
 
-// 折叠所有树形节点
-// 处理全部节点相关逻辑并返回结果
+/**
+ * 折叠所有树形节点
+ * 处理全部节点相关逻辑并返回结果
+ */
 function collapseAllNodes() {
     const details = document.querySelectorAll('.data-tree details');
     details.forEach(d => d.removeAttribute('open'));

@@ -3,9 +3,6 @@ export type FileType = 'markdown' | 'latex' | 'mermaid' | 'json' | 'yaml' | 'tom
 
 /**
  * 标题/节点信息（用于定位）
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 export interface HeadingInfo {
     level: number;
@@ -16,9 +13,6 @@ export interface HeadingInfo {
 
 /**
  * 预览结果
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 export interface PreviewResult {
     // 渲染后的 HTML
@@ -35,9 +29,6 @@ export interface PreviewResult {
 
 /**
  * 支持的文件扩展名映射
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface FileTypeCapabilities {
     extensions: readonly string[];
@@ -45,7 +36,8 @@ interface FileTypeCapabilities {
     isDataTree: boolean;
 }
 
-const fileTypeCapabilities: Record<FileType, FileTypeCapabilities> = {
+// 定义各文件类型的扩展名和预览能力映射
+const FILE_TYPE_CAPABILITIES: Record<FileType, FileTypeCapabilities> = {
     markdown: {
         extensions: ['.md', '.markdown'],
         supportsLocate: true,
@@ -93,8 +85,9 @@ const fileTypeCapabilities: Record<FileType, FileTypeCapabilities> = {
     },
 };
 
-const extensionMap: Map<string, FileType> = new Map(
-    (Object.entries(fileTypeCapabilities) as [FileType, FileTypeCapabilities][])
+// 构建扩展名到文件类型的快速查找表
+const EXTENSION_TO_TYPE_MAP: Map<string, FileType> = new Map(
+    (Object.entries(FILE_TYPE_CAPABILITIES) as [FileType, FileTypeCapabilities][])
         .flatMap(([type, capabilities]) => capabilities.extensions.map(ext => [ext, type] as const))
 );
 
@@ -104,7 +97,7 @@ export function getFileType(fileName: string): FileType | null {
         return null;
     }
     const lowerName = fileName.toLowerCase();
-    for (const [ext, type] of extensionMap.entries()) {
+    for (const [ext, type] of EXTENSION_TO_TYPE_MAP.entries()) {
         if (lowerName.endsWith(ext)) {
             return type;
         }
@@ -114,10 +107,10 @@ export function getFileType(fileName: string): FileType | null {
 
 // 判断文件类型是否支持跟随定位
 export function supportsLocate(fileType: FileType): boolean {
-    return fileTypeCapabilities[fileType].supportsLocate;
+    return FILE_TYPE_CAPABILITIES[fileType].supportsLocate;
 }
 
 // 判断文件类型是否为数据树形类型
 export function isDataTreeType(fileType: FileType): boolean {
-    return fileTypeCapabilities[fileType].isDataTree;
+    return FILE_TYPE_CAPABILITIES[fileType].isDataTree;
 }

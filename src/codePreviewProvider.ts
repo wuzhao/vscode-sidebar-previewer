@@ -6,9 +6,6 @@ import { escapeHtml, escapeRegex } from './utils';
 
 /**
  * 描述 KeyLineLocator 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface KeyLineLocator {
     next(key: string, parentPath?: string[]): number;
@@ -16,9 +13,6 @@ interface KeyLineLocator {
 
 /**
  * 描述 ArrayItemLineLocator 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface ArrayItemLineLocator {
     next(): number;
@@ -26,9 +20,6 @@ interface ArrayItemLineLocator {
 
 /**
  * 描述 JsonCloseLineLocator 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface JsonCloseLineLocator {
     next(line: number): number;
@@ -36,9 +27,6 @@ interface JsonCloseLineLocator {
 
 /**
  * 描述 YamlCloseLineLocator 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface YamlCloseLineLocator {
     next(line: number): number;
@@ -46,9 +34,6 @@ interface YamlCloseLineLocator {
 
 /**
  * 描述 XmlCloseLineLocator 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface XmlCloseLineLocator {
     next(line: number): number;
@@ -56,9 +41,6 @@ interface XmlCloseLineLocator {
 
 /**
  * 描述 XmlTagMatch 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface XmlTagMatch {
     tagName: string;
@@ -67,9 +49,6 @@ interface XmlTagMatch {
 
 /**
  * 描述 XmlCommentScanState 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface XmlCommentScanState {
     inComment: boolean;
@@ -78,9 +57,6 @@ interface XmlCommentScanState {
 
 /**
  * 描述 XmlLineCommentScanResult 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface XmlLineCommentScanResult {
     nonCommentText: string;
@@ -91,9 +67,6 @@ type CommentMarker = '/' | '*' | '#' | '-';
 
 /**
  * 描述 CommentEntry 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface CommentEntry {
     marker: CommentMarker;
@@ -104,9 +77,6 @@ type CommentLineIndex = Map<number, CommentEntry[]>;
 
 /**
  * 描述 StandaloneCommentGroup 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface StandaloneCommentGroup {
     line: number;
@@ -116,9 +86,6 @@ interface StandaloneCommentGroup {
 
 /**
  * 描述 StandaloneCommentCursor 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface StandaloneCommentCursor {
     groups: StandaloneCommentGroup[];
@@ -127,9 +94,6 @@ interface StandaloneCommentCursor {
 
 /**
  * 描述 CommentMetadata 接口结构
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 interface CommentMetadata {
     lineComments: CommentLineIndex;
@@ -138,19 +102,15 @@ interface CommentMetadata {
 
 /**
  * 提供 CodePreview 相关预览能力
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 export class CodePreviewProvider {
     private static readonly MAX_HTML_LENGTH = 10 * 1024 * 1024;
 
     /**
      * 解析数据文件内容，返回树形结构的 HTML
-     * @param content - content 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @param fileType - 当前文件类型标识
+     * @returns 返回解析后的预览结果
      */
     static parse(content: string, fileType: FileType): PreviewResult {
         try {
@@ -201,10 +161,10 @@ export class CodePreviewProvider {
 
     /**
      * 解析文件内容
-     * @param content - content 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @param fileType - 当前文件类型标识
+     * @returns 返回解析后的结构化数据
+     * @throws 当文件类型不受支持时抛出异常
      */
     private static parseContent(content: string, fileType: FileType): unknown {
         switch (fileType) {
@@ -225,10 +185,9 @@ export class CodePreviewProvider {
 
     /**
      * 创建键行定位器并返回可复用实例
-     * @param lines - lines 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param fileType - 当前文件类型标识
+     * @returns 返回可复用实例
      */
     private static createKeyLineLocator(lines: string[], fileType: FileType): KeyLineLocator {
         const primaryIndex = this.buildPrimaryKeyLineIndex(lines, fileType);
@@ -267,9 +226,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建TOML路径行索引供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildTomlPathLineIndex(lines: string[]): Map<string, number[]> {
         const explicitIndex = new Map<string, number[]>();
@@ -347,11 +305,10 @@ export class CodePreviewProvider {
 
     /**
      * 创建数组元素行定位器并返回可复用实例
-     * @param lines - lines 参数
-     * @param fileType - fileType 参数
-     * @param parsedData - parsedData 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param fileType - 当前文件类型标识
+     * @param parsedData - 已解析的结构化数据
+     * @returns 返回可复用实例
      */
     private static createArrayItemLineLocator(lines: string[], fileType: FileType, parsedData: unknown): ArrayItemLineLocator {
         const itemLines = this.buildArrayItemLineIndex(lines, fileType, parsedData);
@@ -371,9 +328,8 @@ export class CodePreviewProvider {
 
     /**
      * 创建YAML 结束行定位器并返回可复用实例
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回可复用实例
      */
     private static createYamlCloseLineLocator(lines: string[]): YamlCloseLineLocator {
         const cache = new Map<number, number>();
@@ -411,9 +367,8 @@ export class CodePreviewProvider {
 
     /**
      * 创建XML 结束行定位器并返回可复用实例
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回可复用实例
      */
     private static createXmlCloseLineLocator(lines: string[]): XmlCloseLineLocator {
         const closeLineMap = new Map<number, number>();
@@ -472,9 +427,8 @@ export class CodePreviewProvider {
 
     /**
      * 创建JSON 结束行定位器并返回可复用实例
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回可复用实例
      */
     private static createJsonCloseLineLocator(lines: string[]): JsonCloseLineLocator {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -555,9 +509,8 @@ export class CodePreviewProvider {
 
     /**
      * 查找JSON 复合起始行并返回匹配结果
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回匹配结果
      */
     private static findJsonCompoundStartInLine(line: string): { char: '{' | '['; column: number } | null {
         let inString = false;
@@ -615,11 +568,10 @@ export class CodePreviewProvider {
 
     /**
      * 构建数组元素行索引供后续流程复用
-     * @param lines - lines 参数
-     * @param fileType - fileType 参数
-     * @param parsedData - parsedData 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param fileType - 当前文件类型标识
+     * @param parsedData - 已解析的结构化数据
+     * @returns 返回构建后的数据结构
      */
     private static buildArrayItemLineIndex(lines: string[], fileType: FileType, parsedData: unknown): number[] {
         switch (fileType) {
@@ -638,10 +590,9 @@ export class CodePreviewProvider {
 
     /**
      * 处理YAML 文档数组行集合相关逻辑并返回结果
-     * @param parsedData - parsedData 参数
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param parsedData - 已解析的结构化数据
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回是否使用文档级 YAML 数组行索引
      */
     private static shouldUseYamlDocumentArrayLines(parsedData: unknown, lines: string[]): boolean {
         if (!Array.isArray(parsedData)) {
@@ -653,9 +604,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建JSON数组元素行索引供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildJsonArrayItemLineIndex(lines: string[]): number[] {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -716,9 +666,8 @@ export class CodePreviewProvider {
 
     /**
      * 查找JSON 行首标记并返回匹配结果
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回匹配结果
      */
     private static findJsonLineFirstToken(line: string): string | null {
         for (let i = 0; i < line.length; i++) {
@@ -733,9 +682,8 @@ export class CodePreviewProvider {
 
     /**
      * 判断JSON 数组值起始是否成立
-     * @param token - token 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param token - 解析阶段的 token 对象
+     * @returns 返回布尔判断结果
      */
     private static isJsonArrayValueStart(token: string | null): boolean {
         if (!token) {
@@ -751,10 +699,9 @@ export class CodePreviewProvider {
 
     /**
      * 构建YAML数组元素行索引供后续流程复用
-     * @param lines - lines 参数
-     * @param includeDocumentRootItems - includeDocumentRootItems 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param includeDocumentRootItems - 是否包含文档根数组项
+     * @returns 返回构建后的数据结构
      */
     private static buildYamlArrayItemLineIndex(lines: string[], includeDocumentRootItems: boolean): number[] {
         const result: number[] = [];
@@ -778,9 +725,8 @@ export class CodePreviewProvider {
 
     /**
      * 查找YAML 文档起始行集合并返回匹配结果
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回匹配结果
      */
     private static findYamlDocumentStartLines(lines: string[]): number[] {
         const starts: number[] = [];
@@ -814,9 +760,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建TOML数组元素行索引供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildTomlArrayItemLineIndex(lines: string[]): number[] {
         const result: number[] = [];
@@ -873,9 +818,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建XML数组元素行索引供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildXmlArrayItemLineIndex(lines: string[]): number[] {
         const result: number[] = [];
@@ -892,9 +836,8 @@ export class CodePreviewProvider {
 
     /**
      * 查找TOML 数组元素首个标记并返回匹配结果
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回匹配结果
      */
     private static findTomlArrayItemFirstToken(line: string): string | null {
         for (let i = 0; i < line.length; i++) {
@@ -909,9 +852,8 @@ export class CodePreviewProvider {
 
     /**
      * 查找TOML 数组起始并返回匹配结果
-     * @param text - text 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param text - 待处理的文本内容
+     * @returns 返回匹配结果
      */
     private static findTomlArrayStart(text: string): number {
         let inSingle = false;
@@ -961,9 +903,8 @@ export class CodePreviewProvider {
 
     /**
      * 统计方括号深度增量用于流程判断
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回布尔判断结果
      */
     private static countSquareBracketDelta(line: string): number {
         let inSingle = false;
@@ -1018,9 +959,8 @@ export class CodePreviewProvider {
 
     /**
      * 解析JSON 或 JSONC并返回结构化结果
-     * @param content - content 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @returns 返回结构化结果
      */
     private static parseJsonOrJsonc(content: string): unknown {
         try {
@@ -1032,9 +972,8 @@ export class CodePreviewProvider {
 
     /**
      * 解析XML并返回结构化结果
-     * @param content - content 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @returns 返回结构化结果
      */
     private static parseXml(content: string): unknown {
         const parser = new XMLParser({
@@ -1057,9 +996,8 @@ export class CodePreviewProvider {
 
     /**
      * 归一化XML值以统一后续处理
-     * @param value - value 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param value - 待处理的值
+     * @returns 返回归一化后的 XML 数据
      */
     private static normalizeXmlValue(value: unknown): unknown {
         if (Array.isArray(value)) {
@@ -1116,9 +1054,8 @@ export class CodePreviewProvider {
 
     /**
      * 判断XML 类文本键是否成立
-     * @param key - key 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param key - 当前处理的键名
+     * @returns 返回布尔判断结果
      */
     private static isXmlTextLikeKey(key: string): boolean {
         return key === '#text' || key === '#cdata';
@@ -1126,9 +1063,8 @@ export class CodePreviewProvider {
 
     /**
      * 判断XML 属性键是否成立
-     * @param key - key 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param key - 当前处理的键名
+     * @returns 返回布尔判断结果
      */
     private static isXmlAttributeKey(key: string): boolean {
         return key.startsWith('@');
@@ -1136,9 +1072,8 @@ export class CodePreviewProvider {
 
     /**
      * 处理JSONC相关逻辑并返回结果
-     * @param content - content 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @returns 返回可被 JSON 解析器处理的标准文本
      */
     private static sanitizeJsonc(content: string): string {
         const withoutComments = this.stripJsoncComments(content);
@@ -1147,9 +1082,8 @@ export class CodePreviewProvider {
 
     /**
      * 去除JSONC注释集合以保留有效信息
-     * @param content - content 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @returns 返回移除注释后的 JSON 文本
      */
     private static stripJsoncComments(content: string): string {
         let out = '';
@@ -1218,9 +1152,8 @@ export class CodePreviewProvider {
 
     /**
      * 去除JSON 尾随逗号以保留有效信息
-     * @param content - content 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @returns 返回移除尾随逗号后的 JSON 文本
      */
     private static stripJsonTrailingCommas(content: string): string {
         let out = '';
@@ -1268,11 +1201,10 @@ export class CodePreviewProvider {
 
     /**
      * 处理 consumeIndexedLine 相关逻辑
-     * @param index - 参数
-     * @param cursor - 参数
-     * @param key - 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param index - 索引映射对象
+     * @param cursor - 独立注释组遍历游标
+     * @param key - 当前处理的键名
+     * @returns 返回当前键对应的下一条行号
      */
     private static consumeIndexedLine(
         index: Map<string, number[]>,
@@ -1295,10 +1227,9 @@ export class CodePreviewProvider {
 
     /**
      * 构建主键行索引供后续流程复用
-     * @param lines - lines 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param fileType - 当前文件类型标识
+     * @returns 返回构建后的数据结构
      */
     private static buildPrimaryKeyLineIndex(lines: string[], fileType: FileType): Map<string, number[]> {
         const index = new Map<string, number[]>();
@@ -1325,11 +1256,10 @@ export class CodePreviewProvider {
 
     /**
      * 构建兜底键行集合供后续流程复用
-     * @param key - key 参数
-     * @param lines - lines 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param key - 当前处理的键名
+     * @param lines - 按行拆分后的源文本
+     * @param fileType - 当前文件类型标识
+     * @returns 返回构建后的数据结构
      */
     private static buildFallbackKeyLines(key: string, lines: string[], fileType: FileType): number[] {
         const escaped = escapeRegex(key);
@@ -1373,10 +1303,9 @@ export class CodePreviewProvider {
 
     /**
      * 提取行中的键供后续逻辑使用
-     * @param line - line 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @param fileType - 当前文件类型标识
+     * @returns 返回当前行提取到的键名列表
      */
     private static extractKeysFromLine(line: string, fileType: FileType): string[] {
         switch (fileType) {
@@ -1395,9 +1324,8 @@ export class CodePreviewProvider {
 
     /**
      * 提取JSON 键供后续逻辑使用
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回 JSON 行中提取到的键名列表
      */
     private static extractJsonKeys(line: string): string[] {
         const match = line.match(/^\s*(?:\/\*.*?\*\/\s*)*"((?:\\.|[^"\\])*)"\s*(?:(?:\/\*.*?\*\/)\s*)*:/);
@@ -1409,9 +1337,8 @@ export class CodePreviewProvider {
 
     /**
      * 提取YAML 键供后续逻辑使用
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回 YAML 行中提取到的键名列表
      */
     private static extractYamlKeys(line: string): string[] {
         const match = line.match(/^\s*(?:-\s+)?(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|([^:#][^:]*?))\s*:(?:\s|$)/);
@@ -1425,9 +1352,8 @@ export class CodePreviewProvider {
 
     /**
      * 提取TOML 键供后续逻辑使用
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回 TOML 行中提取到的键名列表
      */
     private static extractTomlKeys(line: string): string[] {
         const keys: string[] = [];
@@ -1455,9 +1381,8 @@ export class CodePreviewProvider {
 
     /**
      * 提取XML 键供后续逻辑使用
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回 XML 行中提取到的键名列表
      */
     private static extractXmlKeys(line: string): string[] {
         const keys: string[] = [];
@@ -1473,9 +1398,8 @@ export class CodePreviewProvider {
 
     /**
      * 提取XML 标签匹配供后续逻辑使用
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回 XML 标签匹配结果集合
      */
     private static extractXmlTagMatches(line: string): XmlTagMatch[] {
         const tagMatches: XmlTagMatch[] = [];
@@ -1500,9 +1424,8 @@ export class CodePreviewProvider {
 
     /**
      * 提取XML 属性键供后续逻辑使用
-     * @param attributesSource - attributesSource 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param attributesSource - XML 标签中的属性原始文本
+     * @returns 返回 XML 属性键名列表
      */
     private static extractXmlAttributeKeys(attributesSource: string): string[] {
         const keys: string[] = [];
@@ -1518,9 +1441,8 @@ export class CodePreviewProvider {
 
     /**
      * 拆分TOML路径并返回片段集合
-     * @param pathExpr - pathExpr 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param pathExpr - TOML 路径表达式
+     * @returns 返回片段集合
      */
     private static splitTomlPath(pathExpr: string): string[] {
         return pathExpr
@@ -1531,9 +1453,8 @@ export class CodePreviewProvider {
 
     /**
      * 解码JSON 字符串并还原可读数据
-     * @param raw - raw 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param raw - 未解码的原始字符串
+     * @returns 返回解码后的字符串内容
      */
     private static decodeJsonString(raw: string): string {
         try {
@@ -1545,11 +1466,9 @@ export class CodePreviewProvider {
 
     /**
      * 向目标集合追加带索引行
-     * @param index - index 参数
-     * @param key - key 参数
-     * @param line - line 参数
-     * @returns 无返回值
-     * @throws {Error} 处理失败时抛出异常
+     * @param index - 索引映射对象
+     * @param key - 当前处理的键名
+     * @param line - 当前处理的行内容或行号
      */
     private static pushIndexedLine(index: Map<string, number[]>, key: string, line: number): void {
         const normalizedKey = key.trim();
@@ -1568,10 +1487,9 @@ export class CodePreviewProvider {
 
     /**
      * 构建注释元数据供后续流程复用
-     * @param lines - lines 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param fileType - 当前文件类型标识
+     * @returns 返回构建后的数据结构
      */
     private static buildCommentMetadata(lines: string[], fileType: FileType): CommentMetadata {
         const arrayItemLines = new Set(this.buildArrayItemLineIndex(lines, fileType, null));
@@ -1595,9 +1513,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建XML注释元数据供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildXmlCommentMetadata(lines: string[]): CommentMetadata {
         const lineComments = new Map<number, CommentEntry[]>();
@@ -1737,10 +1654,9 @@ export class CodePreviewProvider {
 
     /**
      * 构建JSON注释元数据供后续流程复用
-     * @param lines - lines 参数
-     * @param arrayItemLines - arrayItemLines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param arrayItemLines - 数组元素对应的行号集合
+     * @returns 返回构建后的数据结构
      */
     private static buildJsonCommentMetadata(lines: string[], arrayItemLines: Set<number>): CommentMetadata {
         const lineComments = new Map<number, CommentEntry[]>();
@@ -2005,11 +1921,10 @@ export class CodePreviewProvider {
 
     /**
      * 处理 buildHashCommentMetadata 相关逻辑
-     * @param lines - 参数
-     * @param fileType - 参数
-     * @param arrayItemLines - 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param fileType - 当前文件类型标识
+     * @param arrayItemLines - 数组元素对应的行号集合
+     * @returns 返回按井号注释解析后的元数据
      */
     private static buildHashCommentMetadata(
         lines: string[],
@@ -2203,11 +2118,9 @@ export class CodePreviewProvider {
 
     /**
      * 向目标集合追加注释
-     * @param target - target 参数
-     * @param marker - marker 参数
-     * @param text - text 参数
-     * @returns 无返回值
-     * @throws {Error} 处理失败时抛出异常
+     * @param target - 目标对象或目标元素
+     * @param marker - 注释标记类型
+     * @param text - 待处理的文本内容
      */
     private static pushComment(target: CommentEntry[], marker: CommentMarker, text: string): void {
         if (!text) {
@@ -2218,9 +2131,8 @@ export class CodePreviewProvider {
 
     /**
      * 查找JSON 行内注释集合并返回匹配结果
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回匹配结果
      */
     private static findJsonInlineComments(line: string): CommentEntry[] {
         const comments: CommentEntry[] = [];
@@ -2275,9 +2187,8 @@ export class CodePreviewProvider {
 
     /**
      * 查找井号行内注释集合并返回匹配结果
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回匹配结果
      */
     private static findHashInlineComments(line: string): CommentEntry[] {
         const codePart = this.stripHashCommentText(line);
@@ -2292,10 +2203,9 @@ export class CodePreviewProvider {
 
     /**
      * 扫描XML行注释集合并提取片段
-     * @param line - line 参数
-     * @param state - state 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @param state - XML 注释扫描状态
+     * @returns 返回 XML 行注释扫描结果
      */
     private static scanXmlLineComments(line: string, state: XmlCommentScanState): XmlLineCommentScanResult {
         const comments: string[] = [];
@@ -2355,9 +2265,8 @@ export class CodePreviewProvider {
 
     /**
      * 去除井号注释文本以保留有效信息
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回移除井号注释后的文本
      */
     private static stripHashCommentText(line: string): string {
         let inSingle = false;
@@ -2408,9 +2317,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建JSON 数组起始行深度供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildJsonArrayDepthAtLineStart(lines: string[]): number[] {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -2460,9 +2368,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建JSON 对象起始行深度供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildJsonObjectDepthAtLineStart(lines: string[]): number[] {
         const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -2512,9 +2419,8 @@ export class CodePreviewProvider {
 
     /**
      * 统计XML 元素深度增量用于流程判断
-     * @param nonCommentText - nonCommentText 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param nonCommentText - 剔除注释后的 XML 文本
+     * @returns 返回布尔判断结果
      */
     private static countXmlElementDepthDelta(nonCommentText: string): number {
         let delta = 0;
@@ -2541,9 +2447,8 @@ export class CodePreviewProvider {
 
     /**
      * 构建TOML 数组起始行深度供后续流程复用
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回构建后的数据结构
      */
     private static buildTomlArrayDepthAtLineStart(lines: string[]): number[] {
         const depthAtLineStart: number[] = [];
@@ -2588,11 +2493,10 @@ export class CodePreviewProvider {
 
     /**
      * 根据上下文推断YAML 待绑定数组
-     * @param lines - lines 参数
-     * @param lineIndex - lineIndex 参数
-     * @param arrayItemLines - arrayItemLines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param lineIndex - 当前处理的行索引
+     * @param arrayItemLines - 数组元素对应的行号集合
+     * @returns 返回是否应继续等待数组绑定
      */
     private static inferYamlPendingFromArray(lines: string[], lineIndex: number, arrayItemLines: Set<number>): boolean {
         for (let i = lineIndex - 1; i >= 0; i--) {
@@ -2617,11 +2521,10 @@ export class CodePreviewProvider {
 
     /**
      * 查找YAML 前一个可绑定行并返回匹配结果
-     * @param lines - lines 参数
-     * @param lineIndex - lineIndex 参数
-     * @param arrayItemLines - arrayItemLines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param lineIndex - 当前处理的行索引
+     * @param arrayItemLines - 数组元素对应的行号集合
+     * @returns 返回匹配结果
      */
     private static findYamlPreviousBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
         for (let i = lineIndex - 1; i >= 0; i--) {
@@ -2640,11 +2543,10 @@ export class CodePreviewProvider {
 
     /**
      * 查找YAML 下一个可绑定行并返回匹配结果
-     * @param lines - lines 参数
-     * @param lineIndex - lineIndex 参数
-     * @param arrayItemLines - arrayItemLines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @param lineIndex - 当前处理的行索引
+     * @param arrayItemLines - 数组元素对应的行号集合
+     * @returns 返回匹配结果
      */
     private static findYamlNextBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
         for (let i = lineIndex + 1; i < lines.length; i++) {
@@ -2663,9 +2565,8 @@ export class CodePreviewProvider {
 
     /**
      * 处理行内注释标记值相关逻辑并返回结果
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回当前行是否包含行内值
      */
     private static yamlLineHasInlineValue(line: string): boolean {
         const code = this.stripHashCommentText(line).trim();
@@ -2685,9 +2586,8 @@ export class CodePreviewProvider {
 
     /**
      * 获取缩进并返回结果
-     * @param line - line 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回当前行的缩进宽度
      */
     private static getIndentation(line: string): number {
         const match = line.match(/^\s*/);
@@ -2696,12 +2596,10 @@ export class CodePreviewProvider {
 
     /**
      * 处理 pushStandaloneGroup 相关逻辑
-     * @param groups - 参数
-     * @param line - 参数
-     * @param comments - 参数
-     * @param rootOnly - 参数
-     * @returns 无返回值
-     * @throws {Error} 处理失败时抛出异常
+     * @param groups - 独立注释分组集合
+     * @param line - 当前处理的行内容或行号
+     * @param comments - 注释项集合
+     * @param rootOnly - 是否仅在根节点展示该注释组
      */
     private static pushStandaloneGroup(
         groups: StandaloneCommentGroup[],
@@ -2722,9 +2620,8 @@ export class CodePreviewProvider {
 
     /**
      * 处理注释文本相关逻辑并返回结果
-     * @param text - text 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param text - 待处理的文本内容
+     * @returns 返回清洗后的注释文本
      */
     private static cleanCommentText(text: string): string {
         return text
@@ -2736,9 +2633,8 @@ export class CodePreviewProvider {
 
     /**
      * 处理XML注释文本相关逻辑并返回结果
-     * @param text - text 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param text - 待处理的文本内容
+     * @returns 返回清洗后的 XML 注释文本
      */
     private static cleanXmlCommentText(text: string): string {
         return text
@@ -2750,9 +2646,8 @@ export class CodePreviewProvider {
 
     /**
      * 渲染注释图标并返回可展示内容
-     * @param comments - comments 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param comments - 注释项集合
+     * @returns 返回可展示内容
      */
     private static renderCommentIcon(comments: CommentEntry[]): string {
         const encodedComments = escapeHtml(JSON.stringify(comments));
@@ -2762,10 +2657,9 @@ export class CodePreviewProvider {
 
     /**
      * 渲染注释指定行图标并返回可展示内容
-     * @param line - line 参数
-     * @param commentLines - commentLines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @param commentLines - 按行组织的注释索引
+     * @returns 返回可展示内容
      */
     private static renderCommentIconForLine(line: number, commentLines: CommentLineIndex): string {
         if (line < 0 || !commentLines.has(line)) {
@@ -2776,14 +2670,13 @@ export class CodePreviewProvider {
 
     /**
      * 处理 renderCommentIconForEntry 相关逻辑
-     * @param line - 参数
-     * @param commentLines - 参数
-     * @param fileType - 参数
-     * @param entryKey - 参数
-     * @param sourceLines - 参数
-     * @param xmlConsumedLines - 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @param commentLines - 按行组织的注释索引
+     * @param fileType - 当前文件类型标识
+     * @param entryKey - 当前节点键名
+     * @param sourceLines - 原始文本行集合
+     * @param xmlConsumedLines - 已消费的 XML 注释行集合
+     * @returns 返回当前条目的注释图标 HTML
      */
     private static renderCommentIconForEntry(
         line: number,
@@ -2833,9 +2726,8 @@ export class CodePreviewProvider {
 
     /**
      * 创建独立注释游标并返回可复用实例
-     * @param groups - groups 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param groups - 独立注释分组集合
+     * @returns 返回可复用实例
      */
     private static createStandaloneCursor(groups: StandaloneCommentGroup[]): StandaloneCommentCursor {
         const sortedGroups = [...groups].sort((a, b) => a.line - b.line);
@@ -2847,11 +2739,10 @@ export class CodePreviewProvider {
 
     /**
      * 处理 renderStandaloneBeforeBoundary 相关逻辑
-     * @param cursor - 参数
-     * @param boundaryExclusive - 参数
-     * @param includeRootOnly - 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param cursor - 独立注释组遍历游标
+     * @param boundaryExclusive - 边界行号（不含边界本行）
+     * @param includeRootOnly - 是否仅输出根级注释
+     * @returns 返回边界前的独立注释 HTML
      */
     private static renderStandaloneBeforeBoundary(
         cursor: StandaloneCommentCursor,
@@ -2872,10 +2763,9 @@ export class CodePreviewProvider {
 
     /**
      * 解析边界行并返回最终结果
-     * @param line - line 参数
-     * @param fallback - fallback 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param line - 当前处理的行内容或行号
+     * @param fallback - 回退使用的默认行号
+     * @returns 返回最终结果
      */
     private static resolveBoundaryLine(line: number, fallback: number): number {
         return line >= 0 ? line : fallback;
@@ -2883,12 +2773,11 @@ export class CodePreviewProvider {
 
     /**
      * 处理 constrainBoundaryForJsonContainer 相关逻辑
-     * @param fileType - 参数
-     * @param line - 参数
-     * @param boundaryExclusive - 参数
-     * @param jsonCloseLineLocator - 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param fileType - 当前文件类型标识
+     * @param line - 当前处理的行内容或行号
+     * @param boundaryExclusive - 边界行号（不含边界本行）
+     * @param jsonCloseLineLocator - JSON 结束行定位器
+     * @returns 返回 JSON 容器约束后的边界行
      */
     private static constrainBoundaryForJsonContainer(
         fileType: FileType,
@@ -2910,12 +2799,11 @@ export class CodePreviewProvider {
 
     /**
      * 处理 constrainBoundaryForYamlContainer 相关逻辑
-     * @param fileType - 参数
-     * @param line - 参数
-     * @param boundaryExclusive - 参数
-     * @param yamlCloseLineLocator - 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param fileType - 当前文件类型标识
+     * @param line - 当前处理的行内容或行号
+     * @param boundaryExclusive - 边界行号（不含边界本行）
+     * @param yamlCloseLineLocator - YAML 结束行定位器
+     * @returns 返回 YAML 容器约束后的边界行
      */
     private static constrainBoundaryForYamlContainer(
         fileType: FileType,
@@ -2937,12 +2825,11 @@ export class CodePreviewProvider {
 
     /**
      * 处理 constrainBoundaryForXmlContainer 相关逻辑
-     * @param fileType - 参数
-     * @param line - 参数
-     * @param boundaryExclusive - 参数
-     * @param xmlCloseLineLocator - 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param fileType - 当前文件类型标识
+     * @param line - 当前处理的行内容或行号
+     * @param boundaryExclusive - 边界行号（不含边界本行）
+     * @param xmlCloseLineLocator - XML 结束行定位器
+     * @returns 返回 XML 容器约束后的边界行
      */
     private static constrainBoundaryForXmlContainer(
         fileType: FileType,
@@ -2964,9 +2851,8 @@ export class CodePreviewProvider {
 
     /**
      * 判断值是否为复合类型（对象或非空数组）
-     * @param data - data 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param data - 待处理的数据对象
+     * @returns 返回布尔判断结果
      */
     private static isCompound(data: unknown): boolean {
         if (data === null || data === undefined || data instanceof Date) {
@@ -2983,22 +2869,21 @@ export class CodePreviewProvider {
 
     /**
      * 渲染复合值的子节点
-     * @param data - data 参数
-     * @param lineLocator - lineLocator 参数
-     * @param arrayItemLineLocator - arrayItemLineLocator 参数
-     * @param commentLines - commentLines 参数
-     * @param standaloneCursor - standaloneCursor 参数
-     * @param boundaryExclusive - boundaryExclusive 参数
-     * @param fileType - fileType 参数
-     * @param sourceLines - sourceLines 参数
-     * @param jsonCloseLineLocator - jsonCloseLineLocator 参数
-     * @param yamlCloseLineLocator - yamlCloseLineLocator 参数
-     * @param xmlCloseLineLocator - xmlCloseLineLocator 参数
-     * @param xmlConsumedLines - xmlConsumedLines 参数
-     * @param parentPath - parentPath 参数
-     * @param xmlDeferredFirstItemComments - xmlDeferredFirstItemComments 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param data - 待处理的数据对象
+     * @param lineLocator - 键行号定位器
+     * @param arrayItemLineLocator - 数组元素行号定位器
+     * @param commentLines - 按行组织的注释索引
+     * @param standaloneCursor - 独立注释渲染游标
+     * @param boundaryExclusive - 边界行号（不含边界本行）
+     * @param fileType - 当前文件类型标识
+     * @param sourceLines - 原始文本行集合
+     * @param jsonCloseLineLocator - JSON 结束行定位器
+     * @param yamlCloseLineLocator - YAML 结束行定位器
+     * @param xmlCloseLineLocator - XML 结束行定位器
+     * @param xmlConsumedLines - 已消费的 XML 注释行集合
+     * @param parentPath - 父级路径片段集合
+     * @param xmlDeferredFirstItemComments - 首个数组项延迟注释映射
+     * @returns 返回渲染后的内容
      */
     private static renderCompoundChildren(
         data: unknown,
@@ -3109,9 +2994,8 @@ export class CodePreviewProvider {
 
     /**
      * 渲染原始值
-     * @param data - data 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param data - 待处理的数据对象
+     * @returns 返回渲染后的内容
      */
     private static renderPrimitive(data: unknown): string {
         if (data === null || data === undefined) {
@@ -3140,18 +3024,17 @@ export class CodePreviewProvider {
 
     /**
      * 递归渲染树形结构（入口：顶层对象/数组)
-     * @param data - data 参数
-     * @param lineLocator - lineLocator 参数
-     * @param arrayItemLineLocator - arrayItemLineLocator 参数
-     * @param commentLines - commentLines 参数
-     * @param standaloneGroups - standaloneGroups 参数
-     * @param fileType - fileType 参数
-     * @param sourceLines - sourceLines 参数
-     * @param jsonCloseLineLocator - jsonCloseLineLocator 参数
-     * @param yamlCloseLineLocator - yamlCloseLineLocator 参数
-     * @param xmlCloseLineLocator - xmlCloseLineLocator 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param data - 待处理的数据对象
+     * @param lineLocator - 键行号定位器
+     * @param arrayItemLineLocator - 数组元素行号定位器
+     * @param commentLines - 按行组织的注释索引
+     * @param standaloneGroups - 独立注释分组集合
+     * @param fileType - 当前文件类型标识
+     * @param sourceLines - 原始文本行集合
+     * @param jsonCloseLineLocator - JSON 结束行定位器
+     * @param yamlCloseLineLocator - YAML 结束行定位器
+     * @param xmlCloseLineLocator - XML 结束行定位器
+     * @returns 返回渲染后的内容
      */
     private static renderTree(
         data: unknown,

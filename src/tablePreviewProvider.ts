@@ -5,19 +5,15 @@ type TabularFileType = 'csv' | 'tsv';
 
 /**
  * 提供 TablePreview 相关预览能力
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 export class TablePreviewProvider {
     private static readonly MAX_HTML_LENGTH = 10 * 1024 * 1024;
 
     /**
      * 解析输入内容并返回结构化结果
-     * @param content - content 参数
-     * @param fileType - fileType 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @param fileType - 当前文件类型标识
+     * @returns 返回解析后的预览结果
      */
     static parse(content: string, fileType: TabularFileType): PreviewResult {
         try {
@@ -58,10 +54,10 @@ export class TablePreviewProvider {
 
     /**
      * 解析行数据并返回结构化结果
-     * @param content - content 参数
-     * @param delimiter - delimiter 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @param delimiter - CSV/TSV 字段分隔符
+     * @returns 返回按行解析后的表格数据
+     * @throws 当 CSV/TSV 引号字段未闭合时抛出异常
      */
     private static parseRows(content: string, delimiter: string): string[][] {
         const source = content.replace(/^\uFEFF/, '');
@@ -148,9 +144,8 @@ export class TablePreviewProvider {
 
     /**
      * 判断源文本是否以换行结尾
-     * @param source - source 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param source - 源文本或源数组对象
+     * @returns 返回布尔判断结果
      */
     private static endsWithNewline(source: string): boolean {
         return source.endsWith('\n') || source.endsWith('\r');
@@ -158,9 +153,8 @@ export class TablePreviewProvider {
 
     /**
      * 渲染表格并返回可展示内容
-     * @param rows - rows 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param rows - 表格行数据集合
+     * @returns 返回可渲染的表格 HTML
      */
     private static renderTable(rows: string[][]): string {
         const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
@@ -200,9 +194,8 @@ export class TablePreviewProvider {
 
     /**
      * 渲染单元格并返回可展示内容
-     * @param value - value 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param value - 待处理的值
+     * @returns 返回单元格的渲染 HTML
      */
     private static renderCell(value: string): string {
         if (value.length === 0) {

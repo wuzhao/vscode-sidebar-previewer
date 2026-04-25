@@ -6,16 +6,12 @@ import { escapeHtml } from './utils';
 
 /**
  * 提供 Markdown 相关预览能力
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 export class MarkdownProvider {
     /**
      * 解析 Markdown 内容，返回 HTML 和标题信息
-     * @param content - content 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @returns 返回解析后的预览结果
      */
     static parse(content: string): { html: string; headings: HeadingInfo[] } {
         const headings: HeadingInfo[] = [];
@@ -191,9 +187,8 @@ export class MarkdownProvider {
 
     /**
      * 收集任务列表复选框在原文中的行号
-     * @param lines - lines 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param lines - 按行拆分后的源文本
+     * @returns 返回任务复选框对应的行号列表
      */
     private static collectTaskListLineNumbers(lines: string[]): number[] {
         const taskLines: number[] = [];
@@ -228,9 +223,8 @@ export class MarkdownProvider {
 
     /**
      * 将 front matter 数据渲染为无表头表格
-     * @param data - data 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param data - 待处理的数据对象
+     * @returns 返回渲染后的内容
      */
     private static renderFrontMatterTable(data: Record<string, unknown>): string {
         let rows = '';
@@ -243,9 +237,8 @@ export class MarkdownProvider {
 
     /**
      * 渲染 front matter 的值（支持嵌套对象/数组 → ul > li）
-     * @param value - value 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param value - 待处理的值
+     * @returns 返回渲染后的内容
      */
     private static renderFrontMatterValue(value: unknown): string {
         if (value === null || value === undefined) {
@@ -275,9 +268,8 @@ export class MarkdownProvider {
      * 转换 GitHub 风格的 alert blockquote
      * > [!NOTE]
      * > Content
-     * @param html - html 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param html - 待转换的 HTML 内容
+     * @returns 返回转换后的提示块 HTML
      */
     private static transformGitHubAlerts(html: string): string {
         const alertTypes: Record<string, { icon: string; label: string }> = {
@@ -310,10 +302,9 @@ export class MarkdownProvider {
 
     /**
      * 生成标题锚点 ID（同名标题自动追加唯一 hex 后缀）
-     * @param text - text 参数
-     * @param usedIds - usedIds 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param text - 待处理的文本内容
+     * @param usedIds - 已占用标题 ID 计数映射
+     * @returns 返回唯一的标题锚点 ID
      */
     private static generateHeadingId(text: string, usedIds: Map<string, number>): string {
         let slug = '';
@@ -337,10 +328,9 @@ export class MarkdownProvider {
 
     /**
      * 根据编辑器可见范围的起始行，找到对应的章节
-     * @param headings - headings 参数
-     * @param visibleStartLine - visibleStartLine 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param headings - 标题信息集合
+     * @param visibleStartLine - 可见区域起始行号
+     * @returns 返回当前可见区域对应的标题信息
      */
     static findCurrentHeading(headings: HeadingInfo[], visibleStartLine: number): HeadingInfo | null {
         if (headings.length === 0) {

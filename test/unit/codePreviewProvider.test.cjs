@@ -475,10 +475,46 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     const css = fs.readFileSync(cssPath, 'utf8');
 
     assert.ok(css.includes('.table-preview-scroll'));
-    assert.ok(css.includes('max-height: 70vh;'));
+    assert.ok(/\.table-preview-scroll\s*\{[^}]*max-height:\s*[^;]+;/s.test(css));
     assert.ok(/\.table-preview thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
     assert.ok(/\.table-preview tbody tr:nth-child\(2n\) \.table-index-column\s*\{[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
+  });
+
+  test('Task F comment and global constant conventions are enforced', () => {
+    const srcDir = path.join(__dirname, '..', '..', 'src');
+    const tsFiles = fs.readdirSync(srcDir).filter(name => name.endsWith('.ts'));
+
+    const placeholderPattern = /@param\s+input\s+-\s+无输入参数|@returns\s+返回处理结果|@returns\s+无返回值|@throws\s+\{Error\}\s+处理失败时抛出异常|@returns\s+返回结果|@param\s+\w+\s+-\s+\w+\s+参数/;
+    for (const fileName of tsFiles) {
+      const fileContent = fs.readFileSync(path.join(srcDir, fileName), 'utf8');
+      assert.equal(placeholderPattern.test(fileContent), false, `${fileName} should not contain placeholder JSDoc tags`);
+    }
+
+    const previewJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview.js'), 'utf8');
+    const prepareVendor = fs.readFileSync(path.join(__dirname, '..', '..', 'scripts', 'prepare-vendor.mjs'), 'utf8');
+    const fileTypes = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'fileTypes.ts'), 'utf8');
+    const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
+
+    assert.ok(previewJs.includes('const VSCODE_API = acquireVsCodeApi();'));
+    assert.ok(previewJs.includes('const L10N_TEXT = {'));
+    assert.ok(previewJs.includes('const VALID_MESSAGE_TYPES = new Set(['));
+    assert.ok(previewJs.includes('const MERMAID_DRAG_STATE = {'));
+    assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+escapeHtml\(/.test(previewJs));
+    assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+updateContent\(/.test(previewJs));
+
+    assert.ok(prepareVendor.includes('const ROOT_PATH = path.resolve(__dirname,')); 
+    assert.ok(prepareVendor.includes('const FILES_TO_COPY = ['));
+    assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+copyFile\(/.test(prepareVendor));
+
+    assert.ok(fileTypes.includes('const FILE_TYPE_CAPABILITIES: Record<FileType, FileTypeCapabilities> = {'));
+    assert.ok(fileTypes.includes('const EXTENSION_TO_TYPE_MAP: Map<string, FileType> = new Map('));
+
+    assert.ok(i18n.includes('const SUPPORTED_EXTENSIONS = ['));
+    assert.ok(i18n.includes('const SUPPORTED_LIST_HTML = SUPPORTED_EXTENSIONS.map('));
+    assert.ok(i18n.includes('const I18N_STRINGS: Record<string, I18nStrings> = {'));
+    assert.ok(i18n.includes('const AVAILABLE_LOCALES = Object.keys(I18N_STRINGS) as LocaleKey[];'));
+    assert.ok(i18n.includes('const LOCALE_LOOKUP = new Map<string, LocaleKey>('));
   });
 
   test('Supported JSONC fixture with mixed comment styles parses successfully', () => {

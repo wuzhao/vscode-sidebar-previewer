@@ -3,17 +3,13 @@ import { escapeHtml, escapeRegex } from './utils';
 
 /**
  * 提供 LatexPreview 相关预览能力
- * @param input - 无输入参数
- * @returns 无返回值
- * @throws {Error} 处理失败时抛出异常
  */
 export class LatexPreviewProvider {
     /**
      * 解析 LaTeX 内容，返回需要客户端 KaTeX 渲染的 HTML
      * 将 LaTeX 源码作为待渲染内容传给 webview
-     * @param content - content 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @returns 返回解析后的预览结果
      */
     static parse(content: string): PreviewResult {
         const headings: HeadingInfo[] = [];
@@ -30,10 +26,9 @@ export class LatexPreviewProvider {
 
     /**
      * 将 LaTeX 内容转换为包含 KaTeX 标记的 HTML
-     * @param content - content 参数
-     * @param headings - headings 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param content - 待解析的文件内容
+     * @param headings - 标题信息集合
+     * @returns 返回包含 KaTeX 占位标记的 HTML
      */
     private static convertLatexToHtml(content: string, headings: HeadingInfo[]): string {
         const lines = content.split('\n');
@@ -147,9 +142,8 @@ export class LatexPreviewProvider {
 
     /**
      * 处理当前场景相关逻辑并返回结果
-     * @param text - text 参数
-     * @returns 返回处理结果
-     * @throws {Error} 处理失败时抛出异常
+     * @param text - 待处理的文本内容
+     * @returns 返回可用于锚点的标题 ID
      */
     private static slugify(text: string): string {
         return text
