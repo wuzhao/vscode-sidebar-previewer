@@ -19,6 +19,7 @@ const VALID_MESSAGE_TYPES = new Set([
     'expandAll',
     'collapseAll',
     'highlightDataTreeRange',
+    'highlightTableRange'
 ]);
 // 需要启用数据树交互能力的文件类型枚举
 const DATA_TREE_FILE_TYPES = new Set(['json', 'yaml', 'toml', 'xml']);
@@ -46,6 +47,12 @@ const MERMAID_DRAG_STATE = {
 
 let currentHeadings = [];
 let isScrollingFromEditor = false;
+let isUpdatingSelectionFromWebview = false;
+let tableDragState = {
+    isDragging: false,
+    startCell: null,
+    currentCell: null,
+};
 let zoomLevel = 100;
 let wheelTimeout = null;
 let currentFileType = null;
@@ -190,6 +197,17 @@ window.addEventListener('message', event => {
                 highlightTreeRange(range.start, range.end);
             }
             break;
+        case 'highlightTableRange':
+            {
+                const startLine = normalizeLineValue(message.startLine);
+                const startChar = normalizeLineValue(message.startChar);
+                const endLine = normalizeLineValue(message.endLine);
+                const endChar = normalizeLineValue(message.endChar);
+                if (startLine !== null && startChar !== null && endLine !== null && endChar !== null) {
+                    highlightTableRangeFunc(startLine, startChar, endLine, endChar);
+                }
+            }
+            break;
     }
 });
 
@@ -236,6 +254,7 @@ window.addEventListener('mouseup', stopMermaidDragging);
 window.addEventListener('blur', stopMermaidDragging);
 window.addEventListener('resize', positionCommentTooltip);
 document.addEventListener('scroll', positionCommentTooltip, true);
+window.addEventListener('contextmenu', e => e.preventDefault());
 
 /**
  * 通知扩展缩放级别变化
@@ -295,6 +314,10 @@ function updateContent(data) {
     // 仅在 Markdown 预览中启用的功能
     if (currentFileType === 'markdown' || !currentFileType) {
         bindCheckboxEvents();
+    }
+
+    if (currentFileType === 'csv' || currentFileType === 'tsv') {
+        bindTableSelection();
     }
 
     // 数据树类型：绑定 key 点击定位
@@ -365,7 +388,7 @@ function applyTablePreviewViewportHeight() {
 
     const tablePreviewContainers = document.querySelectorAll('.table-preview-scroll');
     tablePreviewContainers.forEach(container => {
-        container.style.maxHeight = `calc((100vh - ${TABLE_PREVIEW_VIEWPORT_OFFSET_PX}px) / ${zoomScale})`;
+        container.style.maxHeight = `calc(100vh / ${zoomScale} - ${TABLE_PREVIEW_VIEWPORT_OFFSET_PX}px)`;
     });
 }
 
@@ -1363,8 +1386,9 @@ function positionCommentTooltip() {
     }
     top = Math.max(edgePadding, Math.min(top, window.innerHeight - tooltipRect.height - edgePadding));
 
-    commentTooltip.style.left = `${left}px`;
-    commentTooltip.style.top = `${top}px`;
+    const zoomScale = getZoomScale();
+    commentTooltip.style.left = `${left / zoomScale}px`;
+    commentTooltip.style.top = `${top / zoomScale}px`;
 }
 
 /**
@@ -1481,3 +1505,204 @@ function collapseAllNodes() {
     const details = document.querySelectorAll('.data-tree details');
     details.forEach(d => d.removeAttribute('open'));
 }
+
+/**
+ * 处理外部发来的表格高亮区域
+ */
+function highlightTableRangeFunc(startLine, startChar, endLine, endChar) {
+    if (isUpdatingSelectionFromWebview) {
+        return;
+    }
+
+    const table = document.querySelector('.tabular-table');
+    if (!table) {
+        return;
+    }
+
+    const cells = table.querySelectorAll('th[data-start-line], td[data-start-line]');
+    cells.forEach(cell => {
+        const cSL = Number(cell.getAttribute('data-start-line'));
+        const cSC = Number(cell.getAttribute('data-start-char'));
+        const cEL = Number(cell.getAttribute('data-end-line'));
+        const cEC = Number(cell.getAttribute('data-end-char'));
+
+        function comparePos(l1, c1, l2, c2) {
+            if (l1 !== l2) {
+                return l1 - l2;
+            }
+            return c1 - c2;
+        }
+
+        if (comparePos(cEL, cEC, startLine, startChar) >= 0 && comparePos(cSL, cSC, endLine, endChar) <= 0) {
+            cell.classList.add('selected');
+        } else {
+            cell.classList.remove('selected');
+        }
+    });
+}
+
+/**
+ * 绑定表格交互
+ */
+function bindTableSelection() {
+    const table = document.querySelector('.tabular-table');
+    if (!table) {
+        return;
+    }
+
+    // Only bind once
+    if (table.dataset.selectionBound) {
+        return;
+    }
+    table.dataset.selectionBound = "true";
+
+    table.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) {
+            return;
+        }
+        const cell = e.target.closest('th[data-start-line], td[data-start-line]');
+        if (!cell) {
+            return;
+        }
+        
+        tableDragState.isDragging = true;
+        tableDragState.startCell = cell;
+        tableDragState.currentCell = cell;
+        
+        updateTableSelectionVisuals();
+        e.preventDefault(); // prevent text selection
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!tableDragState.isDragging) {
+            return;
+        }
+        const cell = e.target.closest && e.target.closest('th[data-start-line], td[data-start-line]');
+        if (cell && tableDragState.currentCell !== cell) {
+            tableDragState.currentCell = cell;
+            updateTableSelectionVisuals();
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (tableDragState.isDragging) {
+            tableDragState.isDragging = false;
+            applyTableSelectionToEditor();
+        }
+    });
+}
+
+function updateTableSelectionVisuals() {
+    if (!tableDragState.startCell || !tableDragState.currentCell) {
+        return;
+    }
+
+    const table = document.querySelector('.tabular-table');
+    if (!table) {
+        return;
+    }
+
+    const startRow = tableDragState.startCell.parentElement.rowIndex;
+    const startCol = tableDragState.startCell.cellIndex;
+    const currentRow = tableDragState.currentCell.parentElement.rowIndex;
+    const currentCol = tableDragState.currentCell.cellIndex;
+
+    const minRow = Math.min(startRow, currentRow);
+    const maxRow = Math.max(startRow, currentRow);
+    const minCol = Math.min(startCol, currentCol);
+    const maxCol = Math.max(startCol, currentCol);
+
+    const cells = table.querySelectorAll('th[data-start-line], td[data-start-line]');
+    cells.forEach(cell => {
+        const row = cell.parentElement.rowIndex;
+        const col = cell.cellIndex;
+        if (row >= minRow && row <= maxRow && col >= minCol && col <= maxCol) {
+            cell.classList.add('selected');
+        } else {
+            cell.classList.remove('selected');
+        }
+    });
+}
+
+function applyTableSelectionToEditor() {
+    const selectedCells = Array.from(document.querySelectorAll('.tabular-table .selected'));
+    if (selectedCells.length === 0) {
+        return;
+    }
+
+    const selections = selectedCells.map(cell => ({
+        startLine: Number(cell.getAttribute('data-start-line')),
+        startChar: Number(cell.getAttribute('data-start-char')),
+        endLine: Number(cell.getAttribute('data-end-line')),
+        endChar: Number(cell.getAttribute('data-end-char'))
+    }));
+
+    if (selections.length > 0) {
+        isUpdatingSelectionFromWebview = true;
+        VSCODE_API.postMessage({
+            type: 'updateEditorSelection',
+            selections: selections
+        });
+        
+        setTimeout(() => {
+            isUpdatingSelectionFromWebview = false;
+        }, 150);
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
+        const selectedCells = Array.from(document.querySelectorAll('.tabular-table .selected'));
+        if (selectedCells.length > 0) {
+            e.preventDefault();
+
+            const rows = new Map();
+            selectedCells.forEach(cell => {
+                const rowIndex = cell.parentElement.rowIndex;
+                if (!rows.has(rowIndex)) {
+                    rows.set(rowIndex, []);
+                }
+                rows.get(rowIndex).push(cell);
+            });
+
+            const sortedRowIndices = Array.from(rows.keys()).sort((a, b) => a - b);
+            const tsvLines = sortedRowIndices.map(rowIndex => {
+                const cellsInRow = rows.get(rowIndex);
+                cellsInRow.sort((a, b) => a.cellIndex - b.cellIndex);
+                return cellsInRow.map(cell => {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = cell.innerHTML;
+                    
+                    const emptySpan = tempDiv.querySelector('.table-empty-cell');
+                    if (emptySpan) {
+                        return '';
+                    }
+                    
+                    const brs = tempDiv.querySelectorAll('br');
+                    brs.forEach(br => br.replaceWith('\n'));
+                    
+                    let val = tempDiv.textContent || '';
+                    if (val.includes('\t') || val.includes('\n') || val.includes('"')) {
+                        val = '"' + val.replace(/"/g, '""') + '"';
+                    }
+                    return val;
+                }).join('\t');
+            });
+
+            const tsvText = tsvLines.join('\r\n');
+            navigator.clipboard.writeText(tsvText).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                if (copyBtn) {
+                    copyBtn.classList.add('copied');
+                    copyBtn.innerHTML = '<i class="codicon codicon-pass-filled"></i>' + L10N_TEXT.copySuccess;
+                    setTimeout(() => {
+                        copyBtn.classList.remove('copied');
+                        copyBtn.innerHTML = '<i class="codicon codicon-copy"></i>';
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Copy failed:', err);
+            });
+        }
+    }
+});

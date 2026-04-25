@@ -3,6 +3,14 @@ import { escapeHtml } from './utils';
 
 type TabularFileType = 'csv' | 'tsv';
 
+interface CellData {
+    value: string;
+    startLine: number;
+    startChar: number;
+    endLine: number;
+    endChar: number;
+}
+
 /**
  * 提供 TablePreview 相关预览能力
  */
@@ -59,74 +67,131 @@ export class TablePreviewProvider {
      * @returns 返回按行解析后的表格数据
      * @throws 当 CSV/TSV 引号字段未闭合时抛出异常
      */
-    private static parseRows(content: string, delimiter: string): string[][] {
-        const source = content.replace(/^\uFEFF/, '');
-        if (source.length === 0) {
+    private static parseRows(content: string, delimiter: string): CellData[][] {
+        if (content.length === 0 || (content.length === 1 && content.charCodeAt(0) === 0xFEFF)) {
             return [];
         }
 
-        const rows: string[][] = [];
-        let row: string[] = [];
+        const rows: CellData[][] = [];
+        let row: CellData[] = [];
         let cell = '';
         let inQuotes = false;
 
+        let currentLine = 0;
+        let currentChar = 0;
         let i = 0;
-        while (i < source.length) {
-            const ch = source[i];
+
+        if (content.charCodeAt(0) === 0xFEFF) {
+            i = 1;
+            currentChar = 1;
+        }
+
+        let cellStartLine = currentLine;
+        let cellStartChar = currentChar;
+
+        const advance = (ch: string) => {
+            if (ch === '\n') {
+                currentLine++;
+                currentChar = 0;
+            } else {
+                currentChar++;
+            }
+        };
+
+        while (i < content.length) {
+            const ch = content[i];
 
             if (inQuotes) {
                 if (ch === '"') {
-                    const next = i + 1 < source.length ? source[i + 1] : '';
+                    const next = i + 1 < content.length ? content[i + 1] : '';
                     if (next === '"') {
                         cell += '"';
+                        advance('"');
+                        advance('"');
                         i += 2;
                         continue;
                     }
                     inQuotes = false;
+                    advance('"');
                     i += 1;
                     continue;
                 }
 
                 cell += ch;
+                advance(ch);
                 i += 1;
                 continue;
             }
 
             if (ch === '"') {
                 inQuotes = true;
+                advance('"');
                 i += 1;
                 continue;
             }
 
             if (ch === delimiter) {
-                row.push(cell);
+                row.push({
+                    value: cell,
+                    startLine: cellStartLine,
+                    startChar: cellStartChar,
+                    endLine: currentLine,
+                    endChar: currentChar
+                });
                 cell = '';
+                advance(ch);
                 i += 1;
+                cellStartLine = currentLine;
+                cellStartChar = currentChar;
                 continue;
             }
 
             if (ch === '\n') {
-                row.push(cell);
+                row.push({
+                    value: cell,
+                    startLine: cellStartLine,
+                    startChar: cellStartChar,
+                    endLine: currentLine,
+                    endChar: currentChar
+                });
                 rows.push(row);
                 row = [];
                 cell = '';
+                advance(ch);
                 i += 1;
+                cellStartLine = currentLine;
+                cellStartChar = currentChar;
                 continue;
             }
 
             if (ch === '\r') {
-                row.push(cell);
+                const nextIsNewline = i + 1 < content.length && content[i + 1] === '\n';
+                row.push({
+                    value: cell,
+                    startLine: cellStartLine,
+                    startChar: cellStartChar,
+                    endLine: currentLine,
+                    endChar: currentChar
+                });
                 rows.push(row);
                 row = [];
                 cell = '';
                 i += 1;
-                if (i < source.length && source[i] === '\n') {
+                if (nextIsNewline) {
+                    advance('\r');
+                    advance('\n');
                     i += 1;
+                } else {
+                    currentLine++;
+                    currentChar = 0;
                 }
+                cellStartLine = currentLine;
+                cellStartChar = currentChar;
                 continue;
             }
 
             cell += ch;
+            advance(ch);
             i += 1;
         }
 
@@ -134,8 +199,15 @@ export class TablePreviewProvider {
             throw new Error('Unterminated quoted field.');
         }
 
-        row.push(cell);
-        if (row.length > 1 || row[0].length > 0 || !this.endsWithNewline(source)) {
+        row.push({
+            value: cell,
+            startLine: cellStartLine,
+            startChar: cellStartChar,
+            endLine: currentLine,
+            endChar: currentChar
+        });
+        
+        if (row.length > 1 || row[0].value.length > 0 || !this.endsWithNewline(content)) {
             rows.push(row);
         }
 
@@ -156,7 +228,7 @@ export class TablePreviewProvider {
      * @param rows - 表格行数据集合
      * @returns 返回可渲染的表格 HTML
      */
-    private static renderTable(rows: string[][]): string {
+    private static renderTable(rows: CellData[][]): string {
         const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
         if (columnCount === 0) {
             return '<div class="empty-state"><div class="empty-text">No tabular rows to preview.</div></div>';
@@ -166,7 +238,15 @@ export class TablePreviewProvider {
             if (row.length >= columnCount) {
                 return row;
             }
-            return [...row, ...new Array(columnCount - row.length).fill('')];
+            const lastCell = row[row.length - 1];
+            const emptyCells: CellData[] = new Array(columnCount - row.length).fill(null).map(() => ({
+                value: '',
+                startLine: lastCell ? lastCell.endLine : 0,
+                startChar: lastCell ? lastCell.endChar : 0,
+                endLine: lastCell ? lastCell.endLine : 0,
+                endChar: lastCell ? lastCell.endChar : 0
+            }));
+            return [...row, ...emptyCells];
         });
 
         const header = normalizedRows[0];
@@ -174,8 +254,9 @@ export class TablePreviewProvider {
 
         let html = '<div class="table-preview"><div class="table-preview-scroll"><table class="tabular-table"><thead><tr><th class="table-index-column">#</th>';
         for (let i = 0; i < header.length; i++) {
-            const title = header[i].length > 0 ? header[i] : `Column ${i + 1}`;
-            html += `<th>${escapeHtml(title)}</th>`;
+            const cell = header[i];
+            const title = cell.value.length > 0 ? cell.value : `Column ${i + 1}`;
+            html += `<th data-start-line="${cell.startLine}" data-start-char="${cell.startChar}" data-end-line="${cell.endLine}" data-end-char="${cell.endChar}">${escapeHtml(title)}</th>`;
         }
         html += '</tr></thead><tbody>';
 
@@ -183,7 +264,7 @@ export class TablePreviewProvider {
             const row = body[rowIndex];
             html += `<tr><td class="table-index-column">${rowIndex + 1}</td>`;
             for (const cell of row) {
-                html += `<td>${this.renderCell(cell)}</td>`;
+                html += `<td data-start-line="${cell.startLine}" data-start-char="${cell.startChar}" data-end-line="${cell.endLine}" data-end-char="${cell.endChar}">${this.renderCell(cell.value)}</td>`;
             }
             html += '</tr>';
         }

@@ -2,10 +2,14 @@
 
 ## 0.3.7 - 2026-04-26
 
+- Support CSV/TSV bidirectional selection to use multi-cursor selection in editor, copy to clipboard compatible with Excel standard.
+- Disabled context menu in webview preview.
 - Fixed the first separator `hr (---)` cannot be displayed.
 
 ～～～
 
+- 支持 CSV/TSV 双向选区功能，复制到剪贴板兼容 Excel 标准。
+- 禁用 Webview 预览界面的右键菜单。
 - 修复第一个内容分隔符 `hr (---)` 不能显示的问题。
 
 ---
@@ -19,6 +23,7 @@
 - Improved Mermaid precheck to support leading comments before the first diagram declaration.
 - Added sticky first row and first column in CSV/TSV table preview.
 - Fixed zoom behavior for data-tree comment popups so tooltip scale and anchor position stay aligned with comment icons.
+- Fixed table preview container height calculation on zoom to prevent overflow.
 
 ～～～
 
@@ -29,6 +34,7 @@
 - 优化 Mermaid 预检逻辑，支持「前置注释 + 图声明」的文件结构。
 - CSV/TSV 预览新增首行与首列固定，长表格浏览更稳定。
 - 修复数据树注释弹窗在缩放后的表现，使弹窗缩放与锚点位置始终跟随注释图标。
+- 修复缩放状态下表格预览容器高度计算问题，避免内容溢出或留白。
 
 ---
 

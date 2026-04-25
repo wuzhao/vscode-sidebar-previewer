@@ -25,14 +25,21 @@ src/**
 test/**
 
 # AI AGENTS
-AGENTS.md
-CLAUDE.md
+.cursorrules
+.clinerules
+.windsurfrules
+.github/copilot-instructions.md
 .agents/
 .gemini/
 .claude/
 .cline/
 .codex/
 .cursor/
+PROMPT.md
+INSTRUCTIONS.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
 
 # PROJECT FILES
 README.*.md

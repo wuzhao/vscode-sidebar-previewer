@@ -408,13 +408,14 @@ table tr:nth-child(2n) {
     margin: 0;
     border-collapse: separate;
     border-spacing: 0;
+    overflow: visible;
 }
 
 .table-preview thead th {
     position: sticky;
     top: 0;
     z-index: 3;
-    background-color: var(--vscode-editor-background);
+    background-color: var(--vscode-sideBar-background);
 }
 
 .table-preview .table-index-column {
@@ -426,7 +427,7 @@ table tr:nth-child(2n) {
     position: sticky;
     left: 0;
     z-index: 2;
-    background-color: var(--vscode-editor-background);
+    background-color: var(--vscode-sideBar-background);
 }
 
 .table-preview thead .table-index-column {
@@ -434,7 +435,18 @@ table tr:nth-child(2n) {
 }
 
 .table-preview tbody tr:nth-child(2n) .table-index-column {
-    background-color: var(--vscode-editor-background);
+    background-color: var(--vscode-sideBar-background);
+}
+
+.table-preview td.selected,
+.table-preview th.selected {
+    background-color: var(--vscode-editor-selectionBackground);
+    color: var(--vscode-editor-selectionForeground);
+}
+
+.table-preview td:hover,
+.table-preview th:hover {
+    cursor: default;
 }
 
 .table-preview .table-empty-cell {

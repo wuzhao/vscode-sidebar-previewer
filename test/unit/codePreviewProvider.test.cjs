@@ -462,8 +462,8 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(tsvResult.html.includes('<div class="table-preview-scroll">'));
     assert.ok(csvResult.html.includes('<table class="tabular-table">'));
     assert.ok(tsvResult.html.includes('<table class="tabular-table">'));
-    assert.ok(csvResult.html.includes('Device, Series 5'));
-    assert.ok(tsvResult.html.includes('contains'));
+    assert.ok(csvResult.html.includes('Sample Item 1'));
+    assert.ok(tsvResult.html.includes('svc-001'));
     assert.ok(csvResult.html.includes('table-index-column'));
     assert.ok(tsvResult.html.includes('table-index-column'));
     assert.equal(csvResult.html.includes('Failed to parse CSV content.'), false);
@@ -476,9 +476,9 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
 
     assert.ok(css.includes('.table-preview-scroll'));
     assert.ok(/\.table-preview-scroll\s*\{[^}]*max-height:\s*[^;]+;/s.test(css));
-    assert.ok(/\.table-preview thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
-    assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
-    assert.ok(/\.table-preview tbody tr:nth-child\(2n\) \.table-index-column\s*\{[^}]*background-color:\s*var\(--vscode-editor-background\);/s.test(css));
+    assert.ok(/\.table-preview thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
+    assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
+    assert.ok(/\.table-preview tbody tr:nth-child\(2n\) \.table-index-column\s*\{[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
   });
 
   test('Task G zoom keeps tooltip and table viewport behavior stable', () => {
@@ -486,7 +486,7 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     const previewJs = fs.readFileSync(previewJsPath, 'utf8');
 
     assert.ok(previewJs.includes('const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;'));
-    assert.ok(/function applyTablePreviewViewportHeight\(\)\s*\{[\s\S]*?\.table-preview-scroll[\s\S]*?maxHeight\s*=\s*`calc\(\(100vh - \$\{TABLE_PREVIEW_VIEWPORT_OFFSET_PX\}px\) \/ \$\{zoomScale\}\)`;/s.test(previewJs));
+    assert.ok(/function applyTablePreviewViewportHeight\(\)\s*\{[\s\S]*?\.table-preview-scroll[\s\S]*?maxHeight\s*=\s*`calc\(100vh \/ \$\{zoomScale\} - \$\{TABLE_PREVIEW_VIEWPORT_OFFSET_PX\}px\)`/s.test(previewJs));
     assert.ok(/function applyCommentTooltipZoom\(\)\s*\{[\s\S]*?commentTooltip\.style\.zoom\s*=\s*String\(getZoomScale\(\)\);/s.test(previewJs));
     assert.ok(/function applyZoom\(\)\s*\{[\s\S]*?applyTablePreviewViewportHeight\(\);[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?positionCommentTooltip\(\);/s.test(previewJs));
     assert.ok(/function showCommentTooltip\(target\)\s*\{[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?tooltip\.classList\.add\('is-visible'\);/s.test(previewJs));

@@ -136,6 +136,17 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                     this._handleToggleCheckbox(message.line, message.checked);
                 } else if (message.type === 'navigateToLine') {
                     this._navigateToLine(message.line);
+                } else if (message.type === 'updateEditorSelection') {
+                    if (Array.isArray(message.selections)) {
+                        this._updateEditorSelection(message.selections);
+                    } else {
+                        this._updateEditorSelection([{
+                            startLine: message.startLine,
+                            startChar: message.startChar,
+                            endLine: message.endLine,
+                            endChar: message.endChar
+                        }]);
+                    }
                 }
             })
         );
@@ -493,7 +504,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', dataTree);
 
             const scrollTargetHeadingId = options?.suppressAutoScroll ? undefined : this._getScrollTargetHeadingId(document);
-            const selectionRange = dataTree ? this._getEditorSelectionRange(document) : null;
+            const selectionRange = (dataTree || fileType === 'csv' || fileType === 'tsv') ? this._getEditorSelectionRange(document) : null;
             const message: {
                 type: 'update';
                 content: string;
@@ -502,6 +513,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 clientRender: PreviewResult['clientRender'] | null;
                 selectionStartLine: number | null;
                 selectionEndLine: number | null;
+                selectionStartChar: number | null;
+                selectionEndChar: number | null;
                 editedLine: number | null;
                 preserveScrollPosition: boolean;
                 scrollToHeadingId?: string | null;
@@ -514,6 +527,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 clientRender: result.clientRender || null,
                 selectionStartLine: selectionRange ? selectionRange.startLine : null,
                 selectionEndLine: selectionRange ? selectionRange.endLine : null,
+                selectionStartChar: selectionRange ? selectionRange.startChar : null,
+                selectionEndChar: selectionRange ? selectionRange.endChar : null,
                 editedLine: editedLine !== undefined ? editedLine : null,
                 preserveScrollPosition: options?.preserveScrollPosition === true,
             };
@@ -545,16 +560,26 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * @param document - 当前文档对象
      * @returns 返回编辑器当前选区的行范围
      */
-    private _getEditorSelectionRange(document: vscode.TextDocument): { startLine: number; endLine: number } | null {
+    private _getEditorSelectionRange(document: vscode.TextDocument): { startLine: number; endLine: number; startChar: number; endChar: number } | null {
         const editor = vscode.window.activeTextEditor;
         if (!editor || editor.document !== document || editor.selections.length === 0) {
             return null;
         }
 
         const selection = editor.selections[0];
-        const startLine = Math.min(selection.start.line, selection.end.line);
-        const endLine = Math.max(selection.start.line, selection.end.line);
-        return { startLine, endLine };
+        let startLine = selection.start.line;
+        let startChar = selection.start.character;
+        let endLine = selection.end.line;
+        let endChar = selection.end.character;
+
+        if (startLine > endLine || (startLine === endLine && startChar > endChar)) {
+            startLine = selection.end.line;
+            startChar = selection.end.character;
+            endLine = selection.start.line;
+            endChar = selection.start.character;
+        }
+
+        return { startLine, endLine, startChar, endChar };
     }
 
     /**
@@ -567,16 +592,27 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
 
         const fileType = this._getSupportedFileType(editor.document);
-        if (!fileType || !isDataTreeType(fileType)) {
+        if (!fileType) {
             return;
         }
 
-        const selectionRange = this._getEditorSelectionRange(editor.document);
-        this._view.webview.postMessage({
-            type: 'highlightDataTreeRange',
-            startLine: selectionRange ? selectionRange.startLine : null,
-            endLine: selectionRange ? selectionRange.endLine : null,
-        });
+        if (isDataTreeType(fileType)) {
+            const selectionRange = this._getEditorSelectionRange(editor.document);
+            this._view.webview.postMessage({
+                type: 'highlightDataTreeRange',
+                startLine: selectionRange ? selectionRange.startLine : null,
+                endLine: selectionRange ? selectionRange.endLine : null,
+            });
+        } else if (fileType === 'csv' || fileType === 'tsv') {
+            const selectionRange = this._getEditorSelectionRange(editor.document);
+            this._view.webview.postMessage({
+                type: 'highlightTableRange',
+                startLine: selectionRange ? selectionRange.startLine : null,
+                startChar: selectionRange ? selectionRange.startChar : null,
+                endLine: selectionRange ? selectionRange.endLine : null,
+                endChar: selectionRange ? selectionRange.endChar : null,
+            });
+        }
     }
 
     /**
@@ -746,6 +782,32 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             );
         }
         editor.selection = new vscode.Selection(line, 0, line, 0);
+    }
+
+    /**
+     * 更新编辑器选区
+     * @param selections - 选区范围数组
+     */
+    private _updateEditorSelection(selections: { startLine: number; startChar: number; endLine: number; endChar: number }[]): void {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || !selections || selections.length === 0) {
+            return;
+        }
+
+        const vsSelections = selections.map(s => new vscode.Selection(
+            new vscode.Position(s.startLine, s.startChar),
+            new vscode.Position(s.endLine, s.endChar)
+        ));
+
+        editor.selections = vsSelections;
+
+        // 滚动到最后一个选区（通常是鼠标拖拽的目标位置）
+        const last = selections[selections.length - 1];
+        const range = new vscode.Range(
+            new vscode.Position(last.startLine, last.startChar),
+            new vscode.Position(last.endLine, last.endChar)
+        );
+        editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
     }
 
     /**
