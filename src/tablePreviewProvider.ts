@@ -3,10 +3,15 @@ import { escapeHtml } from './utils';
 
 type TabularFileType = 'csv' | 'tsv';
 
+/**
+ * 提供 TablePreview 相关预览能力
+ */
 export class TablePreviewProvider {
     private static readonly MAX_HTML_LENGTH = 10 * 1024 * 1024;
 
-    /** 解析输入内容并返回结构化结果。 */
+    /**
+     * 解析输入内容并返回结构化结果。
+     */
     static parse(content: string, fileType: TabularFileType): PreviewResult {
         try {
             const delimiter = fileType === 'csv' ? ',' : '\t';
@@ -44,7 +49,9 @@ export class TablePreviewProvider {
         }
     }
 
-    /** 解析行数据并返回结构化结果。 */
+    /**
+     * 解析行数据并返回结构化结果。
+     */
     private static parseRows(content: string, delimiter: string): string[][] {
         const source = content.replace(/^\uFEFF/, '');
         if (source.length === 0) {
@@ -128,12 +135,16 @@ export class TablePreviewProvider {
         return rows;
     }
 
-    /** 判断源文本是否以换行结尾。 */
+    /**
+     * 判断源文本是否以换行结尾。
+     */
     private static endsWithNewline(source: string): boolean {
         return source.endsWith('\n') || source.endsWith('\r');
     }
 
-    /** 渲染表格并返回可展示内容。 */
+    /**
+     * 渲染表格并返回可展示内容。
+     */
     private static renderTable(rows: string[][]): string {
         const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
         if (columnCount === 0) {
@@ -150,7 +161,7 @@ export class TablePreviewProvider {
         const header = normalizedRows[0];
         const body = normalizedRows.slice(1);
 
-        let html = '<div class="table-preview"><table class="tabular-table"><thead><tr><th class="table-index-column">#</th>';
+        let html = '<div class="table-preview"><div class="table-preview-scroll"><table class="tabular-table"><thead><tr><th class="table-index-column">#</th>';
         for (let i = 0; i < header.length; i++) {
             const title = header[i].length > 0 ? header[i] : `Column ${i + 1}`;
             html += `<th>${escapeHtml(title)}</th>`;
@@ -166,11 +177,13 @@ export class TablePreviewProvider {
             html += '</tr>';
         }
 
-        html += '</tbody></table></div>';
+        html += '</tbody></table></div></div>';
         return html;
     }
 
-    /** 渲染单元格并返回可展示内容。 */
+    /**
+     * 渲染单元格并返回可展示内容。
+     */
     private static renderCell(value: string): string {
         if (value.length === 0) {
             return '<span class="table-empty-cell">&nbsp;</span>';

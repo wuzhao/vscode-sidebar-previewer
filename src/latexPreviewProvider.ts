@@ -1,6 +1,9 @@
 import { HeadingInfo, PreviewResult } from './fileTypes';
 import { escapeHtml, escapeRegex } from './utils';
 
+/**
+ * 提供 LatexPreview 相关预览能力
+ */
 export class LatexPreviewProvider {
     /**
      * 解析 LaTeX 内容，返回需要客户端 KaTeX 渲染的 HTML
@@ -132,7 +135,9 @@ export class LatexPreviewProvider {
         return parts.join('\n');
     }
 
-    /** 处理当前场景相关逻辑并返回结果。 */
+    /**
+     * 处理当前场景相关逻辑并返回结果。
+     */
     private static slugify(text: string): string {
         return text
             .toLowerCase()

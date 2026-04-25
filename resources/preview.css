@@ -399,11 +399,28 @@ table tr:nth-child(2n) {
     padding-top: 8px;
 }
 
+.table-preview-scroll {
+    max-width: 100%;
+    overflow: auto;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+}
+
 .table-preview table {
     display: table;
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     max-width: none;
     margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-preview thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background-color: var(--vscode-sideBarSectionHeader-background);
 }
 
 .table-preview .table-index-column {
@@ -412,6 +429,19 @@ table tr:nth-child(2n) {
     text-align: right;
     white-space: nowrap;
     color: var(--vscode-descriptionForeground);
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: var(--vscode-editor-background);
+}
+
+.table-preview thead .table-index-column {
+    z-index: 4;
+}
+
+.table-preview tbody tr:nth-child(2n) .table-index-column {
+    background-color: rgba(127, 127, 127, 0.12);
+    background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 35%, transparent 65%);
 }
 
 .table-preview .table-empty-cell {

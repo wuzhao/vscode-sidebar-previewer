@@ -66,7 +66,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ### CSV / TSV
 
-- Render as a table for preview
+- Render as a table for preview with sticky first row and first column
 
 ## Installation
 
@@ -95,7 +95,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
-6. In JSON/YAML/TOML/XML preview, click keys to locate source lines; CSV/TSV preview is rendered as a table
+6. In JSON/YAML/TOML/XML preview, click keys to locate source lines; CSV/TSV preview is rendered as a table with sticky first row and first column
 
 ## How to show the VS Code Secondary Side Bar?
 

@@ -458,10 +458,14 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.equal(csvResult.supportsLocate, false);
     assert.equal(tsvResult.supportsLocate, false);
 
+    assert.ok(csvResult.html.includes('<div class="table-preview-scroll">'));
+    assert.ok(tsvResult.html.includes('<div class="table-preview-scroll">'));
     assert.ok(csvResult.html.includes('<table class="tabular-table">'));
     assert.ok(tsvResult.html.includes('<table class="tabular-table">'));
-    assert.ok(csvResult.html.includes('Monitor, 27&quot; 4K'));
+    assert.ok(csvResult.html.includes('Device, Series 5'));
     assert.ok(tsvResult.html.includes('contains'));
+    assert.ok(csvResult.html.includes('table-index-column'));
+    assert.ok(tsvResult.html.includes('table-index-column'));
     assert.equal(csvResult.html.includes('Failed to parse CSV content.'), false);
     assert.equal(tsvResult.html.includes('Failed to parse TSV content.'), false);
   });

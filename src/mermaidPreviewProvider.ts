@@ -1,6 +1,9 @@
 import { PreviewResult } from './fileTypes';
 import { escapeHtml } from './utils';
 
+/**
+ * 提供 MermaidPreview 相关预览能力
+ */
 export class MermaidPreviewProvider {
     /**
      * 解析 Mermaid 内容，返回需要客户端 mermaid.js 渲染的 HTML
@@ -35,7 +38,9 @@ export class MermaidPreviewProvider {
         };
     }
 
-    /** 查找首个指令行并返回匹配结果。 */
+    /**
+     * 查找首个指令行并返回匹配结果。
+     */
     private static findFirstDirectiveLine(content: string): string {
         const lines = content
             .replace(/^\uFEFF/, '')

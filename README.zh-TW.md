@@ -66,7 +66,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ### CSV / TSV
 
-- 渲染為表格預覽
+- 渲染為表格預覽，首行與首列固定
 
 ## 安裝方法
 
@@ -95,7 +95,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. 預覽面板會自動顯示當前檔案的渲染結果
 4. 使用工具欄或 `Cmd/Ctrl` + 滑鼠滾輪進行縮放
 5. Mermaid 預覽支援拖拽檢視放大區域
-6. JSON / YAML / TOML / XML 可點選鍵名跳轉到原始碼對應行；CSV / TSV 預覽為表格檢視
+6. JSON / YAML / TOML / XML 可點選鍵名跳轉到原始碼對應行；CSV / TSV 預覽為表格檢視，首行與首列固定
 
 ## 如何顯示 VS Code 第二側邊欄？
 

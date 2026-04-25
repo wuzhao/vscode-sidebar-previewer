@@ -4,6 +4,9 @@ import * as yaml from 'js-yaml';
 import { HeadingInfo } from './fileTypes';
 import { escapeHtml } from './utils';
 
+/**
+ * 提供 Markdown 相关预览能力
+ */
 export class MarkdownProvider {
     /**
      * 解析 Markdown 内容，返回 HTML 和标题信息
@@ -110,9 +113,9 @@ export class MarkdownProvider {
         const mathExtension: any = {
             name: 'mathInline',
             level: 'inline',
-            /** 定位行内数学公式的起始位置。 */
+            // 定位行内数学公式的起始位置。
             start(src: string) { return src.match(/\$\$/)?.index; },
-            /** 将 $$...$$ 片段解析为行内数学标记。 */
+            // 将 $$...$$ 片段解析为行内数学标记。
             tokenizer(src: string, tokens: any) {
                 const rule = /^\$\$([\s\S]+?)\$\$/;
                 const match = rule.exec(src);
@@ -124,7 +127,7 @@ export class MarkdownProvider {
                     };
                 }
             },
-            /** 输出行内 KaTeX 占位标记，交由前端统一渲染。 */
+            // 输出行内 KaTeX 占位标记，交由前端统一渲染。
             renderer(token: any) {
                 return `<span class="katex-inline" data-katex-display="false">${escapeHtml(token.text)}</span>`;
             }
@@ -134,9 +137,9 @@ export class MarkdownProvider {
         const mathBlockExtension: any = {
             name: 'mathBlock',
             level: 'block',
-            /** 定位块级数学公式的起始位置。 */
+            // 定位块级数学公式的起始位置。
             start(src: string) { return src.match(/\\begin\{([a-zA-Z*]+)\}/)?.index; },
-            /** 将 begin/end 包裹的片段解析为块级数学标记。 */
+            // 将 begin/end 包裹的片段解析为块级数学标记。
             tokenizer(src: string, tokens: any) {
                 const rule = /^\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/;
                 const match = rule.exec(src);
@@ -148,7 +151,7 @@ export class MarkdownProvider {
                     };
                 }
             },
-            /** 输出块级 KaTeX 占位标记，交由前端统一渲染。 */
+            // 输出块级 KaTeX 占位标记，交由前端统一渲染。
             renderer(token: any) {
                 return `<div class="katex-block" data-katex-display="true">${escapeHtml(token.text)}</div>\n`;
             }
@@ -180,7 +183,9 @@ export class MarkdownProvider {
         return { html, headings: locateHeadings };
     }
 
-    /** 收集任务列表复选框在原文中的行号。 */
+    /**
+     * 收集任务列表复选框在原文中的行号。
+     */
     private static collectTaskListLineNumbers(lines: string[]): number[] {
         const taskLines: number[] = [];
         const taskPattern = /^\s*[-*+]\s+\[([ xX])\]/;

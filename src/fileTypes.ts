@@ -1,11 +1,7 @@
-/**
- * 文件预览类型
- */
+// 文件预览类型
 export type FileType = 'markdown' | 'latex' | 'mermaid' | 'json' | 'yaml' | 'toml' | 'xml' | 'csv' | 'tsv';
 
-/**
- * 标题/节点信息（用于定位）
- */
+// 标题/节点信息（用于定位）
 export interface HeadingInfo {
     level: number;
     text: string;
@@ -13,25 +9,21 @@ export interface HeadingInfo {
     id: string;
 }
 
-/**
- * 预览结果
- */
+// 预览结果
 export interface PreviewResult {
-    /** 渲染后的 HTML */
+    // 渲染后的 HTML
     html: string;
-    /** 文件类型 */
+    // 文件类型
     fileType: FileType;
-    /** 是否支持跟随定位（基于标题） */
+    // 是否支持跟随定位（基于标题）
     supportsLocate: boolean;
-    /** 标题/节点信息（用于定位） */
+    // 标题/节点信息（用于定位）
     headings?: HeadingInfo[];
-    /** 是否需要客户端渲染（如 KaTeX、Mermaid） */
+    // 是否需要客户端渲染（如 KaTeX、Mermaid）
     clientRender?: 'katex' | 'mermaid';
 }
 
-/**
- * 支持的文件扩展名映射
- */
+// 支持的文件扩展名映射
 interface FileTypeCapabilities {
     extensions: readonly string[];
     supportsLocate: boolean;
@@ -91,9 +83,7 @@ const extensionMap: Map<string, FileType> = new Map(
         .flatMap(([type, capabilities]) => capabilities.extensions.map(ext => [ext, type] as const))
 );
 
-/**
- * 根据文件名获取文件类型
- */
+// 根据文件名获取文件类型
 export function getFileType(fileName: string): FileType | null {
     if (!fileName) {
         return null;
@@ -107,16 +97,12 @@ export function getFileType(fileName: string): FileType | null {
     return null;
 }
 
-/**
- * 判断文件类型是否支持跟随定位
- */
+// 判断文件类型是否支持跟随定位
 export function supportsLocate(fileType: FileType): boolean {
     return fileTypeCapabilities[fileType].supportsLocate;
 }
 
-/**
- * 判断文件类型是否为数据树形类型
- */
+// 判断文件类型是否为数据树形类型
 export function isDataTreeType(fileType: FileType): boolean {
     return fileTypeCapabilities[fileType].isDataTree;
 }

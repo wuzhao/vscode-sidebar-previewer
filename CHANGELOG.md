@@ -7,6 +7,7 @@
 - Fixed Markdown fenced-code interference in task checkbox line mapping and heading extraction.
 - Fixed Markdown locate behavior at document top by anchoring frontmatter table as `frontmatter-table`.
 - Improved Mermaid precheck to support leading comments before the first diagram declaration.
+- Added sticky first row and first column in CSV/TSV table preview.
 - No breaking changes in this release.
 
 ～～～
@@ -16,6 +17,7 @@
 - 修复 Markdown 在 fenced code block 场景下对 task 勾选行号映射与标题提取的干扰。
 - 修复 Markdown 顶部定位场景，frontmatter 表格新增 `frontmatter-table` 锚点以保证稳定落位。
 - 优化 Mermaid 预检逻辑，支持「前置注释 + 图声明」的文件结构。
+- CSV/TSV 预览新增首行与首列固定，长表格浏览更稳定。
 - 本次版本无破坏性变更。
 
 ## 0.3.5 - 2026-04-24
