@@ -1,6 +1,6 @@
 {
   "displayName": "Sidebar Previewer",
-  "description": "VS Code のサイドバー向けプレビュー拡張。リアルタイム描画、スクロール同期、ツリービュー、ズーム操作をサポートし、Markdown、LaTeX、Mermaid、JSON、YAML、TOML に対応します。",
+  "description": "VS Code のサイドバー向けプレビュー拡張。リアルタイム描画、スクロール同期、ツリービュー、ズーム操作をサポートし、Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV、TSV に対応します。",
   "command.zoomIn.title": "拡大",
   "command.zoomOut.title": "縮小",
   "command.zoomReset.title": "100%",

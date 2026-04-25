@@ -4,7 +4,7 @@ import { initI18n } from './i18n';
 
 export function activate(context: vscode.ExtensionContext) {
     // 初始化国际化
-    initI18n(context);
+    initI18n();
     const feedbackIssuesUrl = vscode.Uri.parse('https://github.com/wuzhao/vscode-sidebar-previewer/issues/new');
     const previewProvider = new PreviewProvider(context);
 

@@ -18,7 +18,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 | | | |
 | -- | -- | -- |
-| Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTex ![LaTex](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
+| Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTeX ![LaTeX](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
 | CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / YAML / TOML / XML ![JSON / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
 
 ## 対応ファイル
@@ -46,16 +46,16 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - KaTeX および Mermaid ブロックのレンダリング
 - エディタとプレビュー間の同期スクロールおよび位置特定（双方向スクロール）
 
-### Mermaid
-
-- 基本的な構文の事前チェックと、分かりやすいエラーフィードバック
-- ズーム時のドラッグによるパン（移動）操作
-
 ### LaTeX
 
 - インライン数式および主要な数学環境の KaTeX レンダリング
 - エディタとプレビュー間の同期スクロールおよび位置特定
 - ズーム表示対応
+
+### Mermaid
+
+- 基本的な構文の事前チェックと、分かりやすいエラーフィードバック
+- ズーム時のドラッグによるパン（移動）操作
 
 ### JSON / YAML / TOML / XML
 

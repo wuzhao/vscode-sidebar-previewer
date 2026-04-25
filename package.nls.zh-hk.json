@@ -1,6 +1,6 @@
 {
   "displayName": "Sidebar Previewer",
-  "description": "VS Code 嘅側邊欄預覽器，支持實時渲染、滾動同步、樹形視圖、縮放控制等功能，支持包括 Markdown、LaTeX、Mermaid、JSON、YAML 同埋 TOML 喺內嘅多種文件格式。",
+  "description": "VS Code 嘅側邊欄預覽器，支持實時渲染、滾動同步、樹形視圖、縮放控制等功能，支持包括 Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV 同埋 TSV 喺內嘅多種文件格式。",
   "command.zoomIn.title": "放大",
   "command.zoomOut.title": "縮細",
   "command.zoomReset.title": "100%",

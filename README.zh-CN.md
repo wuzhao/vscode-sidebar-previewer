@@ -18,7 +18,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 | | | |
 | -- | -- | -- |
-| Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTex ![LaTex](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
+| Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTeX ![LaTeX](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
 | CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / YAML / TOML / XML ![JSON / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
 
 ## 支持的文件类型
@@ -46,16 +46,16 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - KaTeX 和 Mermaid 代码块渲染
 - 编辑器与预览之间滚动同步、互相定位
 
-### Mermaid
-
-- 基础语法预检查与错误提示
-- 放大后支持拖拽平移
-
 ### LaTeX
 
 - 行内公式与常见数学环境的 KaTeX 渲染
 - 编辑器与预览之间滚动同步、互相定位
 - 支持缩放
+
+### Mermaid
+
+- 基础语法预检查与错误提示
+- 放大后支持拖拽平移
 
 ### JSON / YAML / TOML / XML
 

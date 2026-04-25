@@ -84,35 +84,34 @@ const strings: Record<string, I18nStrings> = {
     }
 };
 
-let currentLocale: string = 'en_US';
+type LocaleKey = keyof typeof strings;
+const availableLocales = Object.keys(strings) as LocaleKey[];
+let currentLocale: LocaleKey = 'en_US';
 
 function normalizeLocale(locale: string): string {
     return locale.replace('-', '_').toLowerCase();
 }
 
-const localeLookup = new Map<string, string>(
-    Object.keys(strings).map(locale => [normalizeLocale(locale), locale])
+const localeLookup = new Map<string, LocaleKey>(
+    availableLocales.map(locale => [normalizeLocale(locale), locale])
 );
 
-export function initI18n(context: vscode.ExtensionContext): void {
+export function initI18n(): void {
     // 获取 VS Code 当前的显示语言
     const vscodeLanguage = normalizeLocale(vscode.env.language);
 
     const exactLocale = localeLookup.get(vscodeLanguage);
     if (exactLocale) {
         currentLocale = exactLocale;
-        void context;
         return;
     }
 
     // 尝试匹配语言前缀 (如 zh 匹配 zh_CN)
     const languagePrefix = vscodeLanguage.split('_')[0];
-    const matchedLocale = Object.keys(strings).find(
+    const matchedLocale = availableLocales.find(
         locale => normalizeLocale(locale).split('_')[0] === languagePrefix
     );
-    currentLocale = matchedLocale || 'en_US';
-
-    void context;
+    currentLocale = matchedLocale ?? 'en_US';
 }
 
 function getString(key: keyof I18nStrings): string {
