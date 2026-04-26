@@ -1654,59 +1654,92 @@ function applyTableSelectionToEditor() {
 }
 
 document.addEventListener('keydown', (e) => {
+console.log("123");
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
         const selectedCells = Array.from(document.querySelectorAll('.tabular-table .selected'));
         if (selectedCells.length > 0) {
             e.preventDefault();
+console.log(selectedCells);
+            // Calculate range boundaries
+            // Note: rowIndex is a standard property of HTMLTableRowElement (cell.parentElement)
+            // cellIndex is a standard property of HTMLTableCellElement (cell)
+            let minRow = Infinity, maxRow = -Infinity;
+            let minCol = Infinity, maxCol = -Infinity;
 
-            const rows = new Map();
             selectedCells.forEach(cell => {
-                const rowIndex = cell.parentElement.rowIndex;
-                if (!rows.has(rowIndex)) {
-                    rows.set(rowIndex, []);
-                }
-                rows.get(rowIndex).push(cell);
+console.log(cell);
+                const r = cell.parentElement.rowIndex;
+                const c = cell.cellIndex;
+                if (r < minRow) minRow = r;
+                if (r > maxRow) maxRow = r;
+                if (c < minCol) minCol = c;
+                if (c > maxCol) maxCol = c;
             });
 
-            const sortedRowIndices = Array.from(rows.keys()).sort((a, b) => a - b);
-            const tsvLines = sortedRowIndices.map(rowIndex => {
-                const cellsInRow = rows.get(rowIndex);
-                cellsInRow.sort((a, b) => a.cellIndex - b.cellIndex);
-                return cellsInRow.map(cell => {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = cell.innerHTML;
-                    
-                    const emptySpan = tempDiv.querySelector('.table-empty-cell');
-                    if (emptySpan) {
-                        return '';
-                    }
-                    
+            // Build a 2D grid to ensure compatibility with Excel (even with gaps)
+            const rowCount = maxRow - minRow + 1;
+            const colCount = maxCol - minCol + 1;
+            const grid = Array.from({ length: rowCount }, () => Array(colCount).fill(''));
+
+            selectedCells.forEach(cell => {
+                const r = cell.parentElement.rowIndex - minRow;
+                const c = cell.cellIndex - minCol;
+                
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = cell.innerHTML;
+                
+                if (tempDiv.querySelector('.table-empty-cell')) {
+                    grid[r][c] = '';
+                } else {
                     const brs = tempDiv.querySelectorAll('br');
                     brs.forEach(br => br.replaceWith('\n'));
-                    
-                    let val = tempDiv.textContent || '';
-                    // 包含空格、制表符、换行符或引号时，使用引号包裹并转义内部引号，以确保 Excel 兼容性
-                    if (val.includes('\t') || val.includes('\n') || val.includes('"') || val.includes(' ')) {
-                        val = '"' + val.replace(/"/g, '""') + '"';
-                    }
-                    return val;
-                }).join('\t');
+                    grid[r][c] = tempDiv.textContent.trim() || '';
+                }
             });
 
-            const tsvText = tsvLines.join('\r\n');
-            navigator.clipboard.writeText(tsvText).then(() => {
+            // Generate TSV for plain text
+            const tsvText = grid.map(row => row.join('\t')).join('\n');
+            
+            // Generate HTML table for rich text (Excel prefers this to maintain structure and newlines)
+            let htmlTable = '<table>';
+            grid.forEach(row => {
+                htmlTable += '<tr>';
+                row.forEach(val => {
+                    const escaped = val.replace(/&/g, '&amp;')
+                                       .replace(/</g, '&lt;')
+                                       .replace(/>/g, '&gt;')
+                                       .replace(/\n/g, '<br>');
+                    htmlTable += `<td>${escaped}</td>`;
+                });
+                htmlTable += '</tr>';
+            });
+            htmlTable += '</table>';
+
+            const feedback = () => {
                 const copyBtn = document.querySelector('.copy-btn');
                 if (copyBtn) {
                     copyBtn.classList.add('copied');
+                    const originalHTML = copyBtn.innerHTML;
                     copyBtn.innerHTML = '<i class="codicon codicon-pass-filled"></i>' + L10N_TEXT.copySuccess;
                     setTimeout(() => {
                         copyBtn.classList.remove('copied');
-                        copyBtn.innerHTML = '<i class="codicon codicon-copy"></i>';
+                        copyBtn.innerHTML = originalHTML;
                     }, 2000);
                 }
-            }).catch(err => {
-                console.error('Copy failed:', err);
-            });
+            };
+
+            if (navigator.clipboard && window.ClipboardItem) {
+                const data = [new ClipboardItem({
+                    'text/plain': new Blob([tsvText], { type: 'text/plain' }),
+                    'text/html': new Blob([htmlTable], { type: 'text/html' })
+                })];
+                navigator.clipboard.write(data).then(feedback).catch(err => {
+                    console.error('Copy failed:', err);
+                    navigator.clipboard.writeText(tsvText).then(feedback);
+                });
+            } else {
+                navigator.clipboard.writeText(tsvText).then(feedback);
+            }
         }
     }
 });
