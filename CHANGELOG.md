@@ -1,16 +1,20 @@
 # Changelog
 
-## 0.3.7 - 2026-04-26
+## 0.3.7 - 2026-04-27
 
-- Support CSV/TSV bidirectional selection to use multi-cursor selection in editor, copy to clipboard compatible with Excel standard.
 - Disabled context menu in webview preview.
 - Fixed the first separator `hr (---)` cannot be displayed.
+- Refactored preview.js into modular domain-based files with lazy-loading and comprehensive code comments.
+- Fixed comment tooltip position drift after zoom on JSON/YAML/TOML/XML data trees.
+- CSV/TSV table: disabled content modification.
 
 ～～～
 
-- 支持 CSV/TSV 双向选区功能，复制到剪贴板兼容 Excel 标准。
 - 禁用 Webview 预览界面的右键菜单。
 - 修复第一个内容分隔符 `hr (---)` 不能显示的问题。
+- 重构 preview.js 按业务拆分为独立模块，实现按需加载，并增加全面代码注释。
+- 修复 JSON/YAML/TOML/XML 数据树在缩放后注释弹窗位置偏移的问题。
+- CSV/TSV 禁止对表格内容进行修改。
 
 ---
 
