@@ -17,7 +17,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     private _view?: vscode.WebviewView;
     private _webviewReady: boolean = false;
     private _previewCssPath: string;
-    private _previewJsPath: string;
+    private _previewCommonJsPath: string;
+    private _previewCodeblockJsPath: string;
+    private _previewKatexJsPath: string;
+    private _previewMermaidJsPath: string;
+    private _previewMarkdownJsPath: string;
+    private _previewDatatreeJsPath: string;
+    private _previewCommentTooltipJsPath: string;
+    private _previewTableJsPath: string;
     private _currentHeadings: HeadingInfo[] = [];
     private _currentFileType: FileType | null = null;
     private _supportsLocate: boolean = false;
@@ -40,7 +47,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     constructor(private readonly _extensionContext: vscode.ExtensionContext) {
         const resourcesPath = path.join(_extensionContext.extensionPath, 'resources');
         this._previewCssPath = path.join(resourcesPath, 'preview.css');
-        this._previewJsPath = path.join(resourcesPath, 'preview.js');
+        this._previewCommonJsPath = path.join(resourcesPath, 'preview-common.js');
+        this._previewCodeblockJsPath = path.join(resourcesPath, 'preview-codeblock.js');
+        this._previewKatexJsPath = path.join(resourcesPath, 'preview-katex.js');
+        this._previewMermaidJsPath = path.join(resourcesPath, 'preview-mermaid.js');
+        this._previewMarkdownJsPath = path.join(resourcesPath, 'preview-markdown.js');
+        this._previewDatatreeJsPath = path.join(resourcesPath, 'preview-datatree.js');
+        this._previewCommentTooltipJsPath = path.join(resourcesPath, 'preview-comment-tooltip.js');
+        this._previewTableJsPath = path.join(resourcesPath, 'preview-table.js');
 
         const vendorPath = path.join(resourcesPath, 'vendor');
 
@@ -942,7 +956,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      */
     private _getHtmlForWebview(webview: vscode.Webview): string {
         const previewCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewCssPath));
-        const previewJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewJsPath));
+        const previewCommonJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewCommonJsPath));
+        const previewCodeblockJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewCodeblockJsPath));
+        const previewKatexJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewKatexJsPath));
+        const previewMermaidJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewMermaidJsPath));
+        const previewMarkdownJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewMarkdownJsPath));
+        const previewDatatreeJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewDatatreeJsPath));
+        const previewCommentTooltipJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewCommentTooltipJsPath));
+        const previewTableJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewTableJsPath));
         const codiconUri = webview.asWebviewUri(vscode.Uri.file(this._codiconCssPath));
         const katexCssUri = webview.asWebviewUri(vscode.Uri.file(this._katexCssPath));
         const katexJsUri = webview.asWebviewUri(vscode.Uri.file(this._katexJsPath));
@@ -967,7 +988,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     </div>
     <script src="${katexJsUri}"></script>
     <script src="${mermaidJsUri}"></script>
-    <script src="${previewJsUri}"></script>
+    <script src="${previewCommonJsUri}"></script>
+    <script src="${previewCodeblockJsUri}"></script>
+    <script src="${previewKatexJsUri}"></script>
+    <script src="${previewMermaidJsUri}"></script>
+    <script src="${previewMarkdownJsUri}"></script>
+    <script src="${previewCommentTooltipJsUri}"></script>
+    <script src="${previewDatatreeJsUri}"></script>
+    <script src="${previewTableJsUri}"></script>
 </body>
 </html>`;
     }
