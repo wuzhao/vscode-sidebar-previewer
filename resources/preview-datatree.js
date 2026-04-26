@@ -177,8 +177,8 @@ function bindTreeKeyClicks() {
     const keys = document.querySelectorAll('.data-tree .tree-key[data-line]');
     keys.forEach(key => {
         key.addEventListener('click', (e) => {
-            if (isCommentTooltipInteractionLocked()) {
-                stopEvent(e);
+            if (typeof PreviewCommentTooltip !== 'undefined' && PreviewCommentTooltip.isCommentTooltipInteractionLocked()) {
+                PreviewCommentTooltip.stopEvent(e);
                 return;
             }
             e.stopPropagation();

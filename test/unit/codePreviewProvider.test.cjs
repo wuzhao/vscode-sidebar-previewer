@@ -482,14 +482,16 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
   });
 
   test('Task G zoom keeps tooltip and table viewport behavior stable', () => {
-    const previewJsPath = path.join(__dirname, '..', '..', 'resources', 'preview.js');
-    const previewJs = fs.readFileSync(previewJsPath, 'utf8');
+    const commonJsPath = path.join(__dirname, '..', '..', 'resources', 'preview-common.js');
+    const commonJs = fs.readFileSync(commonJsPath, 'utf8');
+    const commentTooltipJsPath = path.join(__dirname, '..', '..', 'resources', 'preview-comment-tooltip.js');
+    const commentTooltipJs = fs.readFileSync(commentTooltipJsPath, 'utf8');
 
-    assert.ok(previewJs.includes('const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;'));
-    assert.ok(/function applyTablePreviewViewportHeight\(\)\s*\{[\s\S]*?\.table-preview-scroll[\s\S]*?maxHeight\s*=\s*`calc\(100vh \/ \$\{zoomScale\} - \$\{TABLE_PREVIEW_VIEWPORT_OFFSET_PX\}px\)`/s.test(previewJs));
-    assert.ok(/function applyCommentTooltipZoom\(\)\s*\{[\s\S]*?commentTooltip\.style\.zoom\s*=\s*String\(getZoomScale\(\)\);/s.test(previewJs));
-    assert.ok(/function applyZoom\(\)\s*\{[\s\S]*?applyTablePreviewViewportHeight\(\);[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?positionCommentTooltip\(\);/s.test(previewJs));
-    assert.ok(/function showCommentTooltip\(target\)\s*\{[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?tooltip\.classList\.add\('is-visible'\);/s.test(previewJs));
+    assert.ok(commonJs.includes('const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;'));
+    assert.ok(/function applyTablePreviewViewportHeight\(\)\s*\{[\s\S]*?\.table-preview-scroll[\s\S]*?maxHeight\s*=\s*`calc\(100vh \/ \$\{zoomScale\} - \$\{TABLE_PREVIEW_VIEWPORT_OFFSET_PX\}px\)`/s.test(commonJs));
+    assert.ok(/function applyCommentTooltipZoom\(\)\s*\{[\s\S]*?commentTooltip\.style\.zoom\s*=\s*String\(getZoomScale\(\)\);/s.test(commentTooltipJs));
+    assert.ok(/function applyZoom\(\)\s*\{[\s\S]*?applyTablePreviewViewportHeight\(\);[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?positionCommentTooltip\(\);/s.test(commonJs));
+    assert.ok(/function showCommentTooltip\(target\)\s*\{[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?tooltip\.classList\.add\('is-visible'\);/s.test(commentTooltipJs));
   });
 
   test('Task F comment and global constant conventions are enforced', () => {
@@ -502,17 +504,18 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
       assert.equal(placeholderPattern.test(fileContent), false, `${fileName} should not contain placeholder JSDoc tags`);
     }
 
-    const previewJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-common.js'), 'utf8');
+    const mermaidJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-mermaid.js'), 'utf8');
     const prepareVendor = fs.readFileSync(path.join(__dirname, '..', '..', 'scripts', 'prepare-vendor.mjs'), 'utf8');
     const fileTypes = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'fileTypes.ts'), 'utf8');
     const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
 
-    assert.ok(previewJs.includes('const VSCODE_API = acquireVsCodeApi();'));
-    assert.ok(previewJs.includes('const L10N_TEXT = {'));
-    assert.ok(previewJs.includes('const VALID_MESSAGE_TYPES = new Set(['));
-    assert.ok(previewJs.includes('const MERMAID_DRAG_STATE = {'));
-    assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+escapeHtml\(/.test(previewJs));
-    assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+updateContent\(/.test(previewJs));
+    assert.ok(commonJs.includes('const VSCODE_API = acquireVsCodeApi();'));
+    assert.ok(commonJs.includes('const L10N_TEXT = {'));
+    assert.ok(commonJs.includes('const VALID_MESSAGE_TYPES = new Set(['));
+    assert.ok(mermaidJs.includes('const MERMAID_DRAG_STATE = {'));
+    assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+escapeHtml\(/.test(commonJs));
+    assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+updateContent\(/.test(commonJs));
 
     assert.ok(prepareVendor.includes('const ROOT_PATH = path.resolve(__dirname,')); 
     assert.ok(prepareVendor.includes('const FILES_TO_COPY = ['));

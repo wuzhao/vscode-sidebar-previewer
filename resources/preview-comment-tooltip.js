@@ -430,11 +430,13 @@ function bindCommentTooltips() {
     });
 }
 
-// 在 window / document 上注册注释提示框位置更新事件监听
+// 在 window / document 上注册注释提示框事件监听
 // 监听窗口尺寸变化，重新定位注释提示框
 window.addEventListener('resize', positionCommentTooltip);
-// 监听文档滚动事件，重新定位注释提示框（捕获阶段以确保优先响应）
-document.addEventListener('scroll', positionCommentTooltip, true);
+// 监听预览区域滚动事件，滚动时自动取消 focus 并隐藏提示框
+document.addEventListener('scroll', () => {
+    hideCommentTooltip(true);
+}, true);
 
 // 暴露公共方法
 window.PreviewCommentTooltip = {
