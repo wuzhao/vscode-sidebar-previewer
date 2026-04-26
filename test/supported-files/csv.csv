@@ -8,21 +8,21 @@ id,name,category,price,currency,in_stock,tags,description,notes,multiline,create
 2007,"Quote ""Model"" 7",software,41.69,USD,true,tag7|edge1|group3,description for item 7,row-7,line-7-A\nline-7-B,2026-04-25T15:49:00Z,ok
 2008,Sample Item 8,hardware,44.86,USD,false,tag8|edge2|group0,description for item 8,"=HYPERLINK(""https://example.com/item/8"",""open"")",line-8-A\nline-8-B,2026-04-25T16:56:00Z,ok
 2009,Sample Item 9,software,48.03,USD,true,tag9|edge0|group1,description for item 9,row-9,line-9-A\nline-9-B,2026-04-25T17:03:00Z,ok
-2010,"Device, Series 10",hardware,51.20,USD,true,tag10|edge1|group2,description for item 10,row-10,line-10-A\nline-10-B,2026-04-25T18:10:00Z,ok
+2010,"Device, Series 10",,51.20,USD,true,tag10|edge1|group2,description for item 10,row-10,line-10-A\nline-10-B,2026-04-25T18:10:00Z,ok
 2011,Sample Item 11,software,54.37,USD,true,tag11|edge2|group3,description for item 11,  value with spaces  ,line-11-A\nline-11-B,2026-04-25T19:17:00Z,ok
 2012,Sample Item 12,hardware,57.54,USD,false,tag12|edge0|group0,description for item 12,row-12,line-12-A\nline-12-B,2026-04-25T08:24:00Z,
 2013,Sample Item 13,software,60.71,USD,true,tag13|edge1|group1,description for item 13,row-13,line-13-A\nline-13-B,2026-04-25T09:31:00Z,ok
 2014,"Quote ""Model"" 14",hardware,63.88,USD,true,tag14|edge2|group2,description for item 14,<raw & unsafe>,line-14-A\nline-14-B,2026-04-25T10:38:00Z,ok
 2015,"Device, Series 15",software,67.05,USD,true,tag15|edge0|group3,description for item 15,row-15,line-15-A\nline-15-B,2026-04-25T11:45:00Z,ok
-2016,Sample Item 16,hardware,70.22,USD,false,tag16|edge1|group0,description for item 16,row-16,line-16-A\nline-16-B,2026-04-25T12:52:00Z,ok
-2017,Sample Item 17,software,73.39,USD,true,tag17|edge2|group1,description for item 17,unicode: 你好 / こんにちは / 안녕하세요,line-17-A\nline-17-B,2026-04-25T13:59:00Z,ok
+2016,Sample Item 16,hardware,,,,tag16|edge1|group0,description for item 16,row-16,line-16-A\nline-16-B,2026-04-25T12:52:00Z,ok
+2017,Sample Item 17,software,73.39,CNY,true,tag17|edge2|group1,description for item 17,unicode: 你好 / こんにちは / 안녕하세요,line-17-A\nline-17-B,2026-04-25T13:59:00Z,ok
 2018,Sample Item 18,hardware,76.56,USD,true,tag18|edge0|group2,description for item 18,row-18,line-18-A\nline-18-B,2026-04-25T14:06:00Z,
 2019,Sample Item 19,software,79.73,USD,true,tag19|edge1|group3,description for item 19,row-19,"line-19-A
 line-19-B
 line-19-C",2026-04-25T15:13:00Z,ok
 2020,"Device, Series 20",hardware,82.90,USD,false,tag20|edge2|group0,description for item 20,row-20,line-20-A\nline-20-B,2026-04-25T16:20:00Z,ok
 2021,"Quote ""Model"" 21",software,86.07,USD,true,tag21|edge0|group1,description for item 21,row-21,line-21-A\nline-21-B,2026-04-25T17:27:00Z,ok
-2022,Sample Item 22,hardware,89.24,USD,true,tag22|edge1|group2,description for item 22,row-22,line-22-A\nline-22-B,2026-04-25T18:34:00Z,ok
+2022,Sample Item 22,hardware,89.24,HKD,true,tag22|edge1|group2,description for item 22,row-22,line-22-A\nline-22-B,2026-04-25T18:34:00Z,ok
 2023,Sample Item 23,software,92.41,USD,true,tag23|edge2|group3,description for item 23,,line-23-A\nline-23-B,2026-04-25T19:41:00Z,ok
 2024,Sample Item 24,hardware,95.58,USD,false,tag24|edge0|group0,description for item 24,row-24,line-24-A\nline-24-B,2026-04-25T08:48:00Z,
 2025,"Device, Series 25",software,98.75,USD,true,tag25|edge1|group1,description for item 25,row-25,line-25-A\nline-25-B,2026-04-25T09:55:00Z,ok

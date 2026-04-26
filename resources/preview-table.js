@@ -230,14 +230,34 @@ PreviewCommon.registerDomainInit(['csv', 'tsv'], 'table', function() {
     // 绑定表格拖拽选区交互
     bindTableSelection();
 
-    // 阻止表格单元格内的键盘编辑行为（拦截字符输入、删除等按键）
-    table.addEventListener('keydown', (e) => {
-        if (e.target.closest && e.target.closest('td, th')) {
-            e.preventDefault();
-        }
+    // 确保表格单元格不可编辑（显式声明 contenteditable=false）
+    table.querySelectorAll('td, th').forEach(cell => {
+        cell.setAttribute('contenteditable', 'false');
     });
 
-    // 阻止表格单元格内的输入法编辑行为（拦截 IME 合成输入）
+    // 阻止表格单元格内的键盘编辑行为（仅拦截字符输入、删除、回车等编辑键，保留方向键/Tab/Esc 等导航键）
+    table.addEventListener('keydown', (e) => {
+        if (!e.target.closest || !e.target.closest('td, th')) {
+            return;
+        }
+        // 允许修饰键组合（Ctrl/Cmd 复制、全选等）
+        if (e.ctrlKey || e.metaKey || e.altKey) {
+            return;
+        }
+        // 允许导航键和功能键
+        const allowList = new Set([
+            'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+            'Tab', 'Escape', 'Home', 'End', 'PageUp', 'PageDown',
+            'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'
+        ]);
+        if (allowList.has(e.key)) {
+            return;
+        }
+        // 拦截字符输入、Backspace、Delete、Enter 等编辑键
+        e.preventDefault();
+    });
+
+    // 阻止表格单元格内所有类型的输入事件（IME合成、粘贴、拖放等）
     table.addEventListener('beforeinput', (e) => {
         e.preventDefault();
     });

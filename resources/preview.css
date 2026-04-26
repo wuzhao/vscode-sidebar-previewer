@@ -453,6 +453,11 @@ table tr:nth-child(2n) {
     color: var(--vscode-descriptionForeground);
 }
 
+.table-preview td,
+.table-preview th {
+    -webkit-user-modify: read-only;
+}
+
 hr {
     height: 0.25em;
     padding: 0;

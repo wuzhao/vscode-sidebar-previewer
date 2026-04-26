@@ -353,9 +353,9 @@ function positionCommentTooltip() {
     }
     top = Math.max(edgePadding, Math.min(top, window.innerHeight - tooltipRect.height - edgePadding));
 
-    const zoomScale = getZoomScale();
-    commentTooltip.style.left = `${left / zoomScale}px`;
-    commentTooltip.style.top = `${top / zoomScale}px`;
+    // fixed 定位元素的 left/top 不受自身 zoom 影响，直接使用视口坐标即可
+    commentTooltip.style.left = `${left}px`;
+    commentTooltip.style.top = `${top}px`;
 }
 
 /**
