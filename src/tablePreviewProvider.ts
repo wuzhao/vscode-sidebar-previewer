@@ -32,7 +32,7 @@ export class TablePreviewProvider {
                 return {
                     html: '<div class="empty-state"><div class="empty-text">No tabular rows to preview.</div></div>',
                     fileType,
-                    supportsLocate: false,
+                    supportsLocate: true,
                 };
             }
 
@@ -41,21 +41,21 @@ export class TablePreviewProvider {
                 return {
                     html: '<div class="error-state"><div class="error-text">Preview content is too large to render safely.</div></div>',
                     fileType,
-                    supportsLocate: false,
+                    supportsLocate: true,
                 };
             }
 
             return {
                 html,
                 fileType,
-                supportsLocate: false,
+                supportsLocate: true,
             };
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             return {
                 html: `<div class="error-state"><div class="error-text">Failed to parse ${fileType.toUpperCase()} content.</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
                 fileType,
-                supportsLocate: false,
+                supportsLocate: true,
             };
         }
     }

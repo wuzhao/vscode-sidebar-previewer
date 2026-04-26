@@ -15,6 +15,8 @@ const VALID_MESSAGE_TYPES = new Set([
     'loading',
     'scrollToHeading',
     'getVisibleHeading',
+    'scrollToLine',
+    'getVisibleLine',
     'zoom',
     'expandAll',
     'collapseAll',
@@ -154,6 +156,19 @@ window.addEventListener('message', event => {
         case 'getVisibleHeading':
             if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.reportVisibleHeading) {
                 PreviewMarkdown.reportVisibleHeading();
+            }
+            break;
+        case 'scrollToLine':
+            {
+                const line = normalizeLineValue(message.line);
+                if (line !== null && typeof PreviewTable !== 'undefined' && PreviewTable.scrollToLine) {
+                    PreviewTable.scrollToLine(line);
+                }
+            }
+            break;
+        case 'getVisibleLine':
+            if (typeof PreviewTable !== 'undefined' && PreviewTable.reportVisibleLine) {
+                PreviewTable.reportVisibleLine();
             }
             break;
         case 'zoom':
@@ -351,6 +366,13 @@ function updateContent(data) {
         requestAnimationFrame(() => {
             scrollToHeading(normalizeOptionalString(messageData.scrollToHeadingId));
         });
+    } else if (Object.prototype.hasOwnProperty.call(messageData, 'scrollToLine')) {
+        const line = normalizeLineValue(messageData.scrollToLine);
+        if (line !== null && typeof PreviewTable !== 'undefined' && PreviewTable.scrollToLine) {
+            requestAnimationFrame(() => {
+                PreviewTable.scrollToLine(line);
+            });
+        }
     }
 }
 
@@ -405,6 +427,10 @@ function applyTablePreviewViewportHeight() {
 function applyZoom() {
     const content = document.getElementById('content');
     const zoomScale = getZoomScale();
+    // 缩放时自动取消 focus 并隐藏注释提示框
+    if (typeof PreviewCommentTooltip !== 'undefined' && PreviewCommentTooltip.hideCommentTooltip) {
+        PreviewCommentTooltip.hideCommentTooltip(true);
+    }
     // 只对预览内容应用缩放，不影响 loading、空状态和报错
     const hasSpecialState = content.querySelector('.loading-state, .empty-state, .error-state');
     if (hasSpecialState) {

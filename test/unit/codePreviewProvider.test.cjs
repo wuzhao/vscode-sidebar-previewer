@@ -455,8 +455,8 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
 
     assert.equal(csvResult.fileType, 'csv');
     assert.equal(tsvResult.fileType, 'tsv');
-    assert.equal(csvResult.supportsLocate, false);
-    assert.equal(tsvResult.supportsLocate, false);
+    assert.equal(csvResult.supportsLocate, true);
+    assert.equal(tsvResult.supportsLocate, true);
 
     assert.ok(csvResult.html.includes('<div class="table-preview-scroll">'));
     assert.ok(tsvResult.html.includes('<div class="table-preview-scroll">'));

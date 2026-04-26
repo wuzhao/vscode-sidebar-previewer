@@ -9,6 +9,7 @@ let tableDragState = {
     isDragging: false,
     startCell: null,
     currentCell: null,
+    wasMultiCellDrag: false
 };
 
 /**
@@ -85,6 +86,7 @@ function bindTableSelection() {
         const cell = e.target.closest && e.target.closest('th[data-start-line], td[data-start-line]');
         if (cell && tableDragState.currentCell !== cell) {
             tableDragState.currentCell = cell;
+            tableDragState.wasMultiCellDrag = true;
             updateTableSelectionVisuals();
         }
     });
@@ -261,11 +263,91 @@ PreviewCommon.registerDomainInit(['csv', 'tsv'], 'table', function() {
     table.addEventListener('beforeinput', (e) => {
         e.preventDefault();
     });
+
+    // 绑定单元格点击导航：单击单元格时定位到编辑器中对应行列位置
+    table.addEventListener('click', (e) => {
+        // 拖拽选区场景下不触发导航
+        if (tableDragState.wasMultiCellDrag) {
+            tableDragState.wasMultiCellDrag = false;
+            return;
+        }
+        const cell = e.target.closest('th[data-start-line], td[data-start-line]');
+        if (!cell) {
+            return;
+        }
+        const line = parseInt(cell.getAttribute('data-start-line'), 10);
+        const char = parseInt(cell.getAttribute('data-start-char'), 10);
+        if (!isNaN(line) && line >= 0) {
+            VSCODE_API.postMessage({
+                type: 'navigateToLine',
+                line: line,
+                char: isNaN(char) ? 0 : char
+            });
+        }
+    });
 });
+
+/**
+ * 将表格滚动到指定行
+ * @param line - 目标行号
+ */
+function scrollToLine(line) {
+    const table = document.querySelector('.tabular-table');
+    if (!table) { return; }
+
+    const cells = table.querySelectorAll('th[data-start-line], td[data-start-line]');
+    let best = null;
+    let bestLine = -1;
+
+    cells.forEach(cell => {
+        const l = parseInt(cell.getAttribute('data-start-line'), 10);
+        if (!isNaN(l) && l <= line && l > bestLine) {
+            bestLine = l;
+            best = cell;
+        }
+    });
+
+    if (best) {
+        best.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+}
+
+/**
+ * 报告当前可见表格行，回传给扩展端用于编辑定位
+ */
+function reportVisibleLine() {
+    const table = document.querySelector('.tabular-table');
+    if (!table) { return; }
+
+    const cells = table.querySelectorAll('th[data-start-line], td[data-start-line]');
+    let bestCell = null;
+    let bestDistance = Infinity;
+
+    cells.forEach(cell => {
+        const rect = cell.getBoundingClientRect();
+        const distance = Math.abs(rect.top);
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestCell = cell;
+        }
+    });
+
+    if (bestCell) {
+        const line = parseInt(bestCell.getAttribute('data-start-line'), 10);
+        const char = parseInt(bestCell.getAttribute('data-start-char'), 10);
+        VSCODE_API.postMessage({
+            type: 'visibleLine',
+            line: isNaN(line) ? 0 : line,
+            char: isNaN(char) ? 0 : char
+        });
+    }
+}
 
 // 暴露公共方法
 window.PreviewTable = {
     bindTableSelection: bindTableSelection,
-    highlightTableRangeFunc: highlightTableRangeFunc
+    highlightTableRangeFunc: highlightTableRangeFunc,
+    scrollToLine: scrollToLine,
+    reportVisibleLine: reportVisibleLine
 };
 })();

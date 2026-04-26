@@ -146,10 +146,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                     this._refreshPreviewForActiveEditor();
                 } else if (message.type === 'visibleHeading') {
                     this._handleLocateEditor(message.headingId);
+                } else if (message.type === 'visibleLine') {
+                    this._handleLocateEditorFromLine(message.line, message.char);
                 } else if (message.type === 'toggleCheckbox') {
                     this._handleToggleCheckbox(message.line, message.checked);
                 } else if (message.type === 'navigateToLine') {
-                    this._navigateToLine(message.line);
+                    this._navigateToLine(message.line, message.char);
                 } else if (message.type === 'updateEditorSelection') {
                     if (Array.isArray(message.selections)) {
                         this._updateEditorSelection(message.selections);
@@ -327,6 +329,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
 
         const startLine = visibleRanges[0].start.line;
+
+        if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
+            this._view.webview.postMessage({
+                type: 'scrollToLine',
+                line: startLine
+            });
+            return;
+        }
+
         const heading = this._findCurrentHeading(startLine);
 
         if (heading) {
@@ -350,6 +361,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             return;
         }
         const startLine = visibleRanges[0].start.line;
+
+        if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
+            this._view.webview.postMessage({
+                type: 'scrollToLine',
+                line: startLine
+            });
+            return;
+        }
+
         const heading = this._findCurrentHeading(startLine);
         this._view.webview.postMessage({
             type: 'scrollToHeading',
@@ -383,6 +403,24 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
         const heading = this._findCurrentHeading(editor.visibleRanges[0].start.line);
         return heading ? heading.id : null;
+    }
+
+    /**
+     * 获取表格滚动目标行号并返回结果
+     * @param document - 当前文档对象
+     * @returns 返回编辑器当前可见区域的起始行号
+     */
+    private _getScrollTargetLine(document: vscode.TextDocument): number | null | undefined {
+        if (!this._supportsLocate || !this._followEditorScroll) {
+            return undefined;
+        }
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || editor.document !== document || editor.visibleRanges.length === 0) {
+            return undefined;
+        }
+
+        return editor.visibleRanges[0].start.line;
     }
 
     /**
@@ -517,8 +555,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', locateSupported);
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', dataTree);
 
-            const scrollTargetHeadingId = options?.suppressAutoScroll ? undefined : this._getScrollTargetHeadingId(document);
-            const selectionRange = (dataTree || fileType === 'csv' || fileType === 'tsv') ? this._getEditorSelectionRange(document) : null;
+            const isTableType = fileType === 'csv' || fileType === 'tsv';
+            const scrollTargetHeadingId = options?.suppressAutoScroll ? undefined
+                : isTableType ? undefined
+                : this._getScrollTargetHeadingId(document);
+            const scrollTargetLine = options?.suppressAutoScroll ? undefined
+                : isTableType ? this._getScrollTargetLine(document)
+                : undefined;
+            const selectionRange = (dataTree || isTableType) ? this._getEditorSelectionRange(document) : null;
             const message: {
                 type: 'update';
                 content: string;
@@ -532,6 +576,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 editedLine: number | null;
                 preserveScrollPosition: boolean;
                 scrollToHeadingId?: string | null;
+                scrollToLine?: number | null;
                 baseUri?: string | null;
             } = {
                 type: 'update',
@@ -549,6 +594,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
             if (scrollTargetHeadingId !== undefined) {
                 message.scrollToHeadingId = scrollTargetHeadingId;
+            }
+            if (scrollTargetLine !== undefined) {
+                message.scrollToLine = scrollTargetLine;
             }
 
             // 把当前文档所在目录转为 webview 可访问的 baseUri，前端会用它设置 <base>
@@ -713,6 +761,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
 
         const startLine = visibleRanges[0].start.line;
+
+        if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
+            this._view.webview.postMessage({
+                type: 'scrollToLine',
+                line: startLine
+            });
+            return;
+        }
+
         const heading = this._findCurrentHeading(startLine);
 
         this._view.webview.postMessage({
@@ -732,6 +789,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         if (this._visibleRangesListener) {
             this._visibleRangesListener.dispose();
             this._visibleRangesListener = undefined;
+        }
+        if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
+            this._view.webview.postMessage({
+                type: 'getVisibleLine'
+            });
+            return;
         }
         this._view.webview.postMessage({
             type: 'getVisibleHeading'
@@ -774,11 +837,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * 导航到源文件指定行
      * @param line - 当前处理的行内容或行号
      */
-    private _navigateToLine(line: number): void {
+    private _navigateToLine(line: number, char?: number): void {
         const editor = vscode.window.activeTextEditor;
         if (!editor || line < 0) {
             return;
         }
+        const charPos = typeof char === 'number' && char >= 0 ? char : 0;
         // 先将目标行滚动到编辑器可见区域上方约 1/5 处
         const visibleRanges = editor.visibleRanges;
         if (visibleRanges.length > 0) {
@@ -795,7 +859,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 vscode.TextEditorRevealType.InCenter
             );
         }
-        editor.selection = new vscode.Selection(line, 0, line, 0);
+        editor.selection = new vscode.Selection(line, charPos, line, charPos);
     }
 
     /**
@@ -847,6 +911,28 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         editor.selection = new vscode.Selection(line, 0, line, 0);
 
         // 延迟恢复 visibleRanges 监听器，等编辑器滚动完毕
+        setTimeout(() => {
+            this._updateVisibleRangesListener();
+        }, 500);
+    }
+
+    /**
+     * 处理表格可见行编辑定位响应
+     * @param line - 目标行号
+     * @param char - 目标字符位置
+     */
+    private _handleLocateEditorFromLine(line: number | undefined, char?: number): void {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || !this._supportsLocate) {
+            return;
+        }
+        const targetLine = typeof line === 'number' && line >= 0 ? line : 0;
+        const targetChar = typeof char === 'number' && char >= 0 ? char : 0;
+
+        const range = new vscode.Range(targetLine, 0, targetLine, 0);
+        editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
+        editor.selection = new vscode.Selection(targetLine, targetChar, targetLine, targetChar);
+
         setTimeout(() => {
             this._updateVisibleRangesListener();
         }, 500);

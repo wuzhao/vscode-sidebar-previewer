@@ -75,12 +75,12 @@ const FILE_TYPE_CAPABILITIES: Record<FileType, FileTypeCapabilities> = {
     },
     csv: {
         extensions: ['.csv'],
-        supportsLocate: false,
+        supportsLocate: true,
         isDataTree: false,
     },
     tsv: {
         extensions: ['.tsv'],
-        supportsLocate: false,
+        supportsLocate: true,
         isDataTree: false,
     },
 };
