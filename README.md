@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.7-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.8-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.ja-JP.md)
 
@@ -63,12 +63,16 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Expand all / collapse all
 - Click key to jump to source line
 - Comment icon on keys with hover tooltip
+- Focus-aware selection highlight (blue when focused, gray when unfocused)
 
 ### CSV / TSV
 
 - Render as a table for preview with sticky first row and first column
 - Follow-scroll and locate between editor and preview
 - Bidirectional selection with click-and-drag support
+- Focus-aware selected-cell highlight (blue when focused, gray when unfocused)
+- Multi-cell quick actions (more): copy as `ASCII Table` or `TSV (Tab-Separated Values)`
+- `Cmd/Ctrl+C`: copy single selected cell text, or copy multi-cell selection as TSV
 
 ## Installation
 
@@ -97,7 +101,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
-6. In JSON/YAML/TOML/XML preview, click keys to locate source lines; CSV/TSV preview is rendered as a table with sticky headers, click cells to locate, and scroll follow support
+6. In JSON/YAML/TOML/XML preview, selected entries use focus-aware highlight (focused blue / unfocused gray); CSV/TSV preview keeps sticky headers, supports cell locate, focus-aware highlight, multi-cell copy menu, and `Cmd/Ctrl+C` copy behavior
 
 ## How to show the VS Code Secondary Side Bar?
 

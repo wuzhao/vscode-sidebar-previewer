@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.7-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.8-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -63,12 +63,16 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - すべて展開 / すべて折りたたむ
 - キー（項目）をクリックしてソース行へジャンプ
 - コメント付きキーにはアイコンを表示し、ホバーで内容を確認可能
+- 選択項目のハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
 
 ### CSV / TSV
 
 - プレビューはテーブルとして表示し、先頭行と先頭列を固定
 - エディタとプレビュー間のスクロール同期・相互ロケート
 - 双方向選択機能をサポートし、クリック＆ドラッグでのセル選択
+- 選択セルのハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
+- 複数セル選択時に「More」メニューを表示し、「ASCII Table」または「TSV (Tab-Separated Values)」でコピー可能
+- `Cmd/Ctrl+C`：単一セルはセル文字列をコピー、複数セルはTSV形式でコピー
 
 ## インストール
 
@@ -97,7 +101,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. プレビューパネルに現在のファイルが自動的に表示（レンダリング）される
 4. ツールバーのボタン、または `Cmd/Ctrl` + マウスホイールでズーム操作を行う
 5. Mermaid のプレビューでは、図をドラッグしてパン（移動）させる
-6. JSON/YAML/TOML/XML のプレビューではキーをクリックしてソース行へジャンプでき、CSV/TSV は先頭行・先頭列の固定、セルクリックでのロケート、スクロール追従に対応した表形式で表示されます
+6. JSON/YAML/TOML/XML のプレビューではキーをクリックしてソース行へジャンプでき、選択ハイライトはフォーカス連動します。CSV/TSV は先頭行・先頭列の固定、セルクリックでのロケート、フォーカス連動ハイライト、複数セルコピー用メニュー、`Cmd/Ctrl+C` コピーに対応します
 
 ## VS Code のセカンダリサイドバーを表示するには？
 

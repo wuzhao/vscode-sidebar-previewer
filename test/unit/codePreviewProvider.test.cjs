@@ -504,6 +504,40 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(/function reportVisibleLine\(\)\s*\{[\s\S]*?const anchorCells = getFirstColumnAnchorCells\(table\);[\s\S]*?const probeTop = containerRect\.top \+ stickyHeaderHeight \+ TABLE_VISIBLE_LINE_PROBE_OFFSET_PX;[\s\S]*?Math\.abs\(rect\.top - probeTop\)/s.test(tableJs));
   });
 
+  test('Task H table focus highlight and clipboard actions are wired with i18n labels', () => {
+    const css = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview.css'), 'utf8');
+    const tableJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-table.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-common.js'), 'utf8');
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+    const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
+
+    assert.ok(/\.table-preview td\.selected,[\s\S]*?\.table-preview th\.selected[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
+    assert.ok(/#content\.preview-focused \.table-preview td\.selected,[\s\S]*?#content\.preview-focused \.table-preview th\.selected/s.test(css));
+    assert.ok(/\.data-tree \.tree-item\.is-highlight[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
+    assert.ok(/#content\.preview-focused \.data-tree \.tree-item\.is-highlight/s.test(css));
+    assert.ok(css.includes('.table-selection-more-btn'));
+    assert.ok(css.includes('.table-selection-menu-item'));
+
+    assert.ok(tableJs.includes('L10N_TEXT.tableSelectionMore'));
+    assert.ok(tableJs.includes('L10N_TEXT.tableSelectionAscii'));
+    assert.ok(tableJs.includes('L10N_TEXT.tableSelectionTsv'));
+    assert.ok(tableJs.includes('codicon-more'));
+    assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
+    assert.ok(tableJs.includes('selectedCells.length === 1'));
+    assert.ok(tableJs.includes('buildTsvText(grid)'));
+
+    assert.ok(commonJs.includes('function focusPreviewContent()'));
+    assert.ok(commonJs.includes("content.classList.toggle('preview-focused', !!focused);"));
+
+    assert.ok(previewProvider.includes('data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}"'));
+    assert.ok(previewProvider.includes('data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}"'));
+    assert.ok(previewProvider.includes('data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}"'));
+
+    assert.ok(i18n.includes('tableSelectionMore'));
+    assert.ok(i18n.includes('tableSelectionAsciiTable'));
+    assert.ok(i18n.includes('tableSelectionTsv'));
+  });
+
   test('Task F comment and global constant conventions are enforced', () => {
     const srcDir = path.join(__dirname, '..', '..', 'src');
     const tsFiles = fs.readdirSync(srcDir).filter(name => name.endsWith('.ts'));

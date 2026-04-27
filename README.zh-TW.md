@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.7-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.8-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](./README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文-臺灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -63,12 +63,16 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 全部展開 / 全部摺疊
 - 點選鍵名跳轉原始碼行
 - 含註解的鍵會顯示註解圖示，滑鼠懸停可查看註解內容
+- 選取條目高亮支援焦點狀態（取得焦點為藍色，失焦為灰色）
 
 ### CSV / TSV
 
 - 渲染為表格預覽，首行與首列固定
 - 編輯器與預覽之間捲動同步、互相定位
 - 支援雙向選區功能，支援滑鼠拖曳框選
+- 選取儲存格高亮支援焦點狀態（取得焦點為藍色，失焦為灰色）
+- 多儲存格選取時提供「更多」選單，可複製為「ASCII 表格」或「TSV（Tab 分隔值）」
+- `Cmd/Ctrl+C`：單儲存格複製文字，多儲存格以 TSV 複製
 
 ## 安裝方法
 
@@ -97,7 +101,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. 預覽面板會自動顯示當前檔案的渲染結果
 4. 使用工具欄或 `Cmd/Ctrl` + 滑鼠滾輪進行縮放
 5. Mermaid 預覽支援拖拽檢視放大區域
-6. JSON / YAML / TOML / XML 可點選鍵名跳轉到原始碼對應行；CSV / TSV 預覽為表格檢視，支援首行首列固定、點選儲存格定位、捲動跟隨
+6. JSON / YAML / TOML / XML 可點選鍵名跳轉到原始碼對應行並提供焦點狀態高亮；CSV / TSV 預覽為表格檢視，支援首行首列固定、點選儲存格定位、焦點狀態高亮、多選複製選單與 `Cmd/Ctrl+C` 複製
 
 ## 如何顯示 VS Code 第二側邊欄？
 

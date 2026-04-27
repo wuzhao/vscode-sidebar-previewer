@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.3.8 - 2026-04-27
+
+- CSV/TSV preview now takes focus when interacting with the preview area or selecting cells.
+- Added focus-aware selection colors for CSV/TSV cells and JSON/YAML/TOML/XML tree items (focused: blue, unfocused: gray).
+- CSV/TSV multi-cell selection now shows a floating `more` action menu with:
+  - `ASCII Table` (copy selection as plain-text ASCII table)
+  - `TSV (Tab-Separated Values)` (copy selection as TSV)
+- CSV/TSV copy behavior:
+  - Multi-cell: `Cmd/Ctrl+C` copies as TSV (same as TSV menu action)
+  - Single-cell: `Cmd/Ctrl+C` copies the cell text
+- Added localization support for new table selection action labels.
+- Added regression tests for focus-aware highlighting, table copy action wiring, and i18n dataset propagation.
+- Updated extension version and README documents to `0.3.8`.
+
+～～～
+
+- CSV/TSV 预览在点击预览区域或选中单元格时会获得焦点。
+- CSV/TSV 单元格与 JSON/YAML/TOML/XML 树节点新增焦点态高亮（获得焦点为蓝色，失焦为灰色）。
+- CSV/TSV 多单元格选区新增浮动 `more` 操作菜单，支持：
+  - `ASCII Table`（按纯文本 ASCII 表格复制）
+  - `TSV (Tab-Separated Values)`（按 TSV 复制）
+- CSV/TSV 复制行为更新：
+  - 多单元格：`Cmd/Ctrl+C` 按 TSV 复制（与 TSV 菜单行为一致）
+  - 单单元格：`Cmd/Ctrl+C` 复制单元格文本
+- 新增表格选区操作文案的多语言支持。
+- 新增回归测试，覆盖焦点态高亮、表格复制操作接线与 i18n 数据注入。
+- 版本号与 README 文档更新到 `0.3.8`。
+
+---
+
 ## 0.3.7 - 2026-04-27
 
 - Disabled context menu in webview preview.
