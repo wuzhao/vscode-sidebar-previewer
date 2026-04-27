@@ -182,10 +182,20 @@ window.addEventListener('message', event => {
             applyZoom();
             break;
         case 'expandAll':
-            if (typeof PreviewDatatree !== 'undefined') { PreviewDatatree.expandAllNodes(); }
+            if (typeof PreviewDatatree !== 'undefined') {
+                PreviewDatatree.expandAllNodes();
+            }
+            if (typeof PreviewCommentTooltip !== 'undefined') {
+                PreviewCommentTooltip.hideCommentTooltip(true);
+            }
             break;
         case 'collapseAll':
-            if (typeof PreviewDatatree !== 'undefined') { PreviewDatatree.collapseAllNodes(); }
+            if (typeof PreviewDatatree !== 'undefined') {
+                PreviewDatatree.collapseAllNodes();
+            }
+            if (typeof PreviewCommentTooltip !== 'undefined') {
+                PreviewCommentTooltip.hideCommentTooltip(true);
+            }
             break;
         case 'highlightDataTreeRange':
             {

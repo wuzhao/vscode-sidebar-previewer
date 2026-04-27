@@ -37,3 +37,64 @@ line-19-C",2026-04-25T15:13:00Z,ok
 2034,Sample Item 34,hardware,127.28,USD,true,tag34|edge1|group2,description for item 34,row-34,line-34-A\nline-34-B,2026-04-25T18:58:00Z,ok
 2035,"Quote ""Model"" 35",software,130.45,USD,true,tag35|edge2|group3,description for item 35,"comma, quote "" and slash \",line-35-A\nline-35-B,2026-04-25T19:05:00Z,ok
 2036,Sample Item 36,hardware,133.62,USD,false,tag36|edge0|group0,description for item 36,row-36,line-36-A\nline-36-B,2026-04-25T08:12:00Z,
+2037,Special, "Item 2037",software,100.00,USD,false,tag0|edge0|group0,,ok,line-2037-A
+line-2037-B,2026-04-20T00:00:00Z,ok
+2038,Generated Item 2038,hardware,103.17,USD,true,tag1|edge1|group1,description for item 2038,,,2026-04-21T01:01:00Z,ok
+2039,Generated Item 2039,service,106.34,USD,true,tag2|edge2|group2,description for item 2039,NULL,,2026-04-22T02:02:00Z,ok
+2040,Generated Item 2040,data,109.51,USD,false,tag3|edge0|group3,description for item 2040,ok,,2026-04-23T03:03:00Z,
+2041,Generated Item 2041,software,112.68,USD,true,tag4|edge1|group0,description for item 2041,ok,,2026-04-24T04:04:00Z,ok
+2042,Special, "Item 2042",hardware,115.85,USD,true,tag5|edge2|group1,description for item 2042,ok,,2026-04-25T05:05:00Z,NULL
+2043,Generated Item 2043,service,119.02,USD,false,tag6|edge0|group2,description for item 2043,,,2026-04-26T06:06:00Z,ok
+2044,Generated Item 2044,data,122.19,USD,true,tag7|edge1|group3,,NULL,,2026-04-27T07:07:00Z,ok
+2045,Generated Item 2045,software,125.36,USD,true,tag8|edge2|group0,description for item 2045,ok,line-2045-A
+line-2045-B,2026-04-20T08:08:00Z,ok
+2046,Generated Item 2046,hardware,128.53,USD,false,tag9|edge0|group1,description for item 2046,,,2026-04-21T09:09:00Z,ok
+2047,Special, "Item 2047",service,131.70,USD,true,tag10|edge1|group2,description for item 2047,ok,,2026-04-22T10:10:00Z,ok
+2048,Generated Item 2048,data,134.87,USD,true,tag11|edge2|group3,description for item 2048,,,2026-04-23T11:11:00Z,ok
+2049,Generated Item 2049,software,138.04,USD,false,tag12|edge0|group0,description for item 2049,NULL,,2026-04-24T12:12:00Z,ok
+2050,Generated Item 2050,hardware,141.21,USD,true,tag13|edge1|group1,description for item 2050,ok,,2026-04-25T13:13:00Z,ok
+2051,Generated Item 2051,service,144.38,USD,true,tag14|edge2|group2,,ok,,2026-04-26T14:14:00Z,
+2052,Special, "Item 2052",data,147.55,USD,false,tag15|edge0|group3,description for item 2052,ok,,2026-04-27T15:15:00Z,ok
+2053,Generated Item 2053,software,150.72,USD,true,tag16|edge1|group0,description for item 2053,,line-2053-A
+line-2053-B,2026-04-20T16:16:00Z,ok
+2054,Generated Item 2054,hardware,153.89,USD,true,tag17|edge2|group1,description for item 2054,NULL,,2026-04-21T17:17:00Z,ok
+2055,Generated Item 2055,service,157.06,USD,false,tag18|edge0|group2,description for item 2055,ok,,2026-04-22T18:18:00Z,NULL
+2056,Generated Item 2056,data,160.23,USD,true,tag19|edge1|group3,description for item 2056,,,2026-04-23T19:19:00Z,ok
+2057,Special, "Item 2057",software,163.40,USD,true,tag20|edge2|group0,description for item 2057,ok,,2026-04-24T20:20:00Z,ok
+2058,Generated Item 2058,hardware,166.57,USD,false,tag21|edge0|group1,,,,2026-04-25T21:21:00Z,ok
+2059,Generated Item 2059,service,169.74,USD,true,tag22|edge1|group2,description for item 2059,NULL,,2026-04-26T22:22:00Z,ok
+2060,Generated Item 2060,data,172.91,USD,true,tag23|edge2|group3,description for item 2060,ok,,2026-04-27T23:23:00Z,ok
+2061,Generated Item 2061,software,176.08,USD,false,tag24|edge0|group0,description for item 2061,ok,line-2061-A
+line-2061-B,2026-04-20T00:24:00Z,ok
+2062,Special, "Item 2062",hardware,179.25,USD,true,tag25|edge1|group1,description for item 2062,ok,,2026-04-21T01:25:00Z,
+2063,Generated Item 2063,service,182.42,USD,true,tag26|edge2|group2,description for item 2063,,,2026-04-22T02:26:00Z,ok
+2064,Generated Item 2064,data,185.59,USD,false,tag27|edge0|group3,description for item 2064,NULL,,2026-04-23T03:27:00Z,ok
+2065,Generated Item 2065,software,188.76,USD,true,tag28|edge1|group0,,ok,,2026-04-24T04:28:00Z,ok
+2066,Generated Item 2066,hardware,191.93,USD,true,tag29|edge2|group1,description for item 2066,,,2026-04-25T05:29:00Z,ok
+2067,Special, "Item 2067",service,195.10,USD,false,tag0|edge0|group2,description for item 2067,ok,,2026-04-26T06:30:00Z,ok
+2068,Generated Item 2068,data,198.27,USD,true,tag1|edge1|group3,description for item 2068,,,2026-04-27T07:31:00Z,NULL
+2069,Generated Item 2069,software,201.44,USD,true,tag2|edge2|group0,description for item 2069,NULL,line-2069-A
+line-2069-B,2026-04-20T08:32:00Z,ok
+2070,Generated Item 2070,hardware,204.61,USD,false,tag3|edge0|group1,description for item 2070,ok,,2026-04-21T09:33:00Z,ok
+2071,Generated Item 2071,service,207.78,USD,true,tag4|edge1|group2,description for item 2071,ok,,2026-04-22T10:34:00Z,ok
+2072,Special, "Item 2072",data,210.95,USD,true,tag5|edge2|group3,,ok,,2026-04-23T11:35:00Z,ok
+2073,Generated Item 2073,software,214.12,USD,false,tag6|edge0|group0,description for item 2073,,,2026-04-24T12:36:00Z,
+2074,Generated Item 2074,hardware,217.29,USD,true,tag7|edge1|group1,description for item 2074,NULL,,2026-04-25T13:37:00Z,ok
+2075,Generated Item 2075,service,220.46,USD,true,tag8|edge2|group2,description for item 2075,ok,,2026-04-26T14:38:00Z,ok
+2076,Generated Item 2076,data,223.63,USD,false,tag9|edge0|group3,description for item 2076,,,2026-04-27T15:39:00Z,ok
+2077,Special, "Item 2077",software,226.80,USD,true,tag10|edge1|group0,description for item 2077,ok,line-2077-A
+line-2077-B,2026-04-20T16:40:00Z,ok
+2078,Generated Item 2078,hardware,229.97,USD,true,tag11|edge2|group1,description for item 2078,,,2026-04-21T17:41:00Z,ok
+2079,Generated Item 2079,service,233.14,USD,false,tag12|edge0|group2,,NULL,,2026-04-22T18:42:00Z,ok
+2080,Generated Item 2080,data,236.31,USD,true,tag13|edge1|group3,description for item 2080,ok,,2026-04-23T19:43:00Z,ok
+2081,Generated Item 2081,software,239.48,USD,true,tag14|edge2|group0,description for item 2081,ok,,2026-04-24T20:44:00Z,NULL
+2082,Special, "Item 2082",hardware,242.65,USD,false,tag15|edge0|group1,description for item 2082,ok,,2026-04-25T21:45:00Z,ok
+2083,Generated Item 2083,service,245.82,USD,true,tag16|edge1|group2,description for item 2083,,,2026-04-26T22:46:00Z,ok
+2084,Generated Item 2084,data,248.99,USD,true,tag17|edge2|group3,description for item 2084,NULL,,2026-04-27T23:47:00Z,
+2085,Generated Item 2085,software,252.16,USD,false,tag18|edge0|group0,description for item 2085,ok,line-2085-A
+line-2085-B,2026-04-20T00:48:00Z,ok
+2086,Generated Item 2086,hardware,255.33,USD,true,tag19|edge1|group1,,,,2026-04-21T01:49:00Z,ok
+2087,Special, "Item 2087",service,258.50,USD,true,tag20|edge2|group2,description for item 2087,ok,,2026-04-22T02:50:00Z,ok
+2088,Generated Item 2088,data,261.67,USD,false,tag21|edge0|group3,description for item 2088,,,2026-04-23T03:51:00Z,ok
+2089,Generated Item 2089,software,264.84,USD,true,tag22|edge1|group0,description for item 2089,NULL,,2026-04-24T04:52:00Z,ok
+2090,Generated Item 2090,hardware,268.01,USD,true,tag23|edge2|group1,description for item 2090,ok,,2026-04-25T05:53:00Z,ok
