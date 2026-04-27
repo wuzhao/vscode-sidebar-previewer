@@ -3,13 +3,13 @@
 ## 0.3.8 - 2026-04-28
 
 - Added focus-aware selection colors for CSV/TSV cells and JSON/YAML/TOML/XML tree items (focused: blue, unfocused: gray).
-- CSV/TSV multi-cell selection now shows a floating `Actions` menu with `Copy As ASCII` and `Copy As TSV`.
+- CSV/TSV multi-cell selection now shows actions with `Copy As ASCII` and `Copy As TSV`.
 - CSV/TSV supports `Cmd/Ctrl+C` to copy the selected area.
 
 ～～～
 
 - CSV/TSV 单元格与 JSON/YAML/TOML/XML 树节点新增焦点态高亮（获得焦点为蓝色，失焦为灰色）。
-- CSV/TSV 多单元格选区新增浮动 `Actions` 操作菜单，支持 `复制为 ASCII` 和 `复制为 TSV`。
+- CSV/TSV 多单元格选区新增操作菜单，支持 `复制为 ASCII` 和 `复制为 TSV`。
 - CSV/TSV 支持 `Cmd/Ctrl+C` 复制选中区域。
 
 ---
