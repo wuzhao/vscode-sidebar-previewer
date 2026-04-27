@@ -67,6 +67,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 ### CSV / TSV
 
 - プレビューはテーブルとして表示し、先頭行と先頭列を固定
+- エディタとプレビュー間のスクロール同期・相互ロケート
 - 双方向選択機能をサポートし、クリック＆ドラッグでのセル選択や Cmd/Ctrl+C での TSV 形式でのコピーが可能
 
 ## インストール
@@ -96,7 +97,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. プレビューパネルに現在のファイルが自動的に表示（レンダリング）される
 4. ツールバーのボタン、または `Cmd/Ctrl` + マウスホイールでズーム操作を行う
 5. Mermaid のプレビューでは、図をドラッグしてパン（移動）させる
-6. JSON/YAML/TOML/XML のプレビューではキーをクリックしてソース行へジャンプでき、CSV/TSV は先頭行と先頭列を固定した表形式で表示されます
+6. JSON/YAML/TOML/XML のプレビューではキーをクリックしてソース行へジャンプでき、CSV/TSV は先頭行・先頭列の固定、セルクリックでのロケート、スクロール追従に対応した表形式で表示されます
 
 ## VS Code のセカンダリサイドバーを表示するには？
 

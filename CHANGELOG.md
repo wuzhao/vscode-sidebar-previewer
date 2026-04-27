@@ -7,6 +7,7 @@
 - Refactored preview.js into modular domain-based files with lazy-loading and comprehensive code comments.
 - Fixed comment tooltip position drift after zoom on JSON/YAML/TOML/XML data trees.
 - CSV/TSV table: disabled content modification.
+- CSV/TSV table: added scroll follow, locate in editor, and locate in preview support.
 
 ～～～
 
@@ -15,6 +16,7 @@
 - 重构 preview.js 按业务拆分为独立模块，实现按需加载，并增加全面代码注释。
 - 修复 JSON/YAML/TOML/XML 数据树在缩放后注释弹窗位置偏移的问题。
 - CSV/TSV 禁止对表格内容进行修改。
+- CSV/TSV 表格新增跟随滚动、编辑器定位与预览定位支持。
 
 ---
 
