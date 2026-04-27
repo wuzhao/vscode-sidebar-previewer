@@ -19,8 +19,9 @@ const TABLE_SELECTION_ACTION_MARGIN_PX = 6;
 // 多选快捷操作按钮状态
 let tableSelectionUi = {
     container: null,
-    button: null,
-    menu: null
+    wrapper: null,
+    asciiButton: null,
+    tsvButton: null
 };
 
 /**
@@ -163,21 +164,11 @@ async function writeTextToClipboard(text) {
 }
 
 /**
- * 隐藏多选菜单
- */
-function hideTableSelectionMenu() {
-    if (tableSelectionUi.menu) {
-        tableSelectionUi.menu.classList.remove('is-open');
-    }
-}
-
-/**
- * 隐藏多选操作按钮和菜单
+ * 隐藏多选操作按钮
  */
 function hideTableSelectionActions() {
-    hideTableSelectionMenu();
-    if (tableSelectionUi.button) {
-        tableSelectionUi.button.classList.remove('is-visible');
+    if (tableSelectionUi.wrapper) {
+        tableSelectionUi.wrapper.classList.remove('is-visible');
     }
 }
 
@@ -191,46 +182,37 @@ function ensureTableSelectionActionElements(table) {
         return;
     }
 
-    if (tableSelectionUi.container === container && tableSelectionUi.button && tableSelectionUi.menu) {
+    if (tableSelectionUi.container === container && tableSelectionUi.wrapper && tableSelectionUi.asciiButton && tableSelectionUi.tsvButton) {
         return;
     }
 
     const wrapper = document.createElement('div');
     wrapper.className = 'table-selection-actions';
 
-    const button = document.createElement('button');
-    button.className = 'table-selection-more-btn';
-    button.type = 'button';
-    button.title = L10N_TEXT.tableSelectionMore;
-    button.innerHTML = '<i class="codicon codicon-more"></i>';
-
-    const menu = document.createElement('div');
-    menu.className = 'table-selection-menu';
-
     const asciiButton = document.createElement('button');
     asciiButton.type = 'button';
-    asciiButton.className = 'table-selection-menu-item';
-    asciiButton.textContent = L10N_TEXT.tableSelectionAscii;
+    asciiButton.className = 'table-selection-copy-btn';
+    asciiButton.title = L10N_TEXT.tableSelectionAscii;
+    asciiButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionAscii}</span>`;
 
     const tsvButton = document.createElement('button');
     tsvButton.type = 'button';
-    tsvButton.className = 'table-selection-menu-item';
-    tsvButton.textContent = L10N_TEXT.tableSelectionTsv;
+    tsvButton.className = 'table-selection-copy-btn';
+    tsvButton.title = L10N_TEXT.tableSelectionTsv;
+    tsvButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionTsv}</span>`;
 
-    menu.appendChild(asciiButton);
-    menu.appendChild(tsvButton);
-    wrapper.appendChild(button);
-    wrapper.appendChild(menu);
+    wrapper.appendChild(asciiButton);
+    wrapper.appendChild(tsvButton);
     container.appendChild(wrapper);
 
-    button.addEventListener('click', (e) => {
+    asciiButton.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (menu.classList.contains('is-open')) {
-            menu.classList.remove('is-open');
-        } else {
-            menu.classList.add('is-open');
-        }
+    });
+
+    tsvButton.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
     });
 
     asciiButton.addEventListener('click', async (e) => {
@@ -243,7 +225,6 @@ function ensureTableSelectionActionElements(table) {
         }
         const grid = buildSelectionGrid(selectedCells);
         await writeTextToClipboard(buildAsciiTableText(grid));
-        hideTableSelectionMenu();
     });
 
     tsvButton.addEventListener('click', async (e) => {
@@ -256,19 +237,13 @@ function ensureTableSelectionActionElements(table) {
         }
         const grid = buildSelectionGrid(selectedCells);
         await writeTextToClipboard(buildTsvText(grid));
-        hideTableSelectionMenu();
-    });
-
-    document.addEventListener('mousedown', (e) => {
-        if (!wrapper.contains(e.target)) {
-            hideTableSelectionMenu();
-        }
     });
 
     tableSelectionUi = {
         container,
-        button,
-        menu
+        wrapper,
+        asciiButton,
+        tsvButton
     };
 }
 
@@ -283,7 +258,7 @@ function updateTableSelectionActions() {
     }
 
     ensureTableSelectionActionElements(table);
-    if (!tableSelectionUi.button || !tableSelectionUi.container) {
+    if (!tableSelectionUi.wrapper || !tableSelectionUi.container) {
         return;
     }
 
@@ -297,37 +272,27 @@ function updateTableSelectionActions() {
         const rect = cell.getBoundingClientRect();
         acc.left = Math.min(acc.left, rect.left);
         acc.top = Math.min(acc.top, rect.top);
-        acc.right = Math.max(acc.right, rect.right);
         return acc;
     }, {
         left: Number.POSITIVE_INFINITY,
-        top: Number.POSITIVE_INFINITY,
-        right: Number.NEGATIVE_INFINITY
+        top: Number.POSITIVE_INFINITY
     });
 
     const containerRect = tableSelectionUi.container.getBoundingClientRect();
-    const button = tableSelectionUi.button;
-    button.classList.add('is-visible');
-    const buttonWidth = button.offsetWidth || 24;
+    const wrapper = tableSelectionUi.wrapper;
+    wrapper.classList.add('is-visible');
+    const actionHeight = wrapper.offsetHeight || 24;
 
-    // 将按钮放到选区右侧并预留安全间距，避免覆盖选中单元格
-    let left = bounds.right - containerRect.left + tableSelectionUi.container.scrollLeft + TABLE_SELECTION_ACTION_MARGIN_PX;
-    // 按钮顶部与选区顶部对齐，保持右上侧入口位置稳定
-    let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop;
+    // 将按钮组左侧与选区左侧对齐，保持入口位置稳定
+    let left = bounds.left - containerRect.left + tableSelectionUi.container.scrollLeft;
+    // 将按钮组放到选区上方并预留安全间距，避免遮挡选区首行
+    let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop - actionHeight - TABLE_SELECTION_ACTION_MARGIN_PX;
     // 限制最小横向边距，防止按钮贴住容器左边界
     left = Math.max(TABLE_SELECTION_ACTION_MARGIN_PX, left);
     // 限制最小纵向边距，防止按钮贴住容器上边界
     top = Math.max(TABLE_SELECTION_ACTION_MARGIN_PX, top);
-    button.style.left = `${left}px`;
-    button.style.top = `${top}px`;
-
-    if (tableSelectionUi.menu.classList.contains('is-open')) {
-        tableSelectionUi.menu.style.left = `${left + buttonWidth + TABLE_SELECTION_ACTION_MARGIN_PX}px`;
-        tableSelectionUi.menu.style.top = `${top}px`;
-    } else {
-        tableSelectionUi.menu.style.left = `${left + buttonWidth + TABLE_SELECTION_ACTION_MARGIN_PX}px`;
-        tableSelectionUi.menu.style.top = `${top}px`;
-    }
+    wrapper.style.left = `${left}px`;
+    wrapper.style.top = `${top}px`;
 }
 
 /**

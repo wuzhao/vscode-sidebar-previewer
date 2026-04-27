@@ -515,16 +515,18 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(/#content\.preview-focused \.table-preview td\.selected,[\s\S]*?#content\.preview-focused \.table-preview th\.selected/s.test(css));
     assert.ok(/\.data-tree \.tree-item\.is-highlight[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
     assert.ok(/#content\.preview-focused \.data-tree \.tree-item\.is-highlight/s.test(css));
-    assert.ok(css.includes('.table-selection-more-btn'));
-    assert.ok(css.includes('.table-selection-menu-item'));
+    assert.ok(css.includes('.table-selection-copy-btn'));
+    assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*user-select:\s*none;[^}]*-webkit-user-select:\s*none;/s.test(css));
 
-    assert.ok(tableJs.includes('L10N_TEXT.tableSelectionMore'));
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionAscii'));
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionTsv'));
-    assert.ok(tableJs.includes('codicon-more'));
+    assert.ok(tableJs.includes('table-selection-copy-btn'));
+    assert.ok(tableJs.includes('codicon-copy'));
     assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
-    assert.ok(tableJs.includes('let left = bounds.right - containerRect.left + tableSelectionUi.container.scrollLeft + TABLE_SELECTION_ACTION_MARGIN_PX;'));
-    assert.ok(tableJs.includes('let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop;'));
+    assert.ok(tableJs.includes('let left = bounds.left - containerRect.left + tableSelectionUi.container.scrollLeft;'));
+    assert.ok(tableJs.includes('let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop - actionHeight - TABLE_SELECTION_ACTION_MARGIN_PX;'));
+    assert.equal(tableJs.includes('table-selection-more-btn'), false);
+    assert.equal(tableJs.includes('table-selection-menu-item'), false);
     assert.ok(tableJs.includes('selectedCells.length === 1'));
     assert.ok(tableJs.includes('buildTsvText(grid)'));
 

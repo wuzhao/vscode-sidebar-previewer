@@ -424,6 +424,8 @@ table tr:nth-child(2n) {
     text-align: right;
     white-space: nowrap;
     color: var(--vscode-descriptionForeground);
+    user-select: none;
+    -webkit-user-select: none;
     position: sticky;
     left: 0;
     z-index: 2;
@@ -442,6 +444,10 @@ table tr:nth-child(2n) {
 .table-preview th.selected {
     background-color: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%));
     color: var(--vscode-list-inactiveSelectionForeground, var(--vscode-foreground));
+}
+
+#content.preview-focused {
+    outline: none;
 }
 
 #content.preview-focused .table-preview td.selected,
@@ -466,73 +472,45 @@ table tr:nth-child(2n) {
 
 .table-selection-actions {
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 12;
-}
-
-.table-selection-more-btn {
-    position: absolute;
     display: none;
     align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border: 1px solid var(--vscode-panel-border);
-    background: var(--vscode-editorWidget-background);
-    color: var(--vscode-foreground);
-    border-radius: 4px;
-    cursor: pointer;
+    gap: 6px;
     pointer-events: auto;
-    padding: 0;
+    z-index: 24;
 }
 
-.table-selection-more-btn.is-visible {
+.table-selection-actions.is-visible {
     display: inline-flex;
 }
 
-.table-selection-more-btn:hover {
-    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+.table-selection-copy-btn {
+    align-items: center;
+    display: inline-flex;
+    gap: 4px;
+    height: 24px;
+    border: 1px solid var(--vscode-button-border, var(--vscode-contrastBorder, var(--vscode-panel-border)));
+    background: var(--vscode-button-background, var(--vscode-editorWidget-background));
+    color: var(--vscode-button-foreground, var(--vscode-foreground));
+    border-radius: 4px;
+    box-shadow: 0 2px 6px color-mix(in srgb, #000 25%, transparent 75%);
+    cursor: pointer;
+    padding: 0 8px;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 1;
 }
 
-.table-selection-more-btn:focus-visible {
+.table-selection-copy-btn .codicon {
+    font-size: 12px;
+}
+
+.table-selection-copy-btn:hover {
+    background: var(--vscode-button-hoverBackground, var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)));
+}
+
+.table-selection-copy-btn:focus-visible {
     outline: 1px solid var(--vscode-focusBorder);
     outline-offset: 1px;
-}
-
-.table-selection-menu {
-    position: absolute;
-    display: none;
-    min-width: 200px;
-    border: 1px solid var(--vscode-panel-border);
-    background: var(--vscode-menu-background, var(--vscode-editorWidget-background));
-    border-radius: 6px;
-    box-shadow: 0 4px 12px color-mix(in srgb, #000 35%, transparent 65%);
-    padding: 4px;
-    pointer-events: auto;
-}
-
-.table-selection-menu.is-open {
-    display: flex;
-    flex-direction: column;
-}
-
-.table-selection-menu-item {
-    border: 0;
-    background: transparent;
-    color: var(--vscode-menu-foreground, var(--vscode-foreground));
-    text-align: left;
-    padding: 6px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.table-selection-menu-item:hover {
-    background: var(--vscode-list-hoverBackground);
-}
-
-.table-selection-menu-item:focus-visible {
-    outline: 1px solid var(--vscode-focusBorder);
 }
 
 hr {
