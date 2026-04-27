@@ -17,8 +17,6 @@ const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;
 const TABLE_SELECTION_ACTION_MARGIN_PX = 6;
 // 复制成功状态展示时长（毫秒）
 const TABLE_SELECTION_COPY_SUCCESS_MS = 800;
-// 复制成功状态淡出动画时长（毫秒）
-const TABLE_SELECTION_COPY_FADE_MS = 300;
 // 记录按钮复制反馈定时器，避免连续点击时动画互相覆盖
 const TABLE_SELECTION_COPY_TIMER_MAP = new WeakMap();
 
@@ -178,13 +176,38 @@ function hideTableSelectionActions() {
     }
     if (tableSelectionUi.asciiButton) {
         clearTableCopyStateTimers(tableSelectionUi.asciiButton);
-        tableSelectionUi.asciiButton.classList.remove('copied', 'fade-out');
-        tableSelectionUi.asciiButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionAscii}</span>`;
+        resetTableSelectionCopyButton(tableSelectionUi.asciiButton, L10N_TEXT.tableSelectionAscii);
     }
     if (tableSelectionUi.tsvButton) {
         clearTableCopyStateTimers(tableSelectionUi.tsvButton);
-        tableSelectionUi.tsvButton.classList.remove('copied', 'fade-out');
-        tableSelectionUi.tsvButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionTsv}</span>`;
+        resetTableSelectionCopyButton(tableSelectionUi.tsvButton, L10N_TEXT.tableSelectionTsv);
+    }
+}
+
+/**
+ * 将按钮还原为默认文案并释放固定尺寸
+ * @param copyBtn - 目标复制按钮
+ * @param defaultText - 按钮默认文案
+ */
+function resetTableSelectionCopyButton(copyBtn, defaultText) {
+    copyBtn.classList.remove('copied');
+    copyBtn.style.width = '';
+    copyBtn.style.height = '';
+    copyBtn.innerHTML = `<i class="codicon codicon-copy"></i><span>${defaultText}</span>`;
+}
+
+/**
+ * 锁定按钮当前尺寸，确保复制成功文案不会改变按钮大小
+ * @param copyBtn - 目标复制按钮
+ */
+function lockTableSelectionCopyButtonSize(copyBtn) {
+    const buttonWidth = copyBtn.offsetWidth;
+    const buttonHeight = copyBtn.offsetHeight;
+    if (buttonWidth > 0) {
+        copyBtn.style.width = `${buttonWidth}px`;
+    }
+    if (buttonHeight > 0) {
+        copyBtn.style.height = `${buttonHeight}px`;
     }
 }
 
@@ -196,9 +219,6 @@ function clearTableCopyStateTimers(copyBtn) {
     const timers = TABLE_SELECTION_COPY_TIMER_MAP.get(copyBtn);
     if (!timers) {
         return;
-    }
-    if (timers.fadeTimer) {
-        clearTimeout(timers.fadeTimer);
     }
     if (timers.resetTimer) {
         clearTimeout(timers.resetTimer);
@@ -213,22 +233,16 @@ function clearTableCopyStateTimers(copyBtn) {
  */
 function showTableCopySuccess(copyBtn, defaultText) {
     clearTableCopyStateTimers(copyBtn);
-    copyBtn.classList.remove('fade-out');
+    lockTableSelectionCopyButtonSize(copyBtn);
     copyBtn.classList.add('copied');
     copyBtn.innerHTML = `<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>`;
 
-    const fadeTimer = setTimeout(() => {
-        copyBtn.classList.add('fade-out');
-    }, Math.max(0, TABLE_SELECTION_COPY_SUCCESS_MS - TABLE_SELECTION_COPY_FADE_MS));
-
     const resetTimer = setTimeout(() => {
-        copyBtn.classList.remove('copied', 'fade-out');
-        copyBtn.innerHTML = `<i class="codicon codicon-copy"></i><span>${defaultText}</span>`;
+        resetTableSelectionCopyButton(copyBtn, defaultText);
         TABLE_SELECTION_COPY_TIMER_MAP.delete(copyBtn);
     }, TABLE_SELECTION_COPY_SUCCESS_MS);
 
     TABLE_SELECTION_COPY_TIMER_MAP.set(copyBtn, {
-        fadeTimer,
         resetTimer
     });
 }

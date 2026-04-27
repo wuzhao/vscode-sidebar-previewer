@@ -517,10 +517,10 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(/#content\.preview-focused \.data-tree \.tree-item\.is-highlight/s.test(css));
     assert.ok(css.includes('.table-selection-copy-btn'));
     assert.ok(/\.table-selection-actions\s*\{[^}]*z-index:\s*1;/s.test(css));
-    assert.ok(/\.table-selection-copy-btn\s*\{[^}]*transition:\s*opacity 120ms ease, background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;/s.test(css));
+    assert.ok(/\.table-selection-copy-btn\s*\{[^}]*transition:\s*transform 80ms ease, box-shadow 120ms ease;/s.test(css));
     assert.ok(/\.table-selection-copy-btn:active\s*\{[^}]*transform:\s*translateY\(1px\);/s.test(css));
     assert.ok(/\.table-selection-copy-btn\.copied\s*\{[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
-    assert.ok(/\.table-selection-copy-btn\.fade-out\s*\{[^}]*opacity:\s*0;/s.test(css));
+    assert.equal(css.includes('.table-selection-copy-btn.fade-out'), false);
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*z-index:\s*2;/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*user-select:\s*none;[^}]*-webkit-user-select:\s*none;/s.test(css));
 
@@ -530,9 +530,12 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(tableJs.includes('codicon-copy'));
     assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
     assert.ok(tableJs.includes('const TABLE_SELECTION_COPY_SUCCESS_MS = 800;'));
-    assert.ok(tableJs.includes('const TABLE_SELECTION_COPY_FADE_MS = 300;'));
     assert.ok(tableJs.includes('function showTableCopySuccess(copyBtn, defaultText)'));
+    assert.ok(tableJs.includes('function lockTableSelectionCopyButtonSize(copyBtn)'));
+    assert.ok(tableJs.includes('function resetTableSelectionCopyButton(copyBtn, defaultText)'));
     assert.ok(tableJs.includes('L10N_TEXT.copySuccess'));
+    assert.equal(tableJs.includes('TABLE_SELECTION_COPY_FADE_MS'), false);
+    assert.equal(tableJs.includes('fade-out'), false);
     assert.ok(tableJs.includes('let left = bounds.left - containerRect.left + tableSelectionUi.container.scrollLeft;'));
     assert.ok(tableJs.includes('let top = bounds.bottom - containerRect.top + tableSelectionUi.container.scrollTop + TABLE_SELECTION_ACTION_MARGIN_PX;'));
     assert.equal(tableJs.includes('table-selection-more-btn'), false);
@@ -558,6 +561,21 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(i18n.includes("tableSelectionMore: 'Actions'"));
     assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy As ASCII'"));
     assert.ok(i18n.includes("tableSelectionTsv: 'Copy As TSV'"));
+  });
+
+  test('Task C copy success resets immediately without fade animations', () => {
+    const css = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview.css'), 'utf8');
+    const codeblockJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-codeblock.js'), 'utf8');
+
+    assert.equal(css.includes('.copy-btn.fade-out'), false);
+    assert.equal(css.includes('transition: opacity 0.15s, background-color 0.15s;'), false);
+
+    assert.ok(codeblockJs.includes('const CODE_BLOCK_COPY_RESET_MS = 800;'));
+    assert.ok(codeblockJs.includes('function scheduleCopyButtonReset()'));
+    assert.ok(codeblockJs.includes('scheduleCopyButtonReset();'));
+    assert.ok(codeblockJs.includes('}, CODE_BLOCK_COPY_RESET_MS);'));
+    assert.equal(codeblockJs.includes("copyBtn.addEventListener('mouseleave'"), false);
+    assert.equal(codeblockJs.includes('fade-out'), false);
   });
 
   test('Task F comment and global constant conventions are enforced', () => {

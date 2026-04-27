@@ -498,7 +498,7 @@ table tr:nth-child(2n) {
     white-space: nowrap;
     font-size: 11px;
     line-height: 1;
-    transition: opacity 120ms ease, background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;
+    transition: transform 80ms ease, box-shadow 120ms ease;
 }
 
 .table-selection-copy-btn .codicon {
@@ -524,10 +524,6 @@ table tr:nth-child(2n) {
 
 .table-selection-copy-btn.copied .codicon {
     margin-right: 4px;
-}
-
-.table-selection-copy-btn.fade-out {
-    opacity: 0;
 }
 
 .table-selection-copy-btn:focus-visible {
@@ -893,7 +889,6 @@ pre:hover .copy-btn {
     border: none;
     border-radius: 4px;
     opacity: 0;
-    transition: opacity 0.15s, background-color 0.15s;
     font-size: 14px;
     white-space: nowrap;
     z-index: 10;
@@ -930,11 +925,6 @@ pre:hover .copy-btn {
     font-size: 12px;
     padding-left: 10px;
     padding-right: 10px;
-}
-
-.copy-btn.fade-out {
-    opacity: 0;
-    transition: opacity 0.4s ease-out 0.4s;
 }
 
 
