@@ -494,6 +494,16 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(/function showCommentTooltip\(target\)\s*\{[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?tooltip\.classList\.add\('is-visible'\);/s.test(commentTooltipJs));
   });
 
+  test('Task G table locate/scroll logic compensates sticky header and index column', () => {
+    const tableJsPath = path.join(__dirname, '..', '..', 'resources', 'preview-table.js');
+    const tableJs = fs.readFileSync(tableJsPath, 'utf8');
+
+    assert.ok(tableJs.includes('const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;'));
+    assert.ok(/function getFirstColumnAnchorCells\(table\)\s*\{[\s\S]*?querySelectorAll\('tbody tr'\)[\s\S]*?querySelector\('td\[data-start-line\]'\)/s.test(tableJs));
+    assert.ok(/function scrollToLine\(line\)\s*\{[\s\S]*?const anchorCells = getFirstColumnAnchorCells\(table\);[\s\S]*?const stickyHeaderHeight = getStickyHeaderHeight\(table\);[\s\S]*?const stickyIndexColumnWidth = getStickyIndexColumnWidth\(table\);[\s\S]*?container\.scrollTop = Math\.max\(0, targetTop - stickyHeaderHeight\);[\s\S]*?container\.scrollLeft = Math\.max\(0, targetLeft - stickyIndexColumnWidth\);/s.test(tableJs));
+    assert.ok(/function reportVisibleLine\(\)\s*\{[\s\S]*?const anchorCells = getFirstColumnAnchorCells\(table\);[\s\S]*?const probeTop = containerRect\.top \+ stickyHeaderHeight \+ TABLE_VISIBLE_LINE_PROBE_OFFSET_PX;[\s\S]*?Math\.abs\(rect\.top - probeTop\)/s.test(tableJs));
+  });
+
   test('Task F comment and global constant conventions are enforced', () => {
     const srcDir = path.join(__dirname, '..', '..', 'src');
     const tsFiles = fs.readdirSync(srcDir).filter(name => name.endsWith('.ts'));

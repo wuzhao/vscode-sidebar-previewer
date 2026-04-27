@@ -12,6 +12,9 @@ let tableDragState = {
     wasMultiCellDrag: false
 };
 
+// 可见行探测点向下偏移，避免命中表头边框
+const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;
+
 /**
  * 处理外部发来的表格高亮区域
  */
@@ -97,6 +100,79 @@ function bindTableSelection() {
             applyTableSelectionToEditor();
         }
     });
+}
+
+/**
+ * 获取表格滚动容器并返回结果
+ * @param table - 当前表格元素
+ * @returns 返回表格滚动容器
+ */
+function getTableScrollContainer(table) {
+    const container = table.closest('.table-preview-scroll');
+    return container instanceof HTMLElement ? container : null;
+}
+
+/**
+ * 获取 sticky 表头高度并返回结果
+ * @param table - 当前表格元素
+ * @returns 返回 sticky 表头高度
+ */
+function getStickyHeaderHeight(table) {
+    const headerRow = table.querySelector('thead');
+    if (!(headerRow instanceof HTMLElement)) {
+        return 0;
+    }
+    return headerRow.getBoundingClientRect().height;
+}
+
+/**
+ * 获取 sticky 序号列宽度并返回结果
+ * @param table - 当前表格元素
+ * @returns 返回 sticky 序号列宽度
+ */
+function getStickyIndexColumnWidth(table) {
+    const stickyColumn = table.querySelector('thead .table-index-column, tbody .table-index-column');
+    if (!(stickyColumn instanceof HTMLElement)) {
+        return 0;
+    }
+    return stickyColumn.getBoundingClientRect().width;
+}
+
+/**
+ * 解析单元格起始行号并返回结果
+ * @param cell - 目标单元格
+ * @returns 返回单元格起始行号
+ */
+function getCellStartLine(cell) {
+    const parsed = parseInt(cell.getAttribute('data-start-line'), 10);
+    return Number.isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * 获取每一行第一列内容单元格并返回结果
+ * @param table - 当前表格元素
+ * @returns 返回按行排序的第一列内容单元格数组
+ */
+function getFirstColumnAnchorCells(table) {
+    const rows = table.querySelectorAll('tbody tr');
+    const anchors = [];
+    rows.forEach(row => {
+        const firstDataCell = row.querySelector('td[data-start-line]');
+        if (firstDataCell instanceof HTMLElement) {
+            anchors.push(firstDataCell);
+        }
+    });
+
+    if (anchors.length > 0) {
+        return anchors;
+    }
+
+    const headerAnchor = table.querySelector('thead th[data-start-line]');
+    if (headerAnchor instanceof HTMLElement) {
+        return [headerAnchor];
+    }
+
+    return [];
 }
 
 function updateTableSelectionVisuals() {
@@ -295,21 +371,38 @@ function scrollToLine(line) {
     const table = document.querySelector('.tabular-table');
     if (!table) { return; }
 
-    const cells = table.querySelectorAll('th[data-start-line], td[data-start-line]');
+    const container = getTableScrollContainer(table);
+    if (!container) { return; }
+
+    const anchorCells = getFirstColumnAnchorCells(table);
+    if (anchorCells.length === 0) { return; }
+
     let best = null;
     let bestLine = -1;
-
-    cells.forEach(cell => {
-        const l = parseInt(cell.getAttribute('data-start-line'), 10);
-        if (!isNaN(l) && l <= line && l > bestLine) {
-            bestLine = l;
+    anchorCells.forEach(cell => {
+        const cellLine = getCellStartLine(cell);
+        if (cellLine === null) {
+            return;
+        }
+        if (cellLine <= line && cellLine > bestLine) {
+            bestLine = cellLine;
             best = cell;
         }
     });
 
-    if (best) {
-        best.scrollIntoView({ behavior: 'instant', block: 'start' });
+    if (!best) {
+        best = anchorCells[0];
     }
+
+    const stickyHeaderHeight = getStickyHeaderHeight(table);
+    const stickyIndexColumnWidth = getStickyIndexColumnWidth(table);
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = best.getBoundingClientRect();
+    const targetTop = targetRect.top - containerRect.top + container.scrollTop;
+    const targetLeft = targetRect.left - containerRect.left + container.scrollLeft;
+
+    container.scrollTop = Math.max(0, targetTop - stickyHeaderHeight);
+    container.scrollLeft = Math.max(0, targetLeft - stickyIndexColumnWidth);
 }
 
 /**
@@ -319,13 +412,21 @@ function reportVisibleLine() {
     const table = document.querySelector('.tabular-table');
     if (!table) { return; }
 
-    const cells = table.querySelectorAll('th[data-start-line], td[data-start-line]');
+    const container = getTableScrollContainer(table);
+    if (!container) { return; }
+
+    const anchorCells = getFirstColumnAnchorCells(table);
+    if (anchorCells.length === 0) { return; }
+
+    const containerRect = container.getBoundingClientRect();
+    const stickyHeaderHeight = getStickyHeaderHeight(table);
+    const probeTop = containerRect.top + stickyHeaderHeight + TABLE_VISIBLE_LINE_PROBE_OFFSET_PX;
+
     let bestCell = null;
     let bestDistance = Infinity;
-
-    cells.forEach(cell => {
+    anchorCells.forEach(cell => {
         const rect = cell.getBoundingClientRect();
-        const distance = Math.abs(rect.top);
+        const distance = Math.abs(rect.top - probeTop);
         if (distance < bestDistance) {
             bestDistance = distance;
             bestCell = cell;
