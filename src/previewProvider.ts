@@ -1066,7 +1066,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     <link rel="stylesheet" href="${katexCssUri}">
     <link rel="stylesheet" href="${previewCssUri}">
 </head>
-<body data-copy-success="${escapeHtml(i18n.copySuccess)}" data-copy-code="${escapeHtml(i18n.copyCode)}" data-view-code="${escapeHtml(i18n.viewCode)}" data-view-preview="${escapeHtml(i18n.viewPreview)}">
+<body data-copy-success="${escapeHtml(i18n.copySuccess)}" data-copy-code="${escapeHtml(i18n.copyCode)}" data-view-code="${escapeHtml(i18n.viewCode)}" data-view-preview="${escapeHtml(i18n.viewPreview)}" data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}" data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}" data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}">
     <div id="sidebar-previewer-container">
         <div class="content" id="content">
             <div class="loading-state"><div class="loading-spinner"></div></div>

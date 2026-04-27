@@ -8,6 +8,9 @@ const L10N_TEXT = {
     copyCode: L10N_SOURCE.copyCode || 'Copy',
     viewCode: L10N_SOURCE.viewCode || 'Code',
     viewPreview: L10N_SOURCE.viewPreview || 'Preview',
+    tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'More',
+    tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'ASCII Table',
+    tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'TSV (Tab-Separated Values)',
 };
 // 允许接收的消息类型枚举，避免无效消息触发渲染流程
 const VALID_MESSAGE_TYPES = new Set([
@@ -44,6 +47,51 @@ let isUpdatingSelectionFromWebview = false;
 let zoomLevel = 100;
 let wheelTimeout = null;
 let currentFileType = null;
+
+/**
+ * 获取预览内容容器
+ * @returns 返回预览内容容器元素
+ */
+function getPreviewContentElement() {
+    const content = document.getElementById('content');
+    return content instanceof HTMLElement ? content : null;
+}
+
+/**
+ * 设置预览区域焦点态样式标识
+ * @param focused - 当前是否处于聚焦态
+ */
+function setPreviewFocusedClass(focused) {
+    const content = getPreviewContentElement();
+    if (!content) {
+        return;
+    }
+    content.classList.toggle('preview-focused', !!focused);
+}
+
+/**
+ * 同步预览区域焦点状态
+ */
+function syncPreviewFocusState() {
+    const content = getPreviewContentElement();
+    if (!content) {
+        return;
+    }
+    const activeElement = document.activeElement;
+    setPreviewFocusedClass(activeElement === content || (activeElement instanceof Node && content.contains(activeElement)));
+}
+
+/**
+ * 主动聚焦预览内容区域
+ */
+function focusPreviewContent() {
+    const content = getPreviewContentElement();
+    if (!content) {
+        return;
+    }
+    content.focus({ preventScroll: true });
+    setPreviewFocusedClass(true);
+}
 
 /**
  * 处理HTML相关逻辑并返回结果
@@ -312,9 +360,27 @@ const PreviewCommon = (function() {
 
     return {
         registerDomainInit: registerDomainInit,
-        initDomains: initDomains
+        initDomains: initDomains,
+        focusPreviewContent: focusPreviewContent,
+        syncPreviewFocusState: syncPreviewFocusState
     };
 })();
+
+document.addEventListener('focusin', () => {
+    syncPreviewFocusState();
+});
+
+document.addEventListener('focusout', () => {
+    setTimeout(syncPreviewFocusState, 0);
+});
+
+window.addEventListener('focus', () => {
+    syncPreviewFocusState();
+});
+
+window.addEventListener('blur', () => {
+    setPreviewFocusedClass(false);
+});
 
 /**
  * 更新内容并同步相关结果
@@ -344,6 +410,14 @@ function updateContent(data) {
     }
 
     content.innerHTML = typeof messageData.content === 'string' ? messageData.content : '';
+    content.setAttribute('tabindex', '0');
+    content.setAttribute('role', 'region');
+    if (!content.dataset.focusBound) {
+        content.dataset.focusBound = 'true';
+        content.addEventListener('mousedown', () => {
+            focusPreviewContent();
+        });
+    }
     currentHeadings = Array.isArray(messageData.headings) ? messageData.headings : [];
     currentFileType = typeof messageData.fileType === 'string' ? messageData.fileType : null;
 
@@ -384,6 +458,8 @@ function updateContent(data) {
             });
         }
     }
+
+    syncPreviewFocusState();
 }
 
 /**

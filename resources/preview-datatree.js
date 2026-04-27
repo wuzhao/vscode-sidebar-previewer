@@ -177,6 +177,9 @@ function bindTreeKeyClicks() {
     const keys = document.querySelectorAll('.data-tree .tree-key[data-line]');
     keys.forEach(key => {
         key.addEventListener('click', (e) => {
+            if (typeof PreviewCommon !== 'undefined' && PreviewCommon.focusPreviewContent) {
+                PreviewCommon.focusPreviewContent();
+            }
             if (typeof PreviewCommentTooltip !== 'undefined' && PreviewCommentTooltip.isCommentTooltipInteractionLocked()) {
                 PreviewCommentTooltip.stopEvent(e);
                 return;
@@ -217,6 +220,14 @@ PreviewCommon.registerDomainInit(
     ['json', 'yaml', 'toml', 'xml'],
     'datatree',
     function(fileType, messageData) {
+        const dataTreeRoot = document.querySelector('.data-tree');
+        if (dataTreeRoot) {
+            dataTreeRoot.addEventListener('mousedown', () => {
+                if (typeof PreviewCommon !== 'undefined' && PreviewCommon.focusPreviewContent) {
+                    PreviewCommon.focusPreviewContent();
+                }
+            });
+        }
         // 首先初始化注释提示框（依赖 preview-comment-tooltip.js）
         if (typeof PreviewCommentTooltip !== 'undefined') {
             PreviewCommentTooltip.bindCommentTooltipInteractionGuard();

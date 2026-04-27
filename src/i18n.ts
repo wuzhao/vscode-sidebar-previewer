@@ -13,6 +13,9 @@ interface I18nStrings {
     viewCode: string;
     viewPreview: string;
     previewError: string;
+    tableSelectionMore: string;
+    tableSelectionAsciiTable: string;
+    tableSelectionTsv: string;
 }
 
 // 定义空状态提示中展示的受支持文件格式列表
@@ -42,7 +45,10 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         copyCode: 'Copy',
         viewCode: 'Code',
         viewPreview: 'Preview',
-        previewError: 'Preview Failed'
+        previewError: 'Preview Failed',
+        tableSelectionMore: 'More',
+        tableSelectionAsciiTable: 'ASCII Table',
+        tableSelectionTsv: 'TSV (Tab-Separated Values)'
     },
     'zh_CN': {
         emptyStateTitle: '文件预览',
@@ -53,7 +59,10 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         copyCode: '复制',
         viewCode: '代码',
         viewPreview: '预览',
-        previewError: '预览失败'
+        previewError: '预览失败',
+        tableSelectionMore: '更多',
+        tableSelectionAsciiTable: 'ASCII 表格',
+        tableSelectionTsv: 'TSV（制表符分隔值）'
     },
     'zh_TW': {
         emptyStateTitle: '檔案預覽',
@@ -64,7 +73,10 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         copyCode: '複製',
         viewCode: '程式碼',
         viewPreview: '預覽',
-        previewError: '預覽失敗'
+        previewError: '預覽失敗',
+        tableSelectionMore: '更多',
+        tableSelectionAsciiTable: 'ASCII 表格',
+        tableSelectionTsv: 'TSV（Tab 分隔值）'
     },
     'zh_HK': {
         emptyStateTitle: '檔案預覽',
@@ -75,7 +87,10 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         copyCode: '複製',
         viewCode: '程式碼',
         viewPreview: '預覽',
-        previewError: '預覽失敗'
+        previewError: '預覽失敗',
+        tableSelectionMore: '更多',
+        tableSelectionAsciiTable: 'ASCII 表格',
+        tableSelectionTsv: 'TSV（Tab 分隔值）'
     },
     'ja_JP': {
         emptyStateTitle: 'ファイルプレビュー',
@@ -86,7 +101,10 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         copyCode: 'コピー',
         viewCode: 'コード',
         viewPreview: 'プレビュー',
-        previewError: 'プレビュー失敗'
+        previewError: 'プレビュー失敗',
+        tableSelectionMore: 'その他',
+        tableSelectionAsciiTable: 'ASCII テーブル',
+        tableSelectionTsv: 'TSV（タブ区切り）'
     }
 };
 
@@ -156,6 +174,15 @@ export const i18n = {
     },
     get previewError(): string {
         return getString('previewError');
+    },
+    get tableSelectionMore(): string {
+        return getString('tableSelectionMore');
+    },
+    get tableSelectionAsciiTable(): string {
+        return getString('tableSelectionAsciiTable');
+    },
+    get tableSelectionTsv(): string {
+        return getString('tableSelectionTsv');
     },
 
     // 处理当前场景相关逻辑并返回结果
