@@ -68,7 +68,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 - 渲染為表格預覽，首行與首列固定
 - 編輯器與預覽之間捲動同步、互相定位
-- 支援雙向選區功能，支援滑鼠拖曳框選以及 Cmd/Ctrl+C 複製所選單元格為 TSV 格式
+- 支援雙向選區功能，支援滑鼠拖曳框選
 
 ## 安裝方法
 

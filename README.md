@@ -68,7 +68,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 - Render as a table for preview with sticky first row and first column
 - Follow-scroll and locate between editor and preview
-- Bidirectional selection with click-and-drag support and Cmd/Ctrl+C to copy selected cells as TSV
+- Bidirectional selection with click-and-drag support
 
 ## Installation
 
