@@ -516,6 +516,10 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(/\.data-tree \.tree-item\.is-highlight[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
     assert.ok(/#content\.preview-focused \.data-tree \.tree-item\.is-highlight/s.test(css));
     assert.ok(css.includes('.table-selection-copy-btn'));
+    assert.ok(/\.table-selection-actions\s*\{[^}]*z-index:\s*1;/s.test(css));
+    assert.ok(/\.table-selection-copy-btn\s*\{[^}]*transition:\s*background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;/s.test(css));
+    assert.ok(/\.table-selection-copy-btn:active\s*\{[^}]*transform:\s*translateY\(1px\);/s.test(css));
+    assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*z-index:\s*2;/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*user-select:\s*none;[^}]*-webkit-user-select:\s*none;/s.test(css));
 
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionAscii'));
@@ -532,6 +536,8 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
 
     assert.ok(commonJs.includes('function focusPreviewContent()'));
     assert.ok(commonJs.includes("content.classList.toggle('preview-focused', !!focused);"));
+    assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'yaml', 'toml', 'xml']);"));
+    assert.ok(/document\.addEventListener\('keydown', \(e\) => \{[\s\S]*?e\.key\.toLowerCase\(\) !== 'a'[\s\S]*?NO_SELECT_ALL_FILE_TYPES\.has\(currentFileType\)[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?\}, true\);/s.test(commonJs));
     assert.ok(commonJs.includes("tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions'"));
     assert.ok(commonJs.includes("tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy As ASCII'"));
     assert.ok(commonJs.includes("tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy As TSV'"));

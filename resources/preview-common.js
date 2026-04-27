@@ -28,6 +28,8 @@ const VALID_MESSAGE_TYPES = new Set([
 ]);
 // 需要启用数据树交互能力的文件类型枚举
 const DATA_TREE_FILE_TYPES = new Set(['json', 'yaml', 'toml', 'xml']);
+// 需要禁用全选快捷键的文件类型枚举
+const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'yaml', 'toml', 'xml']);
 // 预览缩放可选档位配置
 const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
 // Mermaid 额外放大倍数，用于提升图表可读性
@@ -313,6 +315,21 @@ document.addEventListener('wheel', (e) => {
 document.addEventListener('contextmenu', e => {
     e.preventDefault();
     return false;
+}, true);
+
+// 拦截指定文件类型的全选快捷键，避免预览触发整页选中
+document.addEventListener('keydown', (e) => {
+    if (!(e.metaKey || e.ctrlKey) || e.altKey) {
+        return;
+    }
+    if (typeof e.key !== 'string' || e.key.toLowerCase() !== 'a') {
+        return;
+    }
+    if (!currentFileType || !NO_SELECT_ALL_FILE_TYPES.has(currentFileType)) {
+        return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
 }, true);
 
 /**

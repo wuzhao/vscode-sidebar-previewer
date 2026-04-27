@@ -476,7 +476,7 @@ table tr:nth-child(2n) {
     align-items: center;
     gap: 6px;
     pointer-events: auto;
-    z-index: 24;
+    z-index: 1;
 }
 
 .table-selection-actions.is-visible {
@@ -498,6 +498,7 @@ table tr:nth-child(2n) {
     white-space: nowrap;
     font-size: 11px;
     line-height: 1;
+    transition: background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;
 }
 
 .table-selection-copy-btn .codicon {
