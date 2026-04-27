@@ -517,8 +517,10 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(/#content\.preview-focused \.data-tree \.tree-item\.is-highlight/s.test(css));
     assert.ok(css.includes('.table-selection-copy-btn'));
     assert.ok(/\.table-selection-actions\s*\{[^}]*z-index:\s*1;/s.test(css));
-    assert.ok(/\.table-selection-copy-btn\s*\{[^}]*transition:\s*background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;/s.test(css));
+    assert.ok(/\.table-selection-copy-btn\s*\{[^}]*transition:\s*opacity 120ms ease, background-color 120ms ease, transform 80ms ease, box-shadow 120ms ease;/s.test(css));
     assert.ok(/\.table-selection-copy-btn:active\s*\{[^}]*transform:\s*translateY\(1px\);/s.test(css));
+    assert.ok(/\.table-selection-copy-btn\.copied\s*\{[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
+    assert.ok(/\.table-selection-copy-btn\.fade-out\s*\{[^}]*opacity:\s*0;/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*z-index:\s*2;/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*user-select:\s*none;[^}]*-webkit-user-select:\s*none;/s.test(css));
 
@@ -527,8 +529,12 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(tableJs.includes('table-selection-copy-btn'));
     assert.ok(tableJs.includes('codicon-copy'));
     assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
+    assert.ok(tableJs.includes('const TABLE_SELECTION_COPY_SUCCESS_MS = 800;'));
+    assert.ok(tableJs.includes('const TABLE_SELECTION_COPY_FADE_MS = 300;'));
+    assert.ok(tableJs.includes('function showTableCopySuccess(copyBtn, defaultText)'));
+    assert.ok(tableJs.includes('L10N_TEXT.copySuccess'));
     assert.ok(tableJs.includes('let left = bounds.left - containerRect.left + tableSelectionUi.container.scrollLeft;'));
-    assert.ok(tableJs.includes('let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop - actionHeight - TABLE_SELECTION_ACTION_MARGIN_PX;'));
+    assert.ok(tableJs.includes('let top = bounds.bottom - containerRect.top + tableSelectionUi.container.scrollTop + TABLE_SELECTION_ACTION_MARGIN_PX;'));
     assert.equal(tableJs.includes('table-selection-more-btn'), false);
     assert.equal(tableJs.includes('table-selection-menu-item'), false);
     assert.ok(tableJs.includes('selectedCells.length === 1'));

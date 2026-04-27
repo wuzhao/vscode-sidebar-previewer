@@ -15,6 +15,12 @@ let tableDragState = {
 // 可见行探测点向下偏移，避免命中表头边框
 const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;
 const TABLE_SELECTION_ACTION_MARGIN_PX = 6;
+// 复制成功状态展示时长（毫秒）
+const TABLE_SELECTION_COPY_SUCCESS_MS = 800;
+// 复制成功状态淡出动画时长（毫秒）
+const TABLE_SELECTION_COPY_FADE_MS = 300;
+// 记录按钮复制反馈定时器，避免连续点击时动画互相覆盖
+const TABLE_SELECTION_COPY_TIMER_MAP = new WeakMap();
 
 // 多选快捷操作按钮状态
 let tableSelectionUi = {
@@ -170,6 +176,61 @@ function hideTableSelectionActions() {
     if (tableSelectionUi.wrapper) {
         tableSelectionUi.wrapper.classList.remove('is-visible');
     }
+    if (tableSelectionUi.asciiButton) {
+        clearTableCopyStateTimers(tableSelectionUi.asciiButton);
+        tableSelectionUi.asciiButton.classList.remove('copied', 'fade-out');
+        tableSelectionUi.asciiButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionAscii}</span>`;
+    }
+    if (tableSelectionUi.tsvButton) {
+        clearTableCopyStateTimers(tableSelectionUi.tsvButton);
+        tableSelectionUi.tsvButton.classList.remove('copied', 'fade-out');
+        tableSelectionUi.tsvButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionTsv}</span>`;
+    }
+}
+
+/**
+ * 清理复制成功反馈定时器
+ * @param copyBtn - 目标复制按钮
+ */
+function clearTableCopyStateTimers(copyBtn) {
+    const timers = TABLE_SELECTION_COPY_TIMER_MAP.get(copyBtn);
+    if (!timers) {
+        return;
+    }
+    if (timers.fadeTimer) {
+        clearTimeout(timers.fadeTimer);
+    }
+    if (timers.resetTimer) {
+        clearTimeout(timers.resetTimer);
+    }
+    TABLE_SELECTION_COPY_TIMER_MAP.delete(copyBtn);
+}
+
+/**
+ * 显示复制成功反馈并在超时后复原按钮文案
+ * @param copyBtn - 目标复制按钮
+ * @param defaultText - 按钮默认文案
+ */
+function showTableCopySuccess(copyBtn, defaultText) {
+    clearTableCopyStateTimers(copyBtn);
+    copyBtn.classList.remove('fade-out');
+    copyBtn.classList.add('copied');
+    copyBtn.innerHTML = `<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>`;
+
+    const fadeTimer = setTimeout(() => {
+        copyBtn.classList.add('fade-out');
+    }, Math.max(0, TABLE_SELECTION_COPY_SUCCESS_MS - TABLE_SELECTION_COPY_FADE_MS));
+
+    const resetTimer = setTimeout(() => {
+        copyBtn.classList.remove('copied', 'fade-out');
+        copyBtn.innerHTML = `<i class="codicon codicon-copy"></i><span>${defaultText}</span>`;
+        TABLE_SELECTION_COPY_TIMER_MAP.delete(copyBtn);
+    }, TABLE_SELECTION_COPY_SUCCESS_MS);
+
+    TABLE_SELECTION_COPY_TIMER_MAP.set(copyBtn, {
+        fadeTimer,
+        resetTimer
+    });
 }
 
 /**
@@ -218,6 +279,9 @@ function ensureTableSelectionActionElements(table) {
     asciiButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (asciiButton.classList.contains('copied')) {
+            return;
+        }
         const selectedCells = getSelectedCells();
         if (selectedCells.length < 2) {
             hideTableSelectionActions();
@@ -225,11 +289,15 @@ function ensureTableSelectionActionElements(table) {
         }
         const grid = buildSelectionGrid(selectedCells);
         await writeTextToClipboard(buildAsciiTableText(grid));
+        showTableCopySuccess(asciiButton, L10N_TEXT.tableSelectionAscii);
     });
 
     tsvButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (tsvButton.classList.contains('copied')) {
+            return;
+        }
         const selectedCells = getSelectedCells();
         if (selectedCells.length < 2) {
             hideTableSelectionActions();
@@ -237,6 +305,7 @@ function ensureTableSelectionActionElements(table) {
         }
         const grid = buildSelectionGrid(selectedCells);
         await writeTextToClipboard(buildTsvText(grid));
+        showTableCopySuccess(tsvButton, L10N_TEXT.tableSelectionTsv);
     });
 
     tableSelectionUi = {
@@ -272,21 +341,22 @@ function updateTableSelectionActions() {
         const rect = cell.getBoundingClientRect();
         acc.left = Math.min(acc.left, rect.left);
         acc.top = Math.min(acc.top, rect.top);
+        acc.bottom = Math.max(acc.bottom, rect.bottom);
         return acc;
     }, {
         left: Number.POSITIVE_INFINITY,
-        top: Number.POSITIVE_INFINITY
+        top: Number.POSITIVE_INFINITY,
+        bottom: Number.NEGATIVE_INFINITY
     });
 
     const containerRect = tableSelectionUi.container.getBoundingClientRect();
     const wrapper = tableSelectionUi.wrapper;
     wrapper.classList.add('is-visible');
-    const actionHeight = wrapper.offsetHeight || 24;
 
     // 将按钮组左侧与选区左侧对齐，保持入口位置稳定
     let left = bounds.left - containerRect.left + tableSelectionUi.container.scrollLeft;
-    // 将按钮组放到选区上方并预留安全间距，避免遮挡选区首行
-    let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop - actionHeight - TABLE_SELECTION_ACTION_MARGIN_PX;
+    // 将按钮组放到选区下方并预留安全间距，避免遮挡选区内容
+    let top = bounds.bottom - containerRect.top + tableSelectionUi.container.scrollTop + TABLE_SELECTION_ACTION_MARGIN_PX;
     // 限制最小横向边距，防止按钮贴住容器左边界
     left = Math.max(TABLE_SELECTION_ACTION_MARGIN_PX, left);
     // 限制最小纵向边距，防止按钮贴住容器上边界
