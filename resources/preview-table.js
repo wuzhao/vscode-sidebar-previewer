@@ -309,11 +309,14 @@ function updateTableSelectionActions() {
     const button = tableSelectionUi.button;
     button.classList.add('is-visible');
     const buttonWidth = button.offsetWidth || 24;
-    const buttonHeight = button.offsetHeight || 24;
 
-    let left = bounds.right - containerRect.left + tableSelectionUi.container.scrollLeft - buttonWidth;
-    let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop - buttonHeight - TABLE_SELECTION_ACTION_MARGIN_PX;
+    // 将按钮放到选区右侧并预留安全间距，避免覆盖选中单元格
+    let left = bounds.right - containerRect.left + tableSelectionUi.container.scrollLeft + TABLE_SELECTION_ACTION_MARGIN_PX;
+    // 按钮顶部与选区顶部对齐，保持右上侧入口位置稳定
+    let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop;
+    // 限制最小横向边距，防止按钮贴住容器左边界
     left = Math.max(TABLE_SELECTION_ACTION_MARGIN_PX, left);
+    // 限制最小纵向边距，防止按钮贴住容器上边界
     top = Math.max(TABLE_SELECTION_ACTION_MARGIN_PX, top);
     button.style.left = `${left}px`;
     button.style.top = `${top}px`;

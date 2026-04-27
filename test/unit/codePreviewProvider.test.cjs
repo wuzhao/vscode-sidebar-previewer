@@ -523,11 +523,16 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionTsv'));
     assert.ok(tableJs.includes('codicon-more'));
     assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
+    assert.ok(tableJs.includes('let left = bounds.right - containerRect.left + tableSelectionUi.container.scrollLeft + TABLE_SELECTION_ACTION_MARGIN_PX;'));
+    assert.ok(tableJs.includes('let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop;'));
     assert.ok(tableJs.includes('selectedCells.length === 1'));
     assert.ok(tableJs.includes('buildTsvText(grid)'));
 
     assert.ok(commonJs.includes('function focusPreviewContent()'));
     assert.ok(commonJs.includes("content.classList.toggle('preview-focused', !!focused);"));
+    assert.ok(commonJs.includes("tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions'"));
+    assert.ok(commonJs.includes("tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy As ASCII'"));
+    assert.ok(commonJs.includes("tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy As TSV'"));
 
     assert.ok(previewProvider.includes('data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}"'));
     assert.ok(previewProvider.includes('data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}"'));
@@ -536,6 +541,9 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(i18n.includes('tableSelectionMore'));
     assert.ok(i18n.includes('tableSelectionAsciiTable'));
     assert.ok(i18n.includes('tableSelectionTsv'));
+    assert.ok(i18n.includes("tableSelectionMore: 'Actions'"));
+    assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy As ASCII'"));
+    assert.ok(i18n.includes("tableSelectionTsv: 'Copy As TSV'"));
   });
 
   test('Task F comment and global constant conventions are enforced', () => {

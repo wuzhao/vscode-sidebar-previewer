@@ -71,7 +71,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - エディタとプレビュー間のスクロール同期・相互ロケート
 - 双方向選択機能をサポートし、クリック＆ドラッグでのセル選択
 - 選択セルのハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
-- 複数セル選択時に「More」メニューを表示し、「ASCII Table」または「TSV (Tab-Separated Values)」でコピー可能
+- 複数セル選択時に「Actions」メニューを表示し、「Copy As ASCII」または「Copy As TSV」でコピー可能
 - `Cmd/Ctrl+C`：単一セルはセル文字列をコピー、複数セルはTSV形式でコピー
 
 ## インストール

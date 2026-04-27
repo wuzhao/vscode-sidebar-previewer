@@ -71,7 +71,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 編輯器同預覽之間捲動同步、互相定位
 - 支援雙向選區功能，可以拖拽框選
 - 選中儲存格高亮支援焦點狀態（有焦點藍色，失焦灰色）
-- 多儲存格選中時提供「更多」選單，可以複製為「ASCII 表格」或者「TSV（Tab 分隔值）」
+- 多儲存格選中時提供操作選單，可以執行「複製為 ASCII」或者「複製為 TSV」
 - `Cmd/Ctrl+C`：單儲存格複製文字，多儲存格按 TSV 複製
 
 ## 安裝方法

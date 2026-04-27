@@ -46,9 +46,9 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         viewCode: 'Code',
         viewPreview: 'Preview',
         previewError: 'Preview Failed',
-        tableSelectionMore: 'More',
-        tableSelectionAsciiTable: 'ASCII Table',
-        tableSelectionTsv: 'TSV (Tab-Separated Values)'
+        tableSelectionMore: 'Actions',
+        tableSelectionAsciiTable: 'Copy As ASCII',
+        tableSelectionTsv: 'Copy As TSV'
     },
     'zh_CN': {
         emptyStateTitle: '文件预览',
@@ -60,9 +60,9 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         viewCode: '代码',
         viewPreview: '预览',
         previewError: '预览失败',
-        tableSelectionMore: '更多',
-        tableSelectionAsciiTable: 'ASCII 表格',
-        tableSelectionTsv: 'TSV（制表符分隔值）'
+        tableSelectionMore: '操作',
+        tableSelectionAsciiTable: '复制为 ASCII',
+        tableSelectionTsv: '复制为 TSV'
     },
     'zh_TW': {
         emptyStateTitle: '檔案預覽',
@@ -74,9 +74,9 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         viewCode: '程式碼',
         viewPreview: '預覽',
         previewError: '預覽失敗',
-        tableSelectionMore: '更多',
-        tableSelectionAsciiTable: 'ASCII 表格',
-        tableSelectionTsv: 'TSV（Tab 分隔值）'
+        tableSelectionMore: '操作',
+        tableSelectionAsciiTable: '複製為 ASCII',
+        tableSelectionTsv: '複製為 TSV'
     },
     'zh_HK': {
         emptyStateTitle: '檔案預覽',
@@ -88,9 +88,9 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         viewCode: '程式碼',
         viewPreview: '預覽',
         previewError: '預覽失敗',
-        tableSelectionMore: '更多',
-        tableSelectionAsciiTable: 'ASCII 表格',
-        tableSelectionTsv: 'TSV（Tab 分隔值）'
+        tableSelectionMore: '操作',
+        tableSelectionAsciiTable: '複製為 ASCII',
+        tableSelectionTsv: '複製為 TSV'
     },
     'ja_JP': {
         emptyStateTitle: 'ファイルプレビュー',
@@ -102,9 +102,9 @@ const I18N_STRINGS: Record<string, I18nStrings> = {
         viewCode: 'コード',
         viewPreview: 'プレビュー',
         previewError: 'プレビュー失敗',
-        tableSelectionMore: 'その他',
-        tableSelectionAsciiTable: 'ASCII テーブル',
-        tableSelectionTsv: 'TSV（タブ区切り）'
+        tableSelectionMore: 'アクション',
+        tableSelectionAsciiTable: 'ASCII としてコピー',
+        tableSelectionTsv: 'TSV としてコピー'
     }
 };
 

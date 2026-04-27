@@ -71,7 +71,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Follow-scroll and locate between editor and preview
 - Bidirectional selection with click-and-drag support
 - Focus-aware selected-cell highlight (blue when focused, gray when unfocused)
-- Multi-cell quick actions (more): copy as `ASCII Table` or `TSV (Tab-Separated Values)`
+- Multi-cell quick actions: `Copy As ASCII` or `Copy As TSV`
 - `Cmd/Ctrl+C`: copy single selected cell text, or copy multi-cell selection as TSV
 
 ## Installation
