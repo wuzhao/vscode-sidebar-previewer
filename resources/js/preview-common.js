@@ -571,7 +571,8 @@ function updateContent(data) {
         }
     }
 
-    content.replaceChildren(buildSafeContentFragment(messageData.content));
+    const contentHtml = typeof messageData.content === 'string' ? messageData.content : '';
+    content.replaceChildren(buildSafeContentFragment(contentHtml));
     content.setAttribute('tabindex', '0');
     content.setAttribute('role', 'region');
     if (!content.dataset.focusBound) {
