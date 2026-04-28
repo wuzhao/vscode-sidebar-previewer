@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.8-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.9-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](./README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -71,7 +71,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - エディタとプレビュー間のスクロール同期・相互ロケート
 - 双方向選択機能をサポートし、クリック＆ドラッグでのセル選択
 - 選択セルのハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
-- 複数セル選択時に「Actions」メニューを表示し、「Copy As ASCII」または「Copy As TSV」でコピー可能
+- 複数セル選択時に「Copy As ASCII」または「Copy As TSV」のクイック操作を表示
 - `Cmd/Ctrl+C`：単一セルはセル文字列をコピー、複数セルはTSV形式でコピー
 
 ## インストール

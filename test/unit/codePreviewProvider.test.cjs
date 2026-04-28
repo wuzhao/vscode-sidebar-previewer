@@ -543,9 +543,22 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(tableJs.includes('function showTableCopySuccess(copyBtn, defaultText)'));
     assert.ok(tableJs.includes('function lockTableSelectionCopyButtonSize(copyBtn)'));
     assert.ok(tableJs.includes('function resetTableSelectionCopyButton(copyBtn, defaultText)'));
+    assert.ok(tableJs.includes('function scheduleTableCopyButtonReset(copyBtn, defaultText)'));
+    assert.ok(tableJs.includes('function updateTableCopyButtonHoverState(copyBtn, isHovering, defaultText)'));
+    assert.ok(tableJs.includes('function isPreviewContentFocused()'));
+    assert.ok(tableJs.includes('function bindTableSelectionFocusEvents()'));
     assert.ok(tableJs.includes('L10N_TEXT.copySuccess'));
     assert.equal(tableJs.includes('TABLE_SELECTION_COPY_FADE_MS'), false);
     assert.equal(tableJs.includes('fade-out'), false);
+    assert.ok(tableJs.includes("asciiButton.addEventListener('mouseenter', () => {"));
+    assert.ok(tableJs.includes("asciiButton.addEventListener('mouseleave', () => {"));
+    assert.ok(tableJs.includes("tsvButton.addEventListener('mouseenter', () => {"));
+    assert.ok(tableJs.includes("tsvButton.addEventListener('mouseleave', () => {"));
+    assert.ok(tableJs.includes("updateTableCopyButtonHoverState(copyBtn, copyBtn.matches(':hover'), defaultText);"));
+    assert.ok(tableJs.includes('if (!isPreviewContentFocused()) {'));
+    assert.ok(tableJs.includes("document.addEventListener('focusin', handleTableSelectionFocusChange);"));
+    assert.ok(tableJs.includes("window.addEventListener('blur', handleTableSelectionFocusChange);"));
+    assert.ok(tableJs.includes('bindTableSelectionFocusEvents();'));
     assert.ok(tableJs.includes('let left = bounds.left - containerRect.left + tableSelectionUi.container.scrollLeft;'));
     assert.ok(tableJs.includes('let top = bounds.bottom - containerRect.top + tableSelectionUi.container.scrollTop + TABLE_SELECTION_ACTION_MARGIN_PX;'));
     assert.equal(tableJs.includes('table-selection-more-btn'), false);
@@ -584,8 +597,24 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(codeblockJs.includes('function scheduleCopyButtonReset()'));
     assert.ok(codeblockJs.includes('scheduleCopyButtonReset();'));
     assert.ok(codeblockJs.includes('}, CODE_BLOCK_COPY_RESET_MS);'));
-    assert.equal(codeblockJs.includes("copyBtn.addEventListener('mouseleave'"), false);
+    assert.ok(codeblockJs.includes('function updateCopyButtonHoverState(isHovering)'));
+    assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseenter', () => {"));
+    assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseleave', () => {"));
+    assert.ok(codeblockJs.includes("updateCopyButtonHoverState(copyBtn.matches(':hover'));"));
     assert.equal(codeblockJs.includes('fade-out'), false);
+  });
+
+  test('Task E copy success remains while hovering and resets after leave', () => {
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-table.js'), 'utf8');
+    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-codeblock.js'), 'utf8');
+
+    assert.ok(tableJs.includes('function updateTableCopyButtonHoverState(copyBtn, isHovering, defaultText)'));
+    assert.ok(tableJs.includes('function scheduleTableCopyButtonReset(copyBtn, defaultText)'));
+    assert.ok(tableJs.includes('if (isHovering) {'));
+
+    assert.ok(codeblockJs.includes('function updateCopyButtonHoverState(isHovering)'));
+    assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseenter', () => {"));
+    assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseleave', () => {"));
   });
 
   test('Task F comment and global constant conventions are enforced', () => {

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.9 - 2026-04-28
+
+- Split webview styles into modular CSS files and switched to per-file-type style loading.
+- CSV/TSV multi-cell copy action buttons now appear only when the preview panel is focused, and reappear on focus regain for existing selections.
+- Markdown code-block copy and CSV/TSV multi-cell copy now keep `Copied` visible while hovered, then reset 800ms after pointer leave.
+
+～～～
+
+- 将 Webview 样式拆分为模块化 CSS 文件，并按文件类型按需加载样式。
+- CSV/TSV 多单元格复制按钮仅在预览面板获得焦点时显示，已有选区在重新获得焦点后会自动恢复显示。
+- Markdown 代码块复制与 CSV/TSV 多选复制在鼠标停留于 `Copied` 提示区域时保持显示，移出后 800ms 自动还原。
+
+---
+
 ## 0.3.8 - 2026-04-28
 
 - Added focus-aware selection colors for CSV/TSV cells and JSON/YAML/TOML/XML tree items (focused: blue, unfocused: gray).

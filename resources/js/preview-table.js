@@ -27,6 +27,7 @@ let tableSelectionUi = {
     asciiButton: null,
     tsvButton: null
 };
+let tableSelectionFocusEventsBound = false;
 
 /**
  * 从单元格提取纯文本值
@@ -47,6 +48,15 @@ function getCellPlainText(cell) {
  */
 function getSelectedCells() {
     return Array.from(document.querySelectorAll('.tabular-table .selected'));
+}
+
+/**
+ * 判断预览面板是否处于聚焦态
+ * @returns 返回预览面板聚焦状态
+ */
+function isPreviewContentFocused() {
+    const content = document.getElementById('content');
+    return !!(content && content.classList.contains('preview-focused'));
 }
 
 /**
@@ -185,6 +195,33 @@ function hideTableSelectionActions() {
 }
 
 /**
+ * 响应焦点变化并刷新多选按钮显隐
+ */
+function handleTableSelectionFocusChange() {
+    updateTableSelectionActions();
+}
+
+/**
+ * 绑定焦点变化监听
+ * 让多选按钮显隐始终跟随预览面板聚焦状态
+ */
+function bindTableSelectionFocusEvents() {
+    if (tableSelectionFocusEventsBound) {
+        return;
+    }
+
+    tableSelectionFocusEventsBound = true;
+    document.addEventListener('focusin', handleTableSelectionFocusChange);
+    document.addEventListener('focusout', () => {
+        setTimeout(handleTableSelectionFocusChange, 0);
+    });
+    window.addEventListener('focus', () => {
+        setTimeout(handleTableSelectionFocusChange, 0);
+    });
+    window.addEventListener('blur', handleTableSelectionFocusChange);
+}
+
+/**
  * 将按钮还原为默认文案并释放固定尺寸
  * @param copyBtn - 目标复制按钮
  * @param defaultText - 按钮默认文案
@@ -227,6 +264,50 @@ function clearTableCopyStateTimers(copyBtn) {
 }
 
 /**
+ * 调度复制反馈复原定时器
+ * @param copyBtn - 目标复制按钮
+ * @param defaultText - 按钮默认文案
+ */
+function scheduleTableCopyButtonReset(copyBtn, defaultText) {
+    const timers = TABLE_SELECTION_COPY_TIMER_MAP.get(copyBtn);
+    if (!timers) {
+        return;
+    }
+
+    if (timers.resetTimer) {
+        clearTimeout(timers.resetTimer);
+    }
+
+    timers.resetTimer = setTimeout(() => {
+        resetTableSelectionCopyButton(copyBtn, defaultText);
+        TABLE_SELECTION_COPY_TIMER_MAP.delete(copyBtn);
+    }, TABLE_SELECTION_COPY_SUCCESS_MS);
+}
+
+/**
+ * 根据鼠标悬停状态控制复制反馈复原时机
+ * @param copyBtn - 目标复制按钮
+ * @param isHovering - 鼠标是否悬停在复制提示区域
+ * @param defaultText - 按钮默认文案
+ */
+function updateTableCopyButtonHoverState(copyBtn, isHovering, defaultText) {
+    const timers = TABLE_SELECTION_COPY_TIMER_MAP.get(copyBtn);
+    if (!timers) {
+        return;
+    }
+
+    if (isHovering) {
+        if (timers.resetTimer) {
+            clearTimeout(timers.resetTimer);
+            timers.resetTimer = null;
+        }
+        return;
+    }
+
+    scheduleTableCopyButtonReset(copyBtn, defaultText);
+}
+
+/**
  * 显示复制成功反馈并在超时后复原按钮文案
  * @param copyBtn - 目标复制按钮
  * @param defaultText - 按钮默认文案
@@ -237,14 +318,11 @@ function showTableCopySuccess(copyBtn, defaultText) {
     copyBtn.classList.add('copied');
     copyBtn.innerHTML = `<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>`;
 
-    const resetTimer = setTimeout(() => {
-        resetTableSelectionCopyButton(copyBtn, defaultText);
-        TABLE_SELECTION_COPY_TIMER_MAP.delete(copyBtn);
-    }, TABLE_SELECTION_COPY_SUCCESS_MS);
-
     TABLE_SELECTION_COPY_TIMER_MAP.set(copyBtn, {
-        resetTimer
+        resetTimer: null
     });
+
+    updateTableCopyButtonHoverState(copyBtn, copyBtn.matches(':hover'), defaultText);
 }
 
 /**
@@ -288,6 +366,22 @@ function ensureTableSelectionActionElements(table) {
     tsvButton.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
+    });
+
+    asciiButton.addEventListener('mouseenter', () => {
+        updateTableCopyButtonHoverState(asciiButton, true, L10N_TEXT.tableSelectionAscii);
+    });
+
+    asciiButton.addEventListener('mouseleave', () => {
+        updateTableCopyButtonHoverState(asciiButton, false, L10N_TEXT.tableSelectionAscii);
+    });
+
+    tsvButton.addEventListener('mouseenter', () => {
+        updateTableCopyButtonHoverState(tsvButton, true, L10N_TEXT.tableSelectionTsv);
+    });
+
+    tsvButton.addEventListener('mouseleave', () => {
+        updateTableCopyButtonHoverState(tsvButton, false, L10N_TEXT.tableSelectionTsv);
     });
 
     asciiButton.addEventListener('click', async (e) => {
@@ -347,6 +441,11 @@ function updateTableSelectionActions() {
 
     const selectedCells = getSelectedCells();
     if (selectedCells.length < 2) {
+        hideTableSelectionActions();
+        return;
+    }
+
+    if (!isPreviewContentFocused()) {
         hideTableSelectionActions();
         return;
     }
@@ -636,6 +735,9 @@ document.addEventListener('copy', (e) => {
 PreviewCommon.registerDomainInit(['csv', 'tsv'], 'table', function() {
     const table = document.querySelector('.tabular-table');
     if (!table) { return; }
+
+    // 绑定焦点事件，确保按钮显示受预览聚焦状态控制
+    bindTableSelectionFocusEvents();
 
     // 绑定表格拖拽选区交互
     bindTableSelection();

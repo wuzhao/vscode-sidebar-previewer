@@ -33,9 +33,28 @@ function addCopyButton(pre) {
     let resetTimer = null;
 
     /**
+     * 清理复制反馈复原定时器
+     */
+    function clearCopyButtonResetTimer() {
+        if (resetTimer) {
+            clearTimeout(resetTimer);
+            resetTimer = null;
+        }
+    }
+
+    /**
+     * 判断复制反馈是否处于可见状态
+     * @returns 返回复制反馈可见状态
+     */
+    function isCopyFeedbackActive() {
+        return copyBtn.classList.contains('copied') || copyBtn.classList.contains('copy-failed');
+    }
+
+    /**
      * 将代码块复制按钮还原到默认状态
      */
     function resetCopyButtonState() {
+        clearCopyButtonResetTimer();
         copyBtn.classList.remove('copied', 'copy-failed');
         copyBtn.innerHTML = '<i class="codicon codicon-copy"></i>';
     }
@@ -44,13 +63,27 @@ function addCopyButton(pre) {
      * 按固定时长调度复制反馈复原
      */
     function scheduleCopyButtonReset() {
-        if (resetTimer) {
-            clearTimeout(resetTimer);
-        }
+        clearCopyButtonResetTimer();
         resetTimer = setTimeout(() => {
             resetCopyButtonState();
-            resetTimer = null;
         }, CODE_BLOCK_COPY_RESET_MS);
+    }
+
+    /**
+     * 根据鼠标悬停状态控制复制反馈复原时机
+     * @param isHovering - 鼠标是否悬停在复制提示区域
+     */
+    function updateCopyButtonHoverState(isHovering) {
+        if (!isCopyFeedbackActive()) {
+            return;
+        }
+
+        if (isHovering) {
+            clearCopyButtonResetTimer();
+            return;
+        }
+
+        scheduleCopyButtonReset();
     }
 
     copyBtn.addEventListener('click', async (e) => {
@@ -66,13 +99,21 @@ function addCopyButton(pre) {
             await navigator.clipboard.writeText(text);
             copyBtn.classList.add('copied');
             copyBtn.innerHTML = '<i class="codicon codicon-pass-filled"></i>' + L10N_TEXT.copySuccess;
-            scheduleCopyButtonReset();
+            updateCopyButtonHoverState(copyBtn.matches(':hover'));
         } catch (err) {
             console.error('Copy failed:', err);
             copyBtn.classList.add('copy-failed');
             copyBtn.textContent = 'FAILED';
-            scheduleCopyButtonReset();
+            updateCopyButtonHoverState(copyBtn.matches(':hover'));
         }
+    });
+
+    copyBtn.addEventListener('mouseenter', () => {
+        updateCopyButtonHoverState(true);
+    });
+
+    copyBtn.addEventListener('mouseleave', () => {
+        updateCopyButtonHoverState(false);
     });
 
     pre.appendChild(copyBtn);
