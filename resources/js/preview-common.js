@@ -195,6 +195,34 @@ function normalizeZoomLevel(level) {
 }
 
 /**
+ * 校验并归一化可用于 link/base 的 URI
+ * @param value - 待校验 URI
+ * @returns 返回安全 URI，非法时返回 null
+ */
+function sanitizeResourceUri(value) {
+    if (typeof value !== 'string' || value.length === 0) {
+        return null;
+    }
+    try {
+        const parsed = new URL(value, window.location.href);
+        const protocol = parsed.protocol.toLowerCase();
+        if (
+            protocol === 'https:' ||
+            protocol === 'http:' ||
+            protocol === 'data:' ||
+            protocol === 'blob:' ||
+            protocol === 'vscode-webview-resource:' ||
+            protocol === 'vscode-resource:'
+        ) {
+            return parsed.toString();
+        }
+    } catch (_) {
+        return null;
+    }
+    return null;
+}
+
+/**
  * 按文件类型解析所需样式域
  * @param fileType - 当前文件类型
  * @returns 返回需要加载的样式域集合
@@ -248,7 +276,7 @@ function applyCssScopes(fileType) {
             return;
         }
         const datasetKey = CSS_SCOPE_DATASET_KEY[scope];
-        const href = document.body && datasetKey ? document.body.dataset[datasetKey] : '';
+        const href = document.body && datasetKey ? sanitizeResourceUri(document.body.dataset[datasetKey] || '') : null;
         if (!href) {
             return;
         }
@@ -494,12 +522,15 @@ function updateContent(data) {
     
     // 如果后端传来 baseUri，则在 head 中设置 <base>，使相对路径（如 screenshots/xxx.png）能被解析为 webview 资源
     if (typeof messageData.baseUri === 'string' && messageData.baseUri.length > 0) {
-        let base = document.querySelector('base');
-        if (!base) {
-            base = document.createElement('base');
-            document.head.appendChild(base);
+        const safeBaseUri = sanitizeResourceUri(messageData.baseUri);
+        if (safeBaseUri) {
+            let base = document.querySelector('base');
+            if (!base) {
+                base = document.createElement('base');
+                document.head.appendChild(base);
+            }
+            base.setAttribute('href', safeBaseUri.endsWith('/') ? safeBaseUri : safeBaseUri + '/');
         }
-        base.setAttribute('href', messageData.baseUri.endsWith('/') ? messageData.baseUri : messageData.baseUri + '/');
     }
 
     content.innerHTML = typeof messageData.content === 'string' ? messageData.content : '';
