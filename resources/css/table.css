@@ -1,0 +1,211 @@
+/* TABLE START */
+/* Front matter table */
+.frontmatter-table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: collapse;
+    display: table;
+    margin: 0 0 24px;
+    font-size: 13px;
+    font-weight: 200;
+    line-height: 1.5;
+    color: var(--vscode-descriptionForeground);
+}
+
+.frontmatter-table td {
+    vertical-align: top;
+    text-align: left;
+}
+
+.frontmatter-table .fm-key,
+.frontmatter-table .fm-value strong {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.frontmatter-table .fm-value ul {
+    margin: 0;
+    padding-left: 18px;
+    list-style: disc;
+}
+
+.frontmatter-table .fm-value li {
+    margin: 0;
+    padding: 0;
+}
+
+.frontmatter-table tr:first-of-type td {
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+table {
+    border-spacing: 0;
+    border-collapse: collapse;
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    margin: 16px 0;
+    overflow: auto;
+}
+
+table th, table td {
+    padding: 6px 10px;
+    border: 1px solid var(--vscode-panel-border);
+}
+
+table th {
+    font-weight: 600;
+    background-color: var(--vscode-sideBarSectionHeader-background);
+    vertical-align: top;
+}
+
+table td {
+    text-align: left;
+    vertical-align: top;
+}
+
+table tr:nth-child(2n) {
+    background-color: rgba(127, 127, 127, 0.12);
+    background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 35%, transparent 65%);
+}
+
+.table-preview-scroll {
+    max-width: 100%;
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    position: relative;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+}
+
+.table-preview table {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: visible;
+}
+
+.table-preview thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background-color: var(--vscode-sideBar-background);
+}
+
+.table-preview .table-index-column {
+    width: 1%;
+    min-width: 48px;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--vscode-descriptionForeground);
+    user-select: none;
+    -webkit-user-select: none;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: var(--vscode-sideBar-background);
+}
+
+.table-preview thead .table-index-column {
+    z-index: 4;
+}
+
+.table-preview tbody tr:nth-child(2n) .table-index-column {
+    background-color: var(--vscode-sideBar-background);
+}
+
+.table-preview td.selected,
+.table-preview th.selected {
+    background-color: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%));
+    color: var(--vscode-list-inactiveSelectionForeground, var(--vscode-foreground));
+}
+
+#content.preview-focused {
+    outline: none;
+}
+
+#content.preview-focused .table-preview td.selected,
+#content.preview-focused .table-preview th.selected {
+    background-color: var(--vscode-editor-selectionBackground);
+    color: var(--vscode-editor-selectionForeground);
+}
+
+.table-preview td:hover,
+.table-preview th:hover {
+    cursor: default;
+}
+
+.table-preview .table-empty-cell {
+    color: var(--vscode-descriptionForeground);
+}
+
+.table-preview td,
+.table-preview th {
+    -webkit-user-modify: read-only;
+}
+
+.table-selection-actions {
+    position: absolute;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+.table-selection-actions.is-visible {
+    display: inline-flex;
+}
+
+.table-selection-copy-btn {
+    align-items: center;
+    display: inline-flex;
+    gap: 4px;
+    height: 24px;
+    border: 1px solid var(--vscode-button-border, var(--vscode-contrastBorder, var(--vscode-panel-border)));
+    background: var(--vscode-button-background, var(--vscode-editorWidget-background));
+    color: var(--vscode-button-foreground, var(--vscode-foreground));
+    border-radius: 4px;
+    box-shadow: 0 2px 6px color-mix(in srgb, #000 25%, transparent 75%);
+    cursor: pointer;
+    padding: 0 8px;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 1;
+    transition: transform 80ms ease, box-shadow 120ms ease;
+}
+
+.table-selection-copy-btn .codicon {
+    font-size: 12px;
+}
+
+.table-selection-copy-btn:hover {
+    background: var(--vscode-button-hoverBackground, var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)));
+}
+
+.table-selection-copy-btn:active {
+    background: var(--vscode-button-secondaryBackground, var(--vscode-list-activeSelectionBackground, var(--vscode-button-hoverBackground)));
+    box-shadow: inset 0 1px 2px color-mix(in srgb, #000 35%, transparent 65%);
+    transform: translateY(1px);
+}
+
+.table-selection-copy-btn.copied {
+    background-color: var(--vscode-notebookStatusSuccessIcon-foreground);
+    color: var(--vscode-notebook-selectedCellBackground);
+    cursor: default;
+    opacity: 1;
+}
+
+.table-selection-copy-btn.copied .codicon {
+    margin-right: 4px;
+}
+
+.table-selection-copy-btn:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: 1px;
+}
+/* TABLE END */

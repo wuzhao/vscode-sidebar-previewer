@@ -42,6 +42,16 @@ const COMMENT_TOOLTIP_HIDE_DELAY_MS = 200;
 const COMMENT_TOOLTIP_CLICK_BLOCK_WINDOW_MS = 200;
 // 表格预览容器与视口高度差值（像素）
 const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;
+// 按类型映射到 CSS data-* 属性，供按需加载样式使用
+const CSS_SCOPE_DATASET_KEY = {
+    markdown: 'cssMarkdown',
+    mermaid: 'cssMermaid',
+    latex: 'cssLatex',
+    table: 'cssTable',
+    highlight: 'cssHighlight',
+    codeblock: 'cssCodeblock',
+    datatree: 'cssDatatree'
+};
 
 let currentHeadings = [];
 let isScrollingFromEditor = false;
@@ -182,6 +192,72 @@ function normalizeZoomLevel(level) {
         }
         return nearest;
     }, ZOOM_STEPS[0]);
+}
+
+/**
+ * 按文件类型解析所需样式域
+ * @param fileType - 当前文件类型
+ * @returns 返回需要加载的样式域集合
+ */
+function resolveCssScopes(fileType) {
+    const scopes = new Set(['codeblock']);
+    if (fileType === 'csv' || fileType === 'tsv') {
+        scopes.add('table');
+        return scopes;
+    }
+    if (fileType === 'json' || fileType === 'yaml' || fileType === 'toml' || fileType === 'xml') {
+        scopes.add('datatree');
+        return scopes;
+    }
+    if (fileType === 'mermaid') {
+        scopes.add('mermaid');
+        return scopes;
+    }
+    if (fileType === 'latex') {
+        scopes.add('latex');
+        return scopes;
+    }
+    scopes.add('markdown');
+    scopes.add('table');
+    scopes.add('highlight');
+    scopes.add('latex');
+    scopes.add('mermaid');
+    return scopes;
+}
+
+/**
+ * 按需加载并切换样式资源
+ * @param fileType - 当前文件类型
+ */
+function applyCssScopes(fileType) {
+    const requiredScopes = resolveCssScopes(fileType || 'markdown');
+    const scopedLinks = document.head.querySelectorAll('link[data-preview-css-scope]');
+    scopedLinks.forEach(link => {
+        if (!(link instanceof HTMLLinkElement)) {
+            return;
+        }
+        const scope = link.dataset.previewCssScope;
+        if (!scope || !requiredScopes.has(scope)) {
+            link.remove();
+        }
+    });
+
+    requiredScopes.forEach(scope => {
+        const selector = `link[data-preview-css-scope="${scope}"]`;
+        if (document.head.querySelector(selector)) {
+            return;
+        }
+        const datasetKey = CSS_SCOPE_DATASET_KEY[scope];
+        const href = document.body && datasetKey ? document.body.dataset[datasetKey] : '';
+        if (!href) {
+            return;
+        }
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.dataset.previewCssScope = scope;
+        document.head.appendChild(link);
+    });
 }
 
 // 监听来自扩展端的消息，根据消息类型分发到对应处理函数
@@ -437,6 +513,7 @@ function updateContent(data) {
     }
     currentHeadings = Array.isArray(messageData.headings) ? messageData.headings : [];
     currentFileType = typeof messageData.fileType === 'string' ? messageData.fileType : null;
+    applyCssScopes(currentFileType || 'markdown');
 
     // 客户端渲染专用路径：KaTeX / Mermaid 独立渲染模式
     if (messageData.clientRender === 'katex') {

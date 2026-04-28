@@ -1,0 +1,213 @@
+/* DATATREE START */
+/* Data tree view */
+.data-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 8px 0;
+}
+
+.data-tree .tree-item {
+    padding: 1px 0 1px 20px;
+}
+
+.data-tree details > .tree-children {
+    border-left: 1px solid var(--vscode-panel-border);
+    margin-left: 4px;
+}
+
+.data-tree summary {
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: inline;
+}
+
+.data-tree summary::-webkit-details-marker {
+    display: none;
+}
+
+.data-tree summary::before {
+    content: '\25B6';
+    display: inline-block;
+    width: 12px;
+    font-size: 12px;
+    text-align: center;
+    transition: transform 0.15s;
+    color: color-mix(in srgb, var(--vscode-foreground) 35%, transparent 65%);
+    margin-right: 4px;
+}
+
+.data-tree details[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.data-tree .tree-key {
+    color: var(--vscode-symbolIcon-propertyForeground, #79c0ff);
+    cursor: pointer;
+}
+
+.data-tree .tree-key:hover {
+    text-decoration: underline;
+}
+
+.data-tree .tree-root-comment {
+    padding: 1px 0 1px 20px;
+}
+
+.data-tree .tree-standalone-comment {
+    padding: 1px 0 1px 20px;
+}
+
+.data-tree .tree-root-comment .tree-comment-icon {
+    margin-left: 0;
+}
+
+.data-tree .tree-standalone-comment .tree-comment-icon {
+    margin-left: 0;
+}
+
+.data-tree .tree-comment-icon {
+    margin: -1px 2px 0 4px;
+    padding: 3px 2px 2px 3px;
+    border-radius: 50%;
+    color: color-mix(in srgb, var(--vscode-foreground) 35%, transparent 65%);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    vertical-align: text-top;
+}
+
+.data-tree .tree-comment-icon:hover {
+    color: color-mix(in srgb, var(--vscode-foreground) 65%, transparent 35%);
+    background-color: color-mix(in srgb, var(--vscode-foreground) 15%, transparent 85%);
+    opacity: 1;
+}
+
+.data-tree .tree-comment-icon.is-tooltip-focused {
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-focusBorder, var(--vscode-editorHoverWidget-border, var(--vscode-panel-border)));
+}
+
+.tree-comment-tooltip {
+    position: fixed;
+    left: 0;
+    top: 0;
+    max-width: min(420px, calc(100vw - 16px));
+    padding: 6px 8px;
+    outline: 0;
+    border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-panel-border));
+    border-radius: 6px;
+    background: var(--vscode-editorHoverWidget-background, var(--vscode-editorWidget-background, var(--vscode-editor-background)));
+    color: var(--vscode-editorHoverWidget-foreground, var(--vscode-editor-foreground));
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: normal;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .35);
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    cursor: default;
+    visibility: hidden;
+    transform: translateY(-2px);
+    transition: opacity 0.08s ease, transform 0.08s ease, visibility 0s linear 0.08s;
+}
+
+.tree-comment-tooltip.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition: opacity 0.06s ease, transform 0.06s ease;
+}
+
+.tree-comment-tooltip.is-focused {
+    border-color: var(--vscode-focusBorder, var(--vscode-editorHoverWidget-border, var(--vscode-panel-border)));
+}
+
+.tree-comment-tooltip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tree-comment-tooltip-item {
+    display: grid;
+    grid-template-columns: 1ch minmax(0, 1fr);
+    align-items: start;
+    column-gap: 8px;
+}
+
+.tree-comment-tooltip-marker {
+    color: color-mix(in srgb, var(--vscode-descriptionForeground) 35%, transparent 65%);
+    font-family: monospace;
+    line-height: 1.45;
+}
+
+.tree-comment-tooltip-body {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.data-tree .tree-item.is-highlight {
+    background-color: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%));
+    color: var(--vscode-list-inactiveSelectionForeground, var(--vscode-foreground));
+    text-decoration: none;
+}
+
+#content.preview-focused .data-tree .tree-item.is-highlight {
+    background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%);
+    color: var(--vscode-editor-selectionForeground);
+    text-decoration: none;
+}
+
+body.vscode-light .data-tree .tree-key {
+    color: var(--vscode-symbolIcon-propertyForeground, #005cc5);
+}
+
+.data-tree .tree-index {
+    color: var(--vscode-descriptionForeground);
+}
+
+.data-tree .tree-value.tree-string {
+    color: var(--vscode-debugTokenExpression-string, #a5d6ff);
+}
+
+body.vscode-light .data-tree .tree-value.tree-string {
+    color: var(--vscode-debugTokenExpression-string, #032f62);
+}
+
+.data-tree .tree-value.tree-number {
+    color: var(--vscode-debugTokenExpression-number, #79c0ff);
+}
+
+body.vscode-light .data-tree .tree-value.tree-number {
+    color: var(--vscode-debugTokenExpression-number, #005cc5);
+}
+
+.data-tree .tree-value.tree-boolean {
+    color: var(--vscode-debugTokenExpression-boolean, #ff7b72);
+}
+
+body.vscode-light .data-tree .tree-value.tree-boolean {
+    color: var(--vscode-debugTokenExpression-boolean, #d73a49);
+}
+
+.data-tree .tree-value.tree-null {
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+.data-tree .tree-value.tree-empty {
+    color: var(--vscode-descriptionForeground);
+}
+
+.data-tree .tree-bracket {
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+}
+
+.data-tree .tree-bracket:hover {
+    text-decoration: underline;
+}
+/* DATATREE END */

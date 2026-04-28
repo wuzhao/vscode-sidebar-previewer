@@ -16,7 +16,15 @@ import { escapeHtml } from './utils';
 export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     private _view?: vscode.WebviewView;
     private _webviewReady: boolean = false;
-    private _previewCssPath: string;
+    private _resourcesPath: string;
+    private _previewCommonCssPath: string;
+    private _previewMarkdownCssPath: string;
+    private _previewMermaidCssPath: string;
+    private _previewLatexCssPath: string;
+    private _previewTableCssPath: string;
+    private _previewHighlightCssPath: string;
+    private _previewCodeblockCssPath: string;
+    private _previewDatatreeCssPath: string;
     private _previewCommonJsPath: string;
     private _previewCodeblockJsPath: string;
     private _previewKatexJsPath: string;
@@ -46,15 +54,25 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      */
     constructor(private readonly _extensionContext: vscode.ExtensionContext) {
         const resourcesPath = path.join(_extensionContext.extensionPath, 'resources');
-        this._previewCssPath = path.join(resourcesPath, 'preview.css');
-        this._previewCommonJsPath = path.join(resourcesPath, 'preview-common.js');
-        this._previewCodeblockJsPath = path.join(resourcesPath, 'preview-codeblock.js');
-        this._previewKatexJsPath = path.join(resourcesPath, 'preview-katex.js');
-        this._previewMermaidJsPath = path.join(resourcesPath, 'preview-mermaid.js');
-        this._previewMarkdownJsPath = path.join(resourcesPath, 'preview-markdown.js');
-        this._previewDatatreeJsPath = path.join(resourcesPath, 'preview-datatree.js');
-        this._previewCommentTooltipJsPath = path.join(resourcesPath, 'preview-comment-tooltip.js');
-        this._previewTableJsPath = path.join(resourcesPath, 'preview-table.js');
+        const cssPath = path.join(resourcesPath, 'css');
+        const jsPath = path.join(resourcesPath, 'js');
+        this._resourcesPath = resourcesPath;
+        this._previewCommonCssPath = path.join(cssPath, 'common.css');
+        this._previewMarkdownCssPath = path.join(cssPath, 'markdown.css');
+        this._previewMermaidCssPath = path.join(cssPath, 'mermaid.css');
+        this._previewLatexCssPath = path.join(cssPath, 'latex.css');
+        this._previewTableCssPath = path.join(cssPath, 'table.css');
+        this._previewHighlightCssPath = path.join(cssPath, 'highlight.css');
+        this._previewCodeblockCssPath = path.join(cssPath, 'codeblock.css');
+        this._previewDatatreeCssPath = path.join(cssPath, 'datatree.css');
+        this._previewCommonJsPath = path.join(jsPath, 'preview-common.js');
+        this._previewCodeblockJsPath = path.join(jsPath, 'preview-codeblock.js');
+        this._previewKatexJsPath = path.join(jsPath, 'preview-katex.js');
+        this._previewMermaidJsPath = path.join(jsPath, 'preview-mermaid.js');
+        this._previewMarkdownJsPath = path.join(jsPath, 'preview-markdown.js');
+        this._previewDatatreeJsPath = path.join(jsPath, 'preview-datatree.js');
+        this._previewCommentTooltipJsPath = path.join(jsPath, 'preview-comment-tooltip.js');
+        this._previewTableJsPath = path.join(jsPath, 'preview-table.js');
 
         const vendorPath = path.join(resourcesPath, 'vendor');
 
@@ -114,7 +132,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
         // 构建可访问的本地资源根（包含扩展内资源与工作区根）
         const roots: vscode.Uri[] = [
-            vscode.Uri.file(path.dirname(this._previewCssPath)),
+            vscode.Uri.file(this._resourcesPath),
             vscode.Uri.file(path.dirname(this._codiconCssPath)),
             vscode.Uri.file(path.dirname(this._katexCssPath)),
             vscode.Uri.file(path.dirname(this._mermaidJsPath))
@@ -1041,7 +1059,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * @returns 返回 Webview 页面 HTML 模板
      */
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        const previewCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewCssPath));
+        const previewCommonCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewCommonCssPath));
+        const previewMarkdownCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewMarkdownCssPath));
+        const previewMermaidCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewMermaidCssPath));
+        const previewLatexCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewLatexCssPath));
+        const previewTableCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewTableCssPath));
+        const previewHighlightCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewHighlightCssPath));
+        const previewCodeblockCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewCodeblockCssPath));
+        const previewDatatreeCssUri = webview.asWebviewUri(vscode.Uri.file(this._previewDatatreeCssPath));
         const previewCommonJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewCommonJsPath));
         const previewCodeblockJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewCodeblockJsPath));
         const previewKatexJsUri = webview.asWebviewUri(vscode.Uri.file(this._previewKatexJsPath));
@@ -1064,9 +1089,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     <title>${i18n.webviewTitle}</title>
     <link rel="stylesheet" href="${codiconUri}">
     <link rel="stylesheet" href="${katexCssUri}">
-    <link rel="stylesheet" href="${previewCssUri}">
+    <link rel="stylesheet" href="${previewCommonCssUri}">
 </head>
-<body data-copy-success="${escapeHtml(i18n.copySuccess)}" data-copy-code="${escapeHtml(i18n.copyCode)}" data-view-code="${escapeHtml(i18n.viewCode)}" data-view-preview="${escapeHtml(i18n.viewPreview)}" data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}" data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}" data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}">
+<body data-copy-success="${escapeHtml(i18n.copySuccess)}" data-copy-code="${escapeHtml(i18n.copyCode)}" data-view-code="${escapeHtml(i18n.viewCode)}" data-view-preview="${escapeHtml(i18n.viewPreview)}" data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}" data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}" data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}" data-css-markdown="${escapeHtml(previewMarkdownCssUri.toString())}" data-css-mermaid="${escapeHtml(previewMermaidCssUri.toString())}" data-css-latex="${escapeHtml(previewLatexCssUri.toString())}" data-css-table="${escapeHtml(previewTableCssUri.toString())}" data-css-highlight="${escapeHtml(previewHighlightCssUri.toString())}" data-css-codeblock="${escapeHtml(previewCodeblockCssUri.toString())}" data-css-datatree="${escapeHtml(previewDatatreeCssUri.toString())}">
     <div id="sidebar-previewer-container">
         <div class="content" id="content">
             <div class="loading-state"><div class="loading-spinner"></div></div>

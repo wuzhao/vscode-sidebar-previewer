@@ -10,6 +10,17 @@ const { LatexPreviewProvider } = require('../../out/latexPreviewProvider');
 const { MermaidPreviewProvider } = require('../../out/mermaidPreviewProvider');
 const { supportsLocate, isDataTreeType, getFileType } = require('../../out/fileTypes');
 
+const RESOURCES_DIR = path.join(__dirname, '..', '..', 'resources');
+const RESOURCES_CSS_DIR = path.join(RESOURCES_DIR, 'css');
+const RESOURCES_JS_DIR = path.join(RESOURCES_DIR, 'js');
+
+function readResourceCssBundle() {
+  const cssFiles = fs.readdirSync(RESOURCES_CSS_DIR)
+    .filter(name => name.endsWith('.css'))
+    .sort();
+  return cssFiles.map(fileName => fs.readFileSync(path.join(RESOURCES_CSS_DIR, fileName), 'utf8')).join('\n');
+}
+
 function escapeRegex(input) {
     return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -471,8 +482,7 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
   });
 
   test('CSV/TSV sticky styles use opaque frozen row and column backgrounds', () => {
-    const cssPath = path.join(__dirname, '..', '..', 'resources', 'preview.css');
-    const css = fs.readFileSync(cssPath, 'utf8');
+    const css = readResourceCssBundle();
 
     assert.ok(css.includes('.table-preview-scroll'));
     assert.ok(/\.table-preview-scroll\s*\{[^}]*max-height:\s*[^;]+;/s.test(css));
@@ -482,9 +492,9 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
   });
 
   test('Task G zoom keeps tooltip and table viewport behavior stable', () => {
-    const commonJsPath = path.join(__dirname, '..', '..', 'resources', 'preview-common.js');
+    const commonJsPath = path.join(RESOURCES_JS_DIR, 'preview-common.js');
     const commonJs = fs.readFileSync(commonJsPath, 'utf8');
-    const commentTooltipJsPath = path.join(__dirname, '..', '..', 'resources', 'preview-comment-tooltip.js');
+    const commentTooltipJsPath = path.join(RESOURCES_JS_DIR, 'preview-comment-tooltip.js');
     const commentTooltipJs = fs.readFileSync(commentTooltipJsPath, 'utf8');
 
     assert.ok(commonJs.includes('const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;'));
@@ -495,7 +505,7 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
   });
 
   test('Task G table locate/scroll logic compensates sticky header and index column', () => {
-    const tableJsPath = path.join(__dirname, '..', '..', 'resources', 'preview-table.js');
+    const tableJsPath = path.join(RESOURCES_JS_DIR, 'preview-table.js');
     const tableJs = fs.readFileSync(tableJsPath, 'utf8');
 
     assert.ok(tableJs.includes('const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;'));
@@ -505,9 +515,9 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
   });
 
   test('Task H table focus highlight and clipboard actions are wired with i18n labels', () => {
-    const css = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview.css'), 'utf8');
-    const tableJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-table.js'), 'utf8');
-    const commonJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-common.js'), 'utf8');
+    const css = readResourceCssBundle();
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-table.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-common.js'), 'utf8');
     const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
     const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
 
@@ -564,8 +574,8 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
   });
 
   test('Task C copy success resets immediately without fade animations', () => {
-    const css = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview.css'), 'utf8');
-    const codeblockJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-codeblock.js'), 'utf8');
+    const css = readResourceCssBundle();
+    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-codeblock.js'), 'utf8');
 
     assert.equal(css.includes('.copy-btn.fade-out'), false);
     assert.equal(css.includes('transition: opacity 0.15s, background-color 0.15s;'), false);
@@ -588,8 +598,8 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
       assert.equal(placeholderPattern.test(fileContent), false, `${fileName} should not contain placeholder JSDoc tags`);
     }
 
-    const commonJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-common.js'), 'utf8');
-    const mermaidJs = fs.readFileSync(path.join(__dirname, '..', '..', 'resources', 'preview-mermaid.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-common.js'), 'utf8');
+    const mermaidJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-mermaid.js'), 'utf8');
     const prepareVendor = fs.readFileSync(path.join(__dirname, '..', '..', 'scripts', 'prepare-vendor.mjs'), 'utf8');
     const fileTypes = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'fileTypes.ts'), 'utf8');
     const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');

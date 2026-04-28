@@ -1,0 +1,50 @@
+/* MERMAID START */
+/* Mermaid container */
+.mermaid-container {
+    width: 100%;
+    min-height: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 16px;
+}
+
+.content.is-mermaid-preview .mermaid-container {
+    min-height: 100%;
+    height: 100%;
+}
+
+.mermaid-container.is-pannable,
+.mermaid-container.is-pannable * {
+    cursor: grab;
+}
+
+.mermaid-container.is-pannable.is-dragging,
+.mermaid-container.is-pannable.is-dragging * {
+    cursor: grabbing;
+}
+
+body.mermaid-dragging {
+    user-select: none;
+}
+
+.mermaid-container .mermaid {
+    display: inline-block;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font-size: 100%;
+    overflow: visible;
+    text-align: left;
+    white-space: normal;
+}
+
+.mermaid-container .mermaid svg {
+    display: block;
+    max-width: none !important;
+}
+
+.katex-block,
+.mermaid-block {
+    background: transparent;
+}
+/* MERMAID END */

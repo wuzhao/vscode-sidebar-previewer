@@ -1,0 +1,63 @@
+/* CODEBLOCK START */
+/* Code block copy button */
+pre {
+    position: relative;
+}
+
+pre:hover .copy-btn {
+    opacity: 1;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    opacity: 0;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.copy-btn {
+    right: 8px;
+}
+
+.copy-btn:hover,
+.copy-btn:active {
+    background-color: var(--vscode-notebook-cellStatusBarItemHoverBackground);
+}
+
+.copy-btn.copied {
+    background-color: var(--vscode-notebookStatusSuccessIcon-foreground);
+    color: var(--vscode-notebook-selectedCellBackground);
+    cursor: default;
+    opacity: 1;
+    font-size: 13px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.copy-btn.copied .codicon {
+    margin-right: 6px;
+}
+
+.copy-btn.copy-failed {
+    background-color: var(--vscode-errorForeground);
+    color: var(--vscode-editor-background);
+    cursor: default;
+    opacity: 1;
+    font-size: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+/* CODEBLOCK END */

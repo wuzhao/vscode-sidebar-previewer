@@ -1,0 +1,38 @@
+/* LATEX START */
+/* LaTeX styles */
+.latex-command {
+    color: var(--vscode-descriptionForeground);
+    font-family: monospace;
+    font-size: 85%;
+    padding: 2px 0;
+}
+
+.latex-author {
+    text-align: center;
+    font-style: italic;
+    color: var(--vscode-descriptionForeground);
+    margin: 8px 0 16px;
+}
+
+.latex-comment {
+    color: var(--vscode-descriptionForeground);
+    font-family: monospace;
+    font-size: 85%;
+    opacity: 0.6;
+    padding: 2px 0;
+}
+
+.katex-block {
+    text-align: center;
+    margin: 16px 0;
+    overflow-x: auto;
+}
+
+.katex-block .katex {
+    font-size: 1.1em;
+}
+
+.katex-inline .katex {
+    font-size: 1em;
+}
+/* LATEX END */
