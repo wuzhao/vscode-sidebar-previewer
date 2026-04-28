@@ -223,6 +223,44 @@ function sanitizeResourceUri(value) {
 }
 
 /**
+ * 将输入 HTML 清洗为安全的文档片段
+ * @param value - 待渲染 HTML 文本
+ * @returns 返回可插入 DOM 的安全片段
+ */
+function buildSafeContentFragment(value) {
+    const html = typeof value === 'string' ? value : '';
+    const parser = new DOMParser();
+    const parsedDoc = parser.parseFromString(html, 'text/html');
+    const forbiddenNodes = parsedDoc.body.querySelectorAll('script, iframe, object, embed, link, meta, base');
+    forbiddenNodes.forEach(node => node.remove());
+
+    const nodesWithAttrs = parsedDoc.body.querySelectorAll('*');
+    nodesWithAttrs.forEach(node => {
+        const attrs = Array.from(node.attributes);
+        attrs.forEach(attr => {
+            const attrName = attr.name.toLowerCase();
+            const attrValue = attr.value || '';
+            if (attrName.startsWith('on')) {
+                node.removeAttribute(attr.name);
+                return;
+            }
+            if (
+                (attrName === 'href' || attrName === 'src' || attrName === 'xlink:href') &&
+                /^\s*javascript:/i.test(attrValue)
+            ) {
+                node.removeAttribute(attr.name);
+            }
+        });
+    });
+
+    const fragment = document.createDocumentFragment();
+    while (parsedDoc.body.firstChild) {
+        fragment.appendChild(parsedDoc.body.firstChild);
+    }
+    return fragment;
+}
+
+/**
  * 按文件类型解析所需样式域
  * @param fileType - 当前文件类型
  * @returns 返回需要加载的样式域集合
@@ -533,7 +571,7 @@ function updateContent(data) {
         }
     }
 
-    content.innerHTML = typeof messageData.content === 'string' ? messageData.content : '';
+    content.replaceChildren(buildSafeContentFragment(messageData.content));
     content.setAttribute('tabindex', '0');
     content.setAttribute('role', 'region');
     if (!content.dataset.focusBound) {
