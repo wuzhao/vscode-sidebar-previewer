@@ -27,7 +27,7 @@ const {
   assertLabelOwner,
   assertSameOwner,
   readSupportedFixture,
-} = require('./codePreviewProvider.testUtils.cjs');
+} = require('./testUtils.cjs');
 
 test('Task G JSON fixture label ownership mapping is correct', () => {
   const source = readSupportedFixture('json.jsonc');

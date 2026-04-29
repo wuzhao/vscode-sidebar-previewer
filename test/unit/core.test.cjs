@@ -27,7 +27,7 @@ const {
   assertLabelOwner,
   assertSameOwner,
   readSupportedFixture,
-} = require('./codePreviewProvider.testUtils.cjs');
+} = require('./testUtils.cjs');
 
 test('JSON duplicate keys map to distinct source lines', () => {
     const source = `{

@@ -27,7 +27,7 @@ const {
   assertLabelOwner,
   assertSameOwner,
   readSupportedFixture,
-} = require('./codePreviewProvider.testUtils.cjs');
+} = require('./testUtils.cjs');
 
   test('CSV/TSV sticky styles use opaque frozen row and column backgrounds', () => {
     const css = readResourceCssBundle();

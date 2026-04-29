@@ -27,7 +27,7 @@ const {
   assertLabelOwner,
   assertSameOwner,
   readSupportedFixture,
-} = require('./codePreviewProvider.testUtils.cjs');
+} = require('./testUtils.cjs');
 
 test('CodePreviewProvider returns an error state for invalid JSON', () => {
     const result = CodePreviewProvider.parse('{"k":', 'json');
