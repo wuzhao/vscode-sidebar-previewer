@@ -86,7 +86,7 @@
 
 .data-tree .tree-comment-icon.is-tooltip-focused {
     color: var(--vscode-foreground);
-    background-color: var(--vscode-focusBorder, var(--vscode-editorHoverWidget-border, var(--vscode-panel-border)));
+    background-color: color-mix(in srgb, var(--vscode-focusBorder) 65%, transparent 35%);
 }
 
 .tree-comment-tooltip {

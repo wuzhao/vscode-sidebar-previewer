@@ -123,10 +123,6 @@ table tr:nth-child(2n) {
     background-color: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%));
 }
 
-#content.preview-focused {
-    outline: none;
-}
-
 #content.preview-focused .table-preview td.selected,
 #content.preview-focused .table-preview th.selected {
     background-color: color-mix(in srgb, var(--vscode-button-background) 35%, transparent 65%);

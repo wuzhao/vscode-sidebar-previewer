@@ -8,6 +8,10 @@
     padding: 16px;
 }
 
+.content.is-mermaid-preview {
+    overflow: hidden;
+}
+
 .content.is-mermaid-preview .mermaid-container {
     min-height: 100%;
     height: 100%;

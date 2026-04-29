@@ -29,9 +29,8 @@ body {
     scroll-behavior: smooth;
 }
 
-.content.is-mermaid-preview {
-    overflow: hidden;
-    padding: 8px;
+.content.preview-focused {
+    outline: none;
 }
 
 .empty-state {
