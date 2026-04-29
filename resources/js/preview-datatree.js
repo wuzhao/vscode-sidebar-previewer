@@ -93,6 +93,110 @@ function collectNearestTreeItems(elements) {
 }
 
 /**
+ * 读取树节点上用于行号映射的键元素
+ * @param treeItem - 树节点元素
+ * @returns 返回键元素
+ */
+function getTreeItemKeyElement(treeItem) {
+    if (!treeItem || typeof treeItem.querySelector !== 'function') {
+        return null;
+    }
+
+    return treeItem.querySelector(':scope > .tree-key[data-line], :scope > details > summary > .tree-key[data-line]');
+}
+
+/**
+ * 读取树节点行号用于同行冲突处理
+ * @param treeItem - 树节点元素
+ * @returns 返回行号
+ */
+function getTreeItemLine(treeItem) {
+    const key = getTreeItemKeyElement(treeItem);
+    if (!key || typeof key.getAttribute !== 'function') {
+        return null;
+    }
+
+    const line = parseInt(key.getAttribute('data-line'), 10);
+    return isNaN(line) ? null : line;
+}
+
+/**
+ * 判断树节点是否为 XML 属性键
+ * @param treeItem - 树节点元素
+ * @returns 返回布尔判断结果
+ */
+function isXmlAttributeTreeItem(treeItem) {
+    const key = getTreeItemKeyElement(treeItem);
+    if (!key) {
+        return false;
+    }
+
+    const label = (key.textContent || '').trim();
+    return label.startsWith('@');
+}
+
+/**
+ * 过滤同行重复命中的树节点避免父子联动高亮
+ * @param matchedItems - 命中的树节点集合
+ * @returns 返回过滤后的树节点集合
+ */
+function filterDuplicateLineTreeItems(matchedItems) {
+    const nextItems = new Set(matchedItems);
+    const lineMap = new Map();
+
+    matchedItems.forEach(item => {
+        lineMap.set(item, getTreeItemLine(item));
+    });
+
+    // XML 属性键与父节点同行时只保留父节点高亮
+    for (const item of Array.from(nextItems)) {
+        if (!isXmlAttributeTreeItem(item)) {
+            continue;
+        }
+
+        const line = lineMap.get(item);
+        if (line === null || line === undefined) {
+            continue;
+        }
+
+        let parent = item.parentElement ? item.parentElement.closest('.tree-item') : null;
+        while (parent) {
+            if (nextItems.has(parent) && lineMap.get(parent) === line) {
+                nextItems.delete(item);
+                break;
+            }
+
+            parent = parent.parentElement ? parent.parentElement.closest('.tree-item') : null;
+        }
+    }
+
+    // 非属性节点同行命中时只保留最深层节点
+    for (const item of Array.from(nextItems)) {
+        const line = lineMap.get(item);
+        if (line === null || line === undefined) {
+            continue;
+        }
+
+        for (const other of nextItems) {
+            if (other === item) {
+                continue;
+            }
+            if (lineMap.get(other) !== line) {
+                continue;
+            }
+            if (!item.contains(other)) {
+                continue;
+            }
+
+            nextItems.delete(item);
+            break;
+        }
+    }
+
+    return Array.from(nextItems);
+}
+
+/**
  * 归一化行范围以统一后续处理
  * @param startLine - 起始行号
  * @param endLine - 结束行号
@@ -142,7 +246,7 @@ function highlightTreeRange(startLine, endLine) {
     }
 
     if (inRange.length > 0) {
-        const matchedItems = collectNearestTreeItems(inRange);
+        const matchedItems = filterDuplicateLineTreeItems(collectNearestTreeItems(inRange));
         matchedItems.forEach(item => item.classList.add('is-highlight'));
         return;
     }

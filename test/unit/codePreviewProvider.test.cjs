@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const { CodePreviewProvider } = require('../../out/codePreviewProvider');
 const { TablePreviewProvider } = require('../../out/tablePreviewProvider');
@@ -601,6 +602,116 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(i18n.includes("tableSelectionMore: 'Actions'"));
     assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy As ASCII'"));
     assert.ok(i18n.includes("tableSelectionTsv: 'Copy As TSV'"));
+  });
+
+  test('Task H datatree highlight de-duplicates same-line parent-child matches', () => {
+    const datatreeJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-datatree.js'), 'utf8');
+
+    function createClassList() {
+      const classes = new Set();
+      return {
+        add(name) {
+          classes.add(name);
+        },
+        remove(name) {
+          classes.delete(name);
+        },
+        contains(name) {
+          return classes.has(name);
+        },
+      };
+    }
+
+    function createTreeItem(label, line, parentItem) {
+      const item = {
+        classList: createClassList(),
+        parentElement: parentItem
+          ? {
+              closest(selector) {
+                return selector === '.tree-item' ? parentItem : null;
+              },
+              parentElement: parentItem.parentElement,
+            }
+          : null,
+        descendants: new Set(),
+        querySelector(selector) {
+          if (selector.includes('.tree-key[data-line]')) {
+            return this.keyElement;
+          }
+          return null;
+        },
+        contains(other) {
+          return this.descendants.has(other);
+        },
+      };
+
+      const keyElement = {
+        textContent: label,
+        getAttribute(name) {
+          if (name === 'data-line') {
+            return String(line);
+          }
+          return null;
+        },
+        closest(selector) {
+          return selector === '.tree-item' ? item : null;
+        },
+      };
+
+      item.keyElement = keyElement;
+      return { item, keyElement };
+    }
+
+    const tomlParent = createTreeItem('profile', 60, null);
+    const tomlChild = createTreeItem('dev', 60, tomlParent.item);
+    tomlParent.item.descendants.add(tomlChild.item);
+
+    const xmlParent = createTreeItem('book', 12, null);
+    const xmlAttr = createTreeItem('@id', 12, xmlParent.item);
+    xmlParent.item.descendants.add(xmlAttr.item);
+
+    let activeKeys = [tomlParent.keyElement, tomlChild.keyElement];
+    let activeItems = [tomlParent.item, tomlChild.item];
+
+    const documentMock = {
+      querySelectorAll(selector) {
+        if (selector === '.data-tree .tree-key[data-line]') {
+          return activeKeys;
+        }
+        if (selector === '.data-tree .tree-item.is-highlight') {
+          return activeItems.filter(item => item.classList.contains('is-highlight'));
+        }
+        return [];
+      },
+      querySelector() {
+        return null;
+      },
+    };
+
+    const context = {
+      window: {},
+      document: documentMock,
+      PreviewCommon: {
+        registerDomainInit() {},
+      },
+      PreviewCommentTooltip: undefined,
+      VSCODE_API: {
+        postMessage() {},
+      },
+    };
+
+    vm.runInNewContext(datatreeJs, context);
+
+    context.window.PreviewDatatree.highlightTreeRange(60, 60);
+    assert.equal(tomlParent.item.classList.contains('is-highlight'), false);
+    assert.equal(tomlChild.item.classList.contains('is-highlight'), true);
+
+    activeKeys = [xmlParent.keyElement, xmlAttr.keyElement];
+    activeItems = [xmlParent.item, xmlAttr.item];
+    context.window.PreviewDatatree.highlightTreeRange(12, 12);
+
+    assert.equal(xmlParent.item.classList.contains('is-highlight'), true);
+    assert.equal(xmlAttr.item.classList.contains('is-highlight'), false);
   });
 
   test('Task C copy success resets immediately without fade animations', () => {
