@@ -68,35 +68,62 @@ Autolink: https://github.com
 ### Unordered List
 
 - Item 1
+  - Item 1.1
+    - Item 1.1.a
+  - Item 1.2 with ordered mix
+    1. Item 1.2.1
+    2. Item 1.2.2
 - Item 2
-  - Nested item 2.1
-  - Nested item 2.2
-    - Deep nested item
+  - [x] Task under unordered item
+  - [ ] Pending task under unordered item
+    - Deep note for pending task
 - Item 3
 
 ### Ordered List
 
-1. First item
-2. Second item
-   1. Nested item 2.1
-   2. Nested item 2.2
-3. Third item
+1. Phase 1
+   1. Step 1.1
+      - Bullet detail A
+      - Bullet detail B
+   2. Step 1.2
+      - [x] Checklist done
+      - [ ] Checklist todo
+2. Phase 2
+   1. Step 2.1
+      1. Deep ordered item 2.1.1
+      2. Deep ordered item 2.1.2
+3. Phase 3
 
 ### Mixed Nested List
 
-1. Ordered item
-   - Unordered sub-item
-   - Another sub-item
-     1. Deep ordered item
-     2. Another deep item
-2. Back to ordered
+1. Sprint planning
+   - Backend
+     1. API draft
+     2. Schema review
+   - Frontend
+     - [x] Component sketch
+     - [ ] Interaction polish
+2. Release checklist
+   - Docs
+     - [x] README updated
+     - [ ] i18n screenshots
+   - QA
+     1. Unit tests
+     2. Manual smoke test
+3. Wrap up
 
 ### Task List
 
-- [x] Completed task
-- [x] Another completed task
-- [ ] Incomplete task
-- [ ] Another incomplete task
+- [x] Feature A delivered
+  - [x] API endpoint completed
+    1. Response schema frozen
+    2. Error code matrix verified
+  - [x] UI integration done
+- [ ] Feature B in progress
+  1. [x] Draft implementation
+  2. [ ] Edge-case verification
+     - Add regression sample for mixed lists
+- [ ] Final release review
 
 ---
 

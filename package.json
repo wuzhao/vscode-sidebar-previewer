@@ -170,8 +170,8 @@
     "prepare:nls": "node scripts/prepare-nls.mjs",
     "prepare:vendor": "node scripts/prepare-vendor.mjs",
     "package:vsix": "npm run clean && npm run bundle && npm run prepare:nls && npm run prepare:vendor",
-    "compile": "npm run clean && tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "npm run clean && tsc -p ./ && npm run prepare:nls",
+    "watch": "npm run prepare:nls && tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
     "test:unit": "npm run compile && node --test test/unit/*.test.cjs",
     "test": "npm run lint && npm run test:unit"
