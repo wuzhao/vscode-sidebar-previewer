@@ -151,13 +151,11 @@
 
 .data-tree .tree-item.is-highlight {
     background-color: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%));
-    color: var(--vscode-list-inactiveSelectionForeground, var(--vscode-foreground));
     text-decoration: none;
 }
 
 #content.preview-focused .data-tree .tree-item.is-highlight {
-    background-color: color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%);
-    color: var(--vscode-editor-selectionForeground);
+    background-color: color-mix(in srgb, var(--vscode-button-background) 35%, transparent 65%);
     text-decoration: none;
 }
 

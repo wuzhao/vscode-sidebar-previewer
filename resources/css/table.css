@@ -121,7 +121,6 @@ table tr:nth-child(2n) {
 .table-preview td.selected,
 .table-preview th.selected {
     background-color: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%));
-    color: var(--vscode-list-inactiveSelectionForeground, var(--vscode-foreground));
 }
 
 #content.preview-focused {
@@ -130,8 +129,7 @@ table tr:nth-child(2n) {
 
 #content.preview-focused .table-preview td.selected,
 #content.preview-focused .table-preview th.selected {
-    background-color: var(--vscode-editor-selectionBackground);
-    color: var(--vscode-editor-selectionForeground);
+    background-color: color-mix(in srgb, var(--vscode-button-background) 35%, transparent 65%);
 }
 
 .table-preview td:hover,

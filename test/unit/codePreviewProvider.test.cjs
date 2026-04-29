@@ -376,6 +376,23 @@ test('MarkdownProvider task checkbox line mapping ignores fenced code blocks', (
   assert.deepEqual(lineMatches, [5, 6]);
 });
 
+test('MarkdownProvider task checkbox line mapping supports ordered task items', () => {
+  const source = [
+    '- [x] top level done',
+    '  1. [ ] nested ordered todo',
+    '  2. [x] nested ordered done',
+    '- [ ] second top level todo',
+  ].join('\n');
+
+  const result = MarkdownProvider.parse(source);
+  const lineMatches = Array.from(
+    result.html.matchAll(/<input type="checkbox"(?: checked="")? data-line="(\d+)">/g),
+    match => Number(match[1])
+  );
+
+  assert.deepEqual(lineMatches, [0, 1, 2, 3]);
+});
+
 test('CodePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
     const source = `{
   "name": "Alice", // profile name

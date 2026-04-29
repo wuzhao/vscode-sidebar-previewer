@@ -192,7 +192,7 @@ export class MarkdownProvider {
      */
     private static collectTaskListLineNumbers(lines: string[]): number[] {
         const taskLines: number[] = [];
-        const taskPattern = /^\s*[-*+]\s+\[([ xX])\]/;
+        const taskPattern = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]/;
 
         let fenceMarker: string | null = null;
 
