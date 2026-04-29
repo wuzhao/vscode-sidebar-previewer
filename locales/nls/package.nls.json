@@ -1,0 +1,15 @@
+{
+  "displayName": "Sidebar Previewer",
+  "description": "Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, TOML, XML, CSV, and TSV.",
+  "command.zoomIn.title": "Zoom In",
+  "command.zoomOut.title": "Zoom Out",
+  "command.zoomReset.title": "100%",
+  "command.locateEditor.title": "Locate in Editor",
+  "command.locatePreview.title": "Locate in Preview",
+  "command.disableFollowScroll.title": "Disable Follow Scroll",
+  "command.enableFollowScroll.title": "Enable Follow Scroll",
+  "command.expandAll.title": "Expand All",
+  "command.collapseAll.title": "Collapse All",
+  "command.feedback.title": "Feedback",
+  "viewsContainer.activitybar.title": "Preview"
+}
