@@ -11,5 +11,17 @@
   "command.expandAll.title": "すべて展開",
   "command.collapseAll.title": "すべて折りたたむ",
   "command.feedback.title": "フィードバック",
-  "viewsContainer.activitybar.title": "プレビュー"
+  "viewsContainer.activitybar.title": "プレビュー",
+  "runtime.emptyStateTitle": "ファイルプレビュー",
+  "runtime.emptyStateText": "このファイル形式はプレビューに対応していません。対応形式：<ul>{0}</ul>",
+  "runtime.zoomStatus": "プレビュー拡大率: {0}%",
+  "runtime.webviewTitle": "ファイルプレビュー",
+  "runtime.copySuccess": "コピー完了",
+  "runtime.copyCode": "コピー",
+  "runtime.viewCode": "コード",
+  "runtime.viewPreview": "プレビュー",
+  "runtime.previewError": "プレビュー失敗",
+  "runtime.tableSelectionMore": "アクション",
+  "runtime.tableSelectionAsciiTable": "ASCII としてコピー",
+  "runtime.tableSelectionTsv": "TSV としてコピー"
 }

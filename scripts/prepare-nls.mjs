@@ -5,15 +5,16 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_PATH = path.resolve(__dirname, '..');
-const NLS_DIR = path.join(ROOT_PATH, 'locales', 'nls');
+const LOCALES_DIR = path.join(ROOT_PATH, 'locales');
 
-if (!fs.existsSync(NLS_DIR)) {
-    throw new Error('Missing locales/nls directory.');
+if (!fs.existsSync(LOCALES_DIR)) {
+    throw new Error('Missing locales directory.');
 }
 
-const nlsFiles = fs.readdirSync(NLS_DIR).filter(fileName => /^package\.nls(\..+)?\.json$/i.test(fileName));
+const nlsFiles = fs.readdirSync(LOCALES_DIR).filter(fileName => /^nls(\..+)?\.json$/i.test(fileName));
 for (const fileName of nlsFiles) {
-    fs.copyFileSync(path.join(NLS_DIR, fileName), path.join(ROOT_PATH, fileName));
+    const targetName = fileName.replace(/^nls/i, 'package.nls');
+    fs.copyFileSync(path.join(LOCALES_DIR, fileName), path.join(ROOT_PATH, targetName));
 }
 
 console.log(`Prepared ${nlsFiles.length} NLS file(s).`);

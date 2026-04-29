@@ -11,5 +11,17 @@
   "command.expandAll.title": "全部展开",
   "command.collapseAll.title": "全部折叠",
   "command.feedback.title": "反馈",
-  "viewsContainer.activitybar.title": "预览"
+  "viewsContainer.activitybar.title": "预览",
+  "runtime.emptyStateTitle": "文件预览",
+  "runtime.emptyStateText": "当前文件类型不支持预览，仅支持以下格式：<ul>{0}</ul>",
+  "runtime.zoomStatus": "预览缩放: {0}%",
+  "runtime.webviewTitle": "文件预览",
+  "runtime.copySuccess": "已复制",
+  "runtime.copyCode": "复制",
+  "runtime.viewCode": "代码",
+  "runtime.viewPreview": "预览",
+  "runtime.previewError": "预览失败",
+  "runtime.tableSelectionMore": "操作",
+  "runtime.tableSelectionAsciiTable": "复制为 ASCII",
+  "runtime.tableSelectionTsv": "复制为 TSV"
 }

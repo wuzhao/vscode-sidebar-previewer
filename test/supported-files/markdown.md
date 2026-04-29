@@ -114,16 +114,30 @@ Autolink: https://github.com
 
 ### Task List
 
-- [x] Feature A delivered
-  - [x] API endpoint completed
-    1. Response schema frozen
-    2. Error code matrix verified
-  - [x] UI integration done
-- [ ] Feature B in progress
+- [x] Release Program Alpha
+  - [x] Backend track
+    1. [x] API milestone
+       - [x] Contract lock completed
+         1. [x] Response examples approved
+         2. [ ] Error matrix final review
+       - [ ] Compatibility validation
+    2. [ ] Data migration rehearsal
+  - [ ] Frontend track
+    - [x] Layout baseline
+    - [ ] Interaction polish
+      1. [ ] Keyboard navigation
+      2. [ ] Accessibility audit
+- [ ] Release Program Beta
   1. [x] Draft implementation
   2. [ ] Edge-case verification
-     - Add regression sample for mixed lists
+     - [ ] Add regression sample for mixed lists
+     - [ ] Validate ordered task nesting behavior
+  3. [ ] Performance check
 - [ ] Final release review
+  - [ ] Changelog proofreading
+  - [ ] Multi-language screenshot refresh
+    1. [ ] zh-CN capture
+    2. [ ] ja-JP capture
 
 ---
 

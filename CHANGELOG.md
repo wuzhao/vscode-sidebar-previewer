@@ -4,19 +4,13 @@
 
 - Fixed Markdown task-list styling so parent item state and style are no longer affected by checked child task items.
 - Adjusted Markdown nested list indentation for ordered/unordered/task lists so child task checkboxes align with parent text.
-- Reorganized localization resources: moved `package.nls*.json` to `locales/nls/` and non-English README files to `docs/i18n/`, with references updated.
-- Added `prepare:nls` build step to restore localization bundles into the package root during VSIX packaging.
-- Restored `.table-selection-copy-btn:active` style to fix the failing unit test baseline.
-- Bumped extension version to `0.3.10`.
+- Reorganized localization resources: moved locale bundles under `locales/` and non-English README files to `docs/i18n/`, with references updated.
 
 ～～～
 
 - 修复 Markdown task list 样式：子级 task item 勾选状态不再影响父级 item 的状态与样式。
 - 调整 Markdown 有序/无序/task 列表的嵌套缩进，使子级 task checkbox 与父级文本左对齐。
-- 重组多语言资源：`package.nls*.json` 移至 `locales/nls/`，非英文 README 移至 `docs/i18n/`，并同步更新引用。
-- 新增 `prepare:nls` 打包步骤，在 VSIX 打包时将语言包复制回根目录。
-- 补回 `.table-selection-copy-btn:active` 样式，修复现有单测失败项。
-- 版本号升级至 `0.3.10`。
+- 重组多语言资源：语言资源统一收敛到 `locales/`，非英文 README 移至 `docs/i18n/`，并同步更新引用。
 
 ---
 
