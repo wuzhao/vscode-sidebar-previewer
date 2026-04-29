@@ -2,7 +2,7 @@
   "name": "sidebar-previewer",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "publisher": "MG12",
   "repository": {
     "type": "git",
@@ -165,10 +165,11 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package:vsix",
-    "clean": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\"",
+    "clean": "node -e \"const fs=require('fs'); fs.rmSync('out', { recursive: true, force: true }); for (const f of fs.readdirSync('.')) { if (/^package\\.nls(\\..+)?\\.json$/i.test(f)) fs.rmSync(f, { force: true }); }\"",
     "bundle": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --outfile=out/extension.js",
+    "prepare:nls": "node scripts/prepare-nls.mjs",
     "prepare:vendor": "node scripts/prepare-vendor.mjs",
-    "package:vsix": "npm run clean && npm run bundle && npm run prepare:vendor",
+    "package:vsix": "npm run clean && npm run bundle && npm run prepare:nls && npm run prepare:vendor",
     "compile": "npm run clean && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",

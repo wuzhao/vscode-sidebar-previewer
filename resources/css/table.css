@@ -187,6 +187,10 @@ table tr:nth-child(2n) {
     background: var(--vscode-button-hoverBackground, var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)));
 }
 
+.table-selection-copy-btn:active {
+    transform: translateY(1px);
+}
+
 .table-selection-copy-btn.copied {
     background-color: var(--vscode-notebookStatusSuccessIcon-foreground);
     color: var(--vscode-notebook-selectedCellBackground);

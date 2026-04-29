@@ -79,7 +79,7 @@ blockquote {
 }
 
 ul, ol {
-    padding-left: 2em;
+    padding-left: 2.2em;
     margin-bottom: 16px;
 }
 
@@ -94,17 +94,22 @@ li + li {
 
 li.task-list-item {
     list-style: none;
-    margin-left: -1.4em;
+    margin-left: 0;
 }
 
-li.task-list-item:has(input[type="checkbox"]:checked) {
+li.task-list-item:has(> input[type="checkbox"]:checked) {
     text-decoration: line-through;
     opacity: 0.6;
 }
 
 li.task-list-item input[type="checkbox"] {
-    margin-right: 0.4em;
+    margin: 0 0.6em 0 0;
     cursor: pointer;
+}
+
+li > ul,
+li > ol {
+    margin-top: 0.35em;
 }
 /* MARKDOWN END */
 

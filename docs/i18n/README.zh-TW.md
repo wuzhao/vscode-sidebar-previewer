@@ -1,8 +1,8 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.9-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.10-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-Language: [English](./README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文-臺灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
+Language: [English](../../README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文-臺灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
 VS Code 的側邊欄預覽器，支援實時渲染、滾動同步、樹形檢視、縮放控制等功能，多檔案格式支援包括 Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV 和 TSV。
 

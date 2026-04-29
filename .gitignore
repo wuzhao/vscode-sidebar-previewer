@@ -8,6 +8,7 @@ out/
 resources/vendor/
 .vscode-test/
 *.vsix
+package.nls*.json
 
 # AI AGENTS
 .cursorrules
@@ -30,4 +31,3 @@ GEMINI.md
 issues/
 tasks/
 checklist/
-
