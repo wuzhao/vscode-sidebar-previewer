@@ -85,3 +85,38 @@ Webview → Host : getVisibleHeading | locateEditor
 3. **渲染**：将 HTML 通过 `postMessage({ type: 'update', ... })` 发送至 Webview；Webview 注入 DOM 后执行二次渲染（KaTeX、Mermaid）。
 4. **定位同步**：编辑器滚动时，Host 计算可视区域对应的标题/节点，发送 `scrollToHeading` 消息；Webview 点击标题时，向 Host 发送 `locateEditor` 消息反向跳转。
 5. **命令**：用户点击工具栏按钮，VS Code 命令触发 `PreviewProvider` 公开方法（如 `zoomIn()`），再通过 `postMessage` 通知 Webview 更新 UI 状态。
+
+---
+
+## Datatree 拆分与职责映射
+
+Task F 已将原先超大文件 `src/datatreePreviewProvider.ts` 拆分为「通用基类 + 按文件类型基类 + 入口壳层」结构。
+
+### 后端解析层文件映射
+
+| 职责 | 文件 |
+| --- | --- |
+| Datatree 入口与总调度 | `src/datatreePreviewProvider.ts` |
+| 通用能力（定位与注释绑定） | `src/datatree/common/datatreeLocatorAndCommentBase.ts` |
+| 通用能力（树渲染与边界处理） | `src/datatree/common/datatreeTreeRenderBase.ts` |
+| JSON 相关实现 | `src/datatree/fileTypes/datatreeJsonFileTypeBase.ts` |
+| YAML 相关实现 | `src/datatree/fileTypes/datatreeYamlFileTypeBase.ts` |
+| TOML 相关实现 | `src/datatree/fileTypes/datatreeTomlFileTypeBase.ts` |
+| XML 相关实现 | `src/datatree/fileTypes/datatreeXmlFileTypeBase.ts` |
+| Datatree 共享类型定义 | `src/datatree/core/datatreeProviderTypes.ts` |
+
+### 前端交互职责映射
+
+| 交互能力 | 主要文件 |
+| --- | --- |
+| 点击 data-tree key 跳转到编辑器（`navigateToLine`） | `resources/js/preview-datatree.js` |
+| comment popup 展示与交互锁 | `resources/js/preview-comment-tooltip.js` |
+| datatree 展开与折叠（`expandAllNodes` / `collapseAllNodes`） | `resources/js/preview-datatree.js` |
+| datatree 展开/折叠命令分发（Host -> Webview） | `src/previewProvider.ts` |
+
+### 关键调用关系
+
+1. `resources/js/preview-datatree.js` 的 `bindTreeKeyClicks()` 读取 `data-line` 并发送 `navigateToLine` 消息
+2. `src/previewProvider.ts` 接收消息后执行编辑器定位与高亮联动
+3. `resources/js/preview-comment-tooltip.js` 负责注释 icon 的浮层渲染与交互守卫
+4. `src/previewProvider.ts` 触发 `expandAll` / `collapseAll` 消息，由 `resources/js/preview-datatree.js` 执行节点开合
