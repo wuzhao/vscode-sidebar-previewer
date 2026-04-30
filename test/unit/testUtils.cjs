@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const { CodePreviewProvider } = require('../../out/codePreviewProvider');
+const { CodePreviewProvider } = require('../../out/datatreePreviewProvider');
 const { TablePreviewProvider } = require('../../out/tablePreviewProvider');
-const { MarkdownProvider } = require('../../out/markdownProvider');
+const { MarkdownProvider } = require('../../out/markdownPreviewProvider');
 const { LatexPreviewProvider } = require('../../out/latexPreviewProvider');
 const { MermaidPreviewProvider } = require('../../out/mermaidPreviewProvider');
 const { supportsLocate, isDataTreeType, getFileType } = require('../../out/fileTypes');

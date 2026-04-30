@@ -7,6 +7,8 @@
 - Reorganized localization resources: moved locale bundles under `locales/` and non-English README files to `docs/i18n/`, with references updated.
 - Fixed JSON/YAML/TOML/XML tree highlight behavior for same-line parent-child nodes so TOML nested section selection highlights only the intended current node.
 - Fixed XML attribute-node highlight behavior so selecting an `@` node highlights only its parent node.
+- Enabled XML text-like keys (`#text`, `#cdata`) to participate in locate selection by mapping them to source lines, and expanded XML fixture coverage for special keys.
+- Renamed provider source files for clarity: `markdownProvider.ts` -> `markdownPreviewProvider.ts`, `codePreviewProvider.ts` -> `datatreePreviewProvider.ts`.
 
 ～～～
 
@@ -15,6 +17,8 @@
 - 重组多语言资源：语言资源统一收敛到 `locales/`，非英文 README 移至 `docs/i18n/`，并同步更新引用。
 - 修复 JSON/YAML/TOML/XML 树形高亮在同一行父子节点场景的联动问题，使 TOML 嵌套 section 仅高亮当前目标节点。
 - 修复 XML `@` 属性节点的高亮联动问题，选中属性节点时仅高亮其父节点。
+- 修复 XML 文本类键（`#text`、`#cdata`）的源码行映射，使其可参与定位/选中，并扩展 XML fixture 的特殊键覆盖。
+- 按职责重命名 Provider 源文件：`markdownProvider.ts` -> `markdownPreviewProvider.ts`，`codePreviewProvider.ts` -> `datatreePreviewProvider.ts`。
 
 ---
 

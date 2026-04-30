@@ -12,6 +12,12 @@
     </meta:flags>
   </meta:source>
 
+  <?audit stage="ingest" actor="bot"?>
+  <meta:samples>
+    <meta:plain>Plain text payload for #text locate</meta:plain>
+    <meta:raw><![CDATA[Raw payload for #cdata locate with <angle> tags.]]></meta:raw>
+  </meta:samples>
+
   <!-- primary products [C] -->
   <products>
     <product id="P-1001" sku="SKU-001" available="true">

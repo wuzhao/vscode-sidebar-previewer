@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { MarkdownProvider } from './markdownProvider';
+import { MarkdownProvider } from './markdownPreviewProvider';
 import { getFileType, FileType, HeadingInfo, isDataTreeType, PreviewResult } from './fileTypes';
-import { CodePreviewProvider } from './codePreviewProvider';
+import { CodePreviewProvider } from './datatreePreviewProvider';
 import { LatexPreviewProvider } from './latexPreviewProvider';
 import { MermaidPreviewProvider } from './mermaidPreviewProvider';
 import { TablePreviewProvider } from './tablePreviewProvider';
