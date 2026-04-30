@@ -152,7 +152,7 @@ const {
       };
     }
 
-    function createTreeItem(label, line, parentItem) {
+    function createTreeItem(label, line, parentItem, kind = 'key') {
       const item = {
         classList: createClassList(),
         parentElement: parentItem
@@ -165,8 +165,11 @@ const {
           : null,
         descendants: new Set(),
         querySelector(selector) {
-          if (selector.includes('.tree-key[data-line]')) {
-            return this.keyElement;
+          if (selector.includes('.tree-key[data-line]') && this.anchorKind === 'key') {
+            return this.anchorElement;
+          }
+          if (selector.includes('.tree-index[data-line]') && this.anchorKind === 'index') {
+            return this.anchorElement;
           }
           return null;
         },
@@ -175,8 +178,9 @@ const {
         },
       };
 
-      const keyElement = {
+      const anchorElement = {
         textContent: label,
+        classList: createClassList(),
         getAttribute(name) {
           if (name === 'data-line') {
             return String(line);
@@ -187,9 +191,11 @@ const {
           return selector === '.tree-item' ? item : null;
         },
       };
+      anchorElement.classList.add(kind === 'index' ? 'tree-index' : 'tree-key');
 
-      item.keyElement = keyElement;
-      return { item, keyElement };
+      item.anchorKind = kind;
+      item.anchorElement = anchorElement;
+      return { item, anchorElement };
     }
 
     const tomlParent = createTreeItem('profile', 60, null);
@@ -201,18 +207,23 @@ const {
     xmlParent.item.descendants.add(xmlAttr.item);
 
     const xmlTextParent = createTreeItem('meta:flag', 21, null);
+    const xmlTextIndex = createTreeItem('0', 21, xmlTextParent.item, 'index');
     const xmlTextAttr = createTreeItem('@name', 21, xmlTextParent.item);
     const xmlTextValue = createTreeItem('#text', 21, xmlTextParent.item);
+    xmlTextParent.item.descendants.add(xmlTextIndex.item);
     xmlTextParent.item.descendants.add(xmlTextAttr.item);
     xmlTextParent.item.descendants.add(xmlTextValue.item);
 
-    let activeKeys = [tomlParent.keyElement, tomlChild.keyElement];
+    let activeAnchors = [tomlParent.anchorElement, tomlChild.anchorElement];
     let activeItems = [tomlParent.item, tomlChild.item];
 
     const documentMock = {
       querySelectorAll(selector) {
-        if (selector === '.data-tree .tree-key[data-line]') {
-          return activeKeys;
+        if (
+          selector === '.data-tree .tree-key[data-line]'
+          || selector === '.data-tree .tree-key[data-line], .data-tree .tree-index[data-line]'
+        ) {
+          return activeAnchors;
         }
         if (selector === '.data-tree .tree-item.is-highlight') {
           return activeItems.filter(item => item.classList.contains('is-highlight'));
@@ -242,18 +253,19 @@ const {
     assert.equal(tomlParent.item.classList.contains('is-highlight'), false);
     assert.equal(tomlChild.item.classList.contains('is-highlight'), true);
 
-    activeKeys = [xmlParent.keyElement, xmlAttr.keyElement];
+    activeAnchors = [xmlParent.anchorElement, xmlAttr.anchorElement];
     activeItems = [xmlParent.item, xmlAttr.item];
     context.window.PreviewDatatree.highlightTreeRange(12, 12);
 
     assert.equal(xmlParent.item.classList.contains('is-highlight'), true);
     assert.equal(xmlAttr.item.classList.contains('is-highlight'), false);
 
-    activeKeys = [xmlTextParent.keyElement, xmlTextAttr.keyElement, xmlTextValue.keyElement];
-    activeItems = [xmlTextParent.item, xmlTextAttr.item, xmlTextValue.item];
+    activeAnchors = [xmlTextParent.anchorElement, xmlTextIndex.anchorElement, xmlTextAttr.anchorElement, xmlTextValue.anchorElement];
+    activeItems = [xmlTextParent.item, xmlTextIndex.item, xmlTextAttr.item, xmlTextValue.item];
     context.window.PreviewDatatree.highlightTreeRange(21, 21);
 
-    assert.equal(xmlTextParent.item.classList.contains('is-highlight'), true);
+    assert.equal(xmlTextParent.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextIndex.item.classList.contains('is-highlight'), true);
     assert.equal(xmlTextAttr.item.classList.contains('is-highlight'), true);
     assert.equal(xmlTextValue.item.classList.contains('is-highlight'), true);
   });
@@ -342,4 +354,3 @@ const {
     assert.ok(payloads.some(payload => payload.some(item => item.marker === '*')));
     assert.ok(payloads.some(payload => payload.some(item => /triple slash|bang-style|doc block|exclamation/.test(item.text))));
   });
-

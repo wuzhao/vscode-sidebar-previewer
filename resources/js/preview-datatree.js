@@ -93,16 +93,16 @@ function collectNearestTreeItems(elements) {
 }
 
 /**
- * 读取树节点上用于行号映射的键元素
+ * 读取树节点上用于行号映射的锚点元素
  * @param treeItem - 树节点元素
- * @returns 返回键元素
+ * @returns 返回锚点元素
  */
-function getTreeItemKeyElement(treeItem) {
+function getTreeItemAnchorElement(treeItem) {
     if (!treeItem || typeof treeItem.querySelector !== 'function') {
         return null;
     }
 
-    return treeItem.querySelector(':scope > .tree-key[data-line], :scope > details > summary > .tree-key[data-line]');
+    return treeItem.querySelector(':scope > .tree-key[data-line], :scope > .tree-index[data-line], :scope > details > summary > .tree-key[data-line], :scope > details > summary > .tree-index[data-line]');
 }
 
 /**
@@ -111,13 +111,26 @@ function getTreeItemKeyElement(treeItem) {
  * @returns 返回行号
  */
 function getTreeItemLine(treeItem) {
-    const key = getTreeItemKeyElement(treeItem);
-    if (!key || typeof key.getAttribute !== 'function') {
+    const anchor = getTreeItemAnchorElement(treeItem);
+    if (!anchor || typeof anchor.getAttribute !== 'function') {
         return null;
     }
 
-    const line = parseInt(key.getAttribute('data-line'), 10);
+    const line = parseInt(anchor.getAttribute('data-line'), 10);
     return isNaN(line) ? null : line;
+}
+
+/**
+ * 判断树节点是否为数组索引节点
+ * @param treeItem - 树节点元素
+ * @returns 返回布尔判断结果
+ */
+function isTreeIndexTreeItem(treeItem) {
+    const anchor = getTreeItemAnchorElement(treeItem);
+    if (!anchor || !anchor.classList || typeof anchor.classList.contains !== 'function') {
+        return false;
+    }
+    return anchor.classList.contains('tree-index');
 }
 
 /**
@@ -126,12 +139,16 @@ function getTreeItemLine(treeItem) {
  * @returns 返回布尔判断结果
  */
 function isXmlAttributeTreeItem(treeItem) {
-    const key = getTreeItemKeyElement(treeItem);
-    if (!key) {
+    const anchor = getTreeItemAnchorElement(treeItem);
+    if (!anchor) {
         return false;
     }
 
-    const label = (key.textContent || '').trim();
+    if (anchor.classList && typeof anchor.classList.contains === 'function' && !anchor.classList.contains('tree-key')) {
+        return false;
+    }
+
+    const label = (anchor.textContent || '').trim();
     return label.startsWith('@');
 }
 
@@ -141,12 +158,16 @@ function isXmlAttributeTreeItem(treeItem) {
  * @returns 返回布尔判断结果
  */
 function isXmlTextLikeTreeItem(treeItem) {
-    const key = getTreeItemKeyElement(treeItem);
-    if (!key) {
+    const anchor = getTreeItemAnchorElement(treeItem);
+    if (!anchor) {
         return false;
     }
 
-    const label = (key.textContent || '').trim();
+    if (anchor.classList && typeof anchor.classList.contains === 'function' && !anchor.classList.contains('tree-key')) {
+        return false;
+    }
+
+    const label = (anchor.textContent || '').trim();
     return label === '#text' || label === '#cdata';
 }
 
@@ -159,6 +180,7 @@ function filterDuplicateLineTreeItems(matchedItems) {
     const nextItems = new Set(matchedItems);
     const lineMap = new Map();
     const lineHasTextLike = new Map();
+    const lineHasIndex = new Map();
 
     matchedItems.forEach(item => {
         const line = getTreeItemLine(item);
@@ -170,6 +192,8 @@ function filterDuplicateLineTreeItems(matchedItems) {
 
         const hasTextLike = lineHasTextLike.get(line) === true;
         lineHasTextLike.set(line, hasTextLike || isXmlTextLikeTreeItem(item));
+        const hasIndex = lineHasIndex.get(line) === true;
+        lineHasIndex.set(line, hasIndex || isTreeIndexTreeItem(item));
     });
 
     // XML 属性键与父节点同行时只保留父节点高亮
@@ -206,8 +230,16 @@ function filterDuplicateLineTreeItems(matchedItems) {
             continue;
         }
 
-        // 同行存在 #text / #cdata 时不做最深层裁剪，保留元素 + 属性 + 文本的联动高亮
-        if (lineHasTextLike.get(line) === true) {
+        const hasTextLike = lineHasTextLike.get(line) === true;
+        const hasIndex = lineHasIndex.get(line) === true;
+
+        // 纯元素 + 属性 + 文本场景保留联动高亮，避免误删当前元素
+        if (hasTextLike && !hasIndex) {
+            continue;
+        }
+
+        // 数组元素同行命中时优先保留索引节点与细粒度子节点，去除外层集合键
+        if (hasTextLike && (isTreeIndexTreeItem(item) || isXmlTextLikeTreeItem(item) || isXmlAttributeTreeItem(item))) {
             continue;
         }
 
@@ -266,16 +298,16 @@ function highlightTreeRange(startLine, endLine) {
         return;
     }
 
-    const keys = Array.from(document.querySelectorAll('.data-tree .tree-key[data-line]'));
-    if (keys.length === 0) {
+    const anchors = Array.from(document.querySelectorAll('.data-tree .tree-key[data-line], .data-tree .tree-index[data-line]'));
+    if (anchors.length === 0) {
         return;
     }
 
     const inRange = [];
-    for (const key of keys) {
-        const line = parseInt(key.getAttribute('data-line'), 10);
+    for (const anchor of anchors) {
+        const line = parseInt(anchor.getAttribute('data-line'), 10);
         if (!isNaN(line) && line >= range.from && line <= range.to) {
-            inRange.push(key);
+            inRange.push(anchor);
         }
     }
 
@@ -287,15 +319,15 @@ function highlightTreeRange(startLine, endLine) {
 
     let closestKey = null;
     let closestDist = Number.POSITIVE_INFINITY;
-    for (const key of keys) {
-        const line = parseInt(key.getAttribute('data-line'), 10);
+    for (const anchor of anchors) {
+        const line = parseInt(anchor.getAttribute('data-line'), 10);
         if (isNaN(line)) {
             continue;
         }
         const dist = line < range.from ? range.from - line : line - range.to;
         if (dist < closestDist) {
             closestDist = dist;
-            closestKey = key;
+            closestKey = anchor;
         }
     }
 

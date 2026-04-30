@@ -56,6 +56,14 @@ interface XmlDtdDirective {
 }
 
 /**
+ * 描述 XmlDtdBlock 接口结构
+ */
+interface XmlDtdBlock {
+    doctype: XmlDtdDirective | null;
+    directives: XmlDtdDirective[];
+}
+
+/**
  * 描述 XmlCommentScanState 接口结构
  */
 interface XmlCommentScanState {
@@ -999,10 +1007,61 @@ export class CodePreviewProvider {
             ignorePiTags: false,
         });
 
-        const dtdDirectives = this.extractXmlDtdDirectives(content);
+        const topLevelPiKeys = this.extractXmlTopLevelProcessingInstructionKeys(content);
+        const dtdBlock = this.extractXmlDtdBlock(content);
         const parsed = parser.parse(contentWithoutDtd) as unknown;
         const normalized = this.normalizeXmlValue(parsed);
-        return this.attachXmlDtdDirectives(normalized, dtdDirectives);
+        return this.attachXmlDtdDirectives(normalized, topLevelPiKeys, dtdBlock);
+    }
+
+    /**
+     * 提取XML 文档顶层处理指令键并保持源顺序
+     * @param content - 待解析的文件内容
+     * @returns 返回处理指令键列表
+     */
+    private static extractXmlTopLevelProcessingInstructionKeys(content: string): string[] {
+        const keys: string[] = [];
+        const lines = content.split('\n');
+        let inDtdBlock = false;
+
+        for (const line of lines) {
+            const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
+            const trimmed = lineWithoutComments.trim();
+
+            if (trimmed.length === 0) {
+                continue;
+            }
+
+            if (inDtdBlock) {
+                if (trimmed.includes(']>')) {
+                    inDtdBlock = false;
+                }
+                continue;
+            }
+
+            if (/^<!DOCTYPE\b/i.test(trimmed)) {
+                if (trimmed.includes('[') && !trimmed.includes(']>')) {
+                    inDtdBlock = true;
+                }
+                continue;
+            }
+
+            const piMatch = trimmed.match(/^<\?\s*([A-Za-z_:][\w:.-]*)\b/);
+            if (piMatch) {
+                keys.push(`?${piMatch[1]}`);
+                continue;
+            }
+
+            if (/^<!/.test(trimmed)) {
+                continue;
+            }
+
+            if (trimmed.startsWith('<')) {
+                break;
+            }
+        }
+
+        return keys;
     }
 
     /**
@@ -1043,19 +1102,47 @@ export class CodePreviewProvider {
      * @param content - 待解析的文件内容
      * @returns 返回提取到的 DTD 指令集合
      */
-    private static extractXmlDtdDirectives(content: string): XmlDtdDirective[] {
-        const directives: XmlDtdDirective[] = [];
+    private static extractXmlDtdBlock(content: string): XmlDtdBlock {
+        const block: XmlDtdBlock = {
+            doctype: null,
+            directives: [],
+        };
         const lines = content.split('\n');
+        let inDtdBlock = false;
 
         for (const line of lines) {
+            const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
+            const trimmed = lineWithoutComments.trim();
+            if (trimmed.length === 0 || trimmed.startsWith('<![CDATA[')) {
+                if (inDtdBlock && trimmed.includes(']>')) {
+                    inDtdBlock = false;
+                }
+                continue;
+            }
+
+            if (inDtdBlock && trimmed.includes(']>')) {
+                inDtdBlock = false;
+            }
+
             const directive = this.extractXmlDtdDirectiveFromLine(line);
             if (!directive) {
                 continue;
             }
-            directives.push(directive);
+
+            if (directive.key === '!DOCTYPE') {
+                block.doctype = directive;
+                if (trimmed.includes('[') && !trimmed.includes(']>')) {
+                    inDtdBlock = true;
+                }
+                continue;
+            }
+
+            if (inDtdBlock) {
+                block.directives.push(directive);
+            }
         }
 
-        return directives;
+        return block;
     }
 
     /**
@@ -1092,39 +1179,68 @@ export class CodePreviewProvider {
     /**
      * 合并XML DTD 指令到解析结果供后续流程复用
      * @param value - 解析后的 XML 数据
-     * @param directives - 提取到的 DTD 指令集合
+     * @param topLevelPiKeys - 顶层处理指令键列表
+     * @param dtdBlock - 提取到的 DTD 结构
      * @returns 返回合并后的 XML 数据
      */
-    private static attachXmlDtdDirectives(value: unknown, directives: XmlDtdDirective[]): unknown {
-        if (directives.length === 0) {
+    private static attachXmlDtdDirectives(value: unknown, topLevelPiKeys: string[], dtdBlock: XmlDtdBlock): unknown {
+        const hasDoctype = dtdBlock.doctype !== null;
+        const hasTopLevelPi = topLevelPiKeys.length > 0;
+        if (!hasDoctype && !hasTopLevelPi) {
             return value;
         }
 
-        const directiveRecord: Record<string, unknown> = {};
-        for (const directive of directives) {
-            const existing = directiveRecord[directive.key];
-            if (existing === undefined) {
-                directiveRecord[directive.key] = directive.value;
-                continue;
+        const merged: Record<string, unknown> = {};
+        const consumedPiKey = new Set<string>();
+
+        const attachPreludeToMerged = (target: Record<string, unknown>): void => {
+            for (const key of topLevelPiKeys) {
+                if (consumedPiKey.has(key) || !Object.prototype.hasOwnProperty.call(target, key)) {
+                    continue;
+                }
+                merged[key] = target[key];
+                consumedPiKey.add(key);
+            }
+        };
+
+        const buildDoctypeValue = (): unknown => {
+            if (!dtdBlock.doctype) {
+                return undefined;
             }
 
-            directiveRecord[directive.key] = `${String(existing)} | ${directive.value}`;
-        }
+            if (dtdBlock.directives.length === 0) {
+                return dtdBlock.doctype.value;
+            }
 
+            const nested: Record<string, unknown> = {};
+            const declaration = dtdBlock.doctype.value.replace(/\[\s*$/, '').trim();
+            if (declaration.length > 0) {
+                nested.declaration = declaration;
+            }
+
+            for (const directive of dtdBlock.directives) {
+                const existing = nested[directive.key];
+                if (existing === undefined) {
+                    nested[directive.key] = directive.value;
+                    continue;
+                }
+                nested[directive.key] = `${String(existing)} | ${directive.value}`;
+            }
+
+            return nested;
+        };
+
+        const doctypeValue = buildDoctypeValue();
         if (value && typeof value === 'object' && !Array.isArray(value)) {
             const normalized = value as Record<string, unknown>;
-            const merged: Record<string, unknown> = {};
+            attachPreludeToMerged(normalized);
 
-            if (Object.prototype.hasOwnProperty.call(normalized, '?xml')) {
-                merged['?xml'] = normalized['?xml'];
-            }
-
-            for (const [key, directiveValue] of Object.entries(directiveRecord)) {
-                merged[key] = directiveValue;
+            if (hasDoctype && doctypeValue !== undefined) {
+                merged['!DOCTYPE'] = doctypeValue;
             }
 
             for (const [key, normalizedValue] of Object.entries(normalized)) {
-                if (key === '?xml') {
+                if (consumedPiKey.has(key)) {
                     continue;
                 }
                 merged[key] = normalizedValue;
@@ -1133,12 +1249,23 @@ export class CodePreviewProvider {
             return merged;
         }
 
+        if (hasDoctype && doctypeValue !== undefined) {
+            merged['!DOCTYPE'] = doctypeValue;
+        }
+
         if (value === null || value === undefined) {
-            return directiveRecord;
+            return merged;
+        }
+
+        if (value && typeof value === 'object' && Array.isArray(value)) {
+            return {
+                ...merged,
+                '#document': value,
+            };
         }
 
         return {
-            ...directiveRecord,
+            ...merged,
             '#document': value,
         };
     }
@@ -1623,8 +1750,30 @@ export class CodePreviewProvider {
      */
     private static buildXmlTextLikeKeyLines(key: string, lines: string[]): number[] {
         const matches: number[] = [];
+        let inDtdBlock = false;
 
         for (let i = 0; i < lines.length; i++) {
+            const lineWithoutComments = lines[i].replace(/<!--.*?-->/g, ' ');
+            const trimmed = lineWithoutComments.trim();
+
+            if (!inDtdBlock && /^<!DOCTYPE\b/i.test(trimmed)) {
+                if (trimmed.includes('[') && !trimmed.includes(']>')) {
+                    inDtdBlock = true;
+                }
+                continue;
+            }
+
+            if (inDtdBlock) {
+                if (trimmed.includes(']>')) {
+                    inDtdBlock = false;
+                }
+                continue;
+            }
+
+            if (/^<!/.test(trimmed)) {
+                continue;
+            }
+
             if (key === '#cdata') {
                 if (lines[i].includes('<![CDATA[')) {
                     matches.push(i);

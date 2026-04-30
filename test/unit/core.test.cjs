@@ -228,8 +228,11 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(cdataLines.length > 0);
     assert.ok(declarationLines.length > 0);
     assert.ok(previewPiLines.length > 0);
+    assert.deepEqual(textLines.slice(0, 2), [16, 17]);
 
     textLines.forEach(line => {
+      assert.equal(/^\s*<!/.test(lines[line]), false, `#text line ${line} should not bind to DTD directives`);
+      assert.notEqual(lines[line].trim(), ']>', `#text line ${line} should not bind to DTD closing marker`);
       const plainText = lines[line]
         .replace(/<!--.*?-->/g, ' ')
         .replace(/<[^>]*>/g, ' ')
@@ -263,6 +266,34 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     attlistLines.forEach(line => assertLineContains(source, '<!ATTLIST', line));
     entityLines.forEach(line => assertLineContains(source, '<!ENTITY', line));
     notationLines.forEach(line => assertLineContains(source, '<!NOTATION', line));
+  });
+
+  test('XML preamble processing instructions keep source order before DOCTYPE', () => {
+    const source = readSupportedFixture('xml.xml');
+    const result = CodePreviewProvider.parse(source, 'xml');
+
+    const xmlPos = result.html.indexOf('>?xml</span>');
+    const previewPos = result.html.indexOf('>?preview</span>');
+    const doctypePos = result.html.indexOf('>!DOCTYPE</span>');
+
+    assert.ok(xmlPos >= 0);
+    assert.ok(previewPos >= 0);
+    assert.ok(doctypePos >= 0);
+    assert.ok(xmlPos < previewPos);
+    assert.ok(previewPos < doctypePos);
+  });
+
+  test('XML DTD directives are nested under !DOCTYPE block', () => {
+    const source = readSupportedFixture('xml.xml');
+    const result = CodePreviewProvider.parse(source, 'xml');
+
+    const doctypePos = result.html.indexOf('>!DOCTYPE</span>');
+    const doctypeBracketPos = result.html.indexOf('<span class="tree-bracket">{', doctypePos);
+    const elementPos = result.html.indexOf('>!ELEMENT</span>', doctypePos);
+
+    assert.ok(doctypePos >= 0);
+    assert.ok(doctypeBracketPos > doctypePos);
+    assert.ok(elementPos > doctypeBracketPos);
   });
 
   test('XML attributes are previewed as @-prefixed keys on the same object', () => {
@@ -319,4 +350,3 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.equal(csvResult.html.includes('Failed to parse CSV content.'), false);
     assert.equal(tsvResult.html.includes('Failed to parse TSV content.'), false);
   });
-
