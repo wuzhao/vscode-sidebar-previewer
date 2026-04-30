@@ -200,6 +200,12 @@ const {
     const xmlAttr = createTreeItem('@id', 12, xmlParent.item);
     xmlParent.item.descendants.add(xmlAttr.item);
 
+    const xmlTextParent = createTreeItem('meta:flag', 21, null);
+    const xmlTextAttr = createTreeItem('@name', 21, xmlTextParent.item);
+    const xmlTextValue = createTreeItem('#text', 21, xmlTextParent.item);
+    xmlTextParent.item.descendants.add(xmlTextAttr.item);
+    xmlTextParent.item.descendants.add(xmlTextValue.item);
+
     let activeKeys = [tomlParent.keyElement, tomlChild.keyElement];
     let activeItems = [tomlParent.item, tomlChild.item];
 
@@ -242,6 +248,14 @@ const {
 
     assert.equal(xmlParent.item.classList.contains('is-highlight'), true);
     assert.equal(xmlAttr.item.classList.contains('is-highlight'), false);
+
+    activeKeys = [xmlTextParent.keyElement, xmlTextAttr.keyElement, xmlTextValue.keyElement];
+    activeItems = [xmlTextParent.item, xmlTextAttr.item, xmlTextValue.item];
+    context.window.PreviewDatatree.highlightTreeRange(21, 21);
+
+    assert.equal(xmlTextParent.item.classList.contains('is-highlight'), true);
+    assert.equal(xmlTextAttr.item.classList.contains('is-highlight'), true);
+    assert.equal(xmlTextValue.item.classList.contains('is-highlight'), true);
   });
 
   test('Task C copy success resets immediately without fade animations', () => {

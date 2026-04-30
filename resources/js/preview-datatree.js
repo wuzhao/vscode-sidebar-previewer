@@ -136,6 +136,21 @@ function isXmlAttributeTreeItem(treeItem) {
 }
 
 /**
+ * 判断树节点是否为 XML 文本类键
+ * @param treeItem - 树节点元素
+ * @returns 返回布尔判断结果
+ */
+function isXmlTextLikeTreeItem(treeItem) {
+    const key = getTreeItemKeyElement(treeItem);
+    if (!key) {
+        return false;
+    }
+
+    const label = (key.textContent || '').trim();
+    return label === '#text' || label === '#cdata';
+}
+
+/**
  * 过滤同行重复命中的树节点避免父子联动高亮
  * @param matchedItems - 命中的树节点集合
  * @returns 返回过滤后的树节点集合
@@ -143,9 +158,18 @@ function isXmlAttributeTreeItem(treeItem) {
 function filterDuplicateLineTreeItems(matchedItems) {
     const nextItems = new Set(matchedItems);
     const lineMap = new Map();
+    const lineHasTextLike = new Map();
 
     matchedItems.forEach(item => {
-        lineMap.set(item, getTreeItemLine(item));
+        const line = getTreeItemLine(item);
+        lineMap.set(item, line);
+
+        if (line === null || line === undefined) {
+            return;
+        }
+
+        const hasTextLike = lineHasTextLike.get(line) === true;
+        lineHasTextLike.set(line, hasTextLike || isXmlTextLikeTreeItem(item));
     });
 
     // XML 属性键与父节点同行时只保留父节点高亮
@@ -156,6 +180,11 @@ function filterDuplicateLineTreeItems(matchedItems) {
 
         const line = lineMap.get(item);
         if (line === null || line === undefined) {
+            continue;
+        }
+
+        // 同行存在 #text / #cdata 时保留属性节点高亮，便于观察同一行完整语义
+        if (lineHasTextLike.get(line) === true) {
             continue;
         }
 
@@ -174,6 +203,11 @@ function filterDuplicateLineTreeItems(matchedItems) {
     for (const item of Array.from(nextItems)) {
         const line = lineMap.get(item);
         if (line === null || line === undefined) {
+            continue;
+        }
+
+        // 同行存在 #text / #cdata 时不做最深层裁剪，保留元素 + 属性 + 文本的联动高亮
+        if (lineHasTextLike.get(line) === true) {
             continue;
         }
 

@@ -242,6 +242,29 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     previewPiLines.forEach(line => assertLineContains(source, '<?preview', line));
   });
 
+  test('XML DTD directive keys map to source lines for locate', () => {
+    const source = readSupportedFixture('xml.xml');
+    const result = CodePreviewProvider.parse(source, 'xml');
+
+    const doctypeLines = extractKeyLines(result.html, '!DOCTYPE');
+    const elementLines = extractKeyLines(result.html, '!ELEMENT');
+    const attlistLines = extractKeyLines(result.html, '!ATTLIST');
+    const entityLines = extractKeyLines(result.html, '!ENTITY');
+    const notationLines = extractKeyLines(result.html, '!NOTATION');
+
+    assert.ok(doctypeLines.length > 0);
+    assert.ok(elementLines.length > 0);
+    assert.ok(attlistLines.length > 0);
+    assert.ok(entityLines.length > 0);
+    assert.ok(notationLines.length > 0);
+
+    doctypeLines.forEach(line => assertLineContains(source, '<!DOCTYPE', line));
+    elementLines.forEach(line => assertLineContains(source, '<!ELEMENT', line));
+    attlistLines.forEach(line => assertLineContains(source, '<!ATTLIST', line));
+    entityLines.forEach(line => assertLineContains(source, '<!ENTITY', line));
+    notationLines.forEach(line => assertLineContains(source, '<!NOTATION', line));
+  });
+
   test('XML attributes are previewed as @-prefixed keys on the same object', () => {
     const source = '<book id="101" category="fiction"><title>The Great Gatsby</title></book>';
     const result = CodePreviewProvider.parse(source, 'xml');

@@ -2,6 +2,13 @@
 
 <?xml version="1.0" encoding="UTF-8"?>
 <?preview mode="strict" version="2026.04"?>
+<!DOCTYPE catalog SYSTEM "catalog.dtd" [
+  <!ELEMENT catalog ANY>
+  <!ELEMENT meta:flag (#PCDATA)>
+  <!ATTLIST meta:flag name CDATA #REQUIRED>
+  <!ENTITY release "2026.04">
+  <!NOTATION svg SYSTEM "image/svg+xml">
+]>
 <!-- catalog fixture with namespaces, comments, CDATA, attributes and repeated nodes [B] -->
 <catalog xmlns="https://example.com/catalog" xmlns:meta="https://example.com/meta" generatedAt="2026-04-21T12:00:00Z">
   <meta:source system="erp" batch="B-0421">

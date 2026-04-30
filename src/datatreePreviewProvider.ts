@@ -48,6 +48,14 @@ interface XmlTagMatch {
 }
 
 /**
+ * 描述 XmlDtdDirective 接口结构
+ */
+interface XmlDtdDirective {
+    key: string;
+    value: string;
+}
+
+/**
  * 描述 XmlCommentScanState 接口结构
  */
 interface XmlCommentScanState {
@@ -976,6 +984,7 @@ export class CodePreviewProvider {
      * @returns 返回结构化结果
      */
     private static parseXml(content: string): unknown {
+        const contentWithoutDtd = this.stripXmlDtdDeclarations(content);
         const parser = new XMLParser({
             ignoreAttributes: false,
             attributeNamePrefix: '@',
@@ -990,8 +999,148 @@ export class CodePreviewProvider {
             ignorePiTags: false,
         });
 
-        const parsed = parser.parse(content) as unknown;
-        return this.normalizeXmlValue(parsed);
+        const dtdDirectives = this.extractXmlDtdDirectives(content);
+        const parsed = parser.parse(contentWithoutDtd) as unknown;
+        const normalized = this.normalizeXmlValue(parsed);
+        return this.attachXmlDtdDirectives(normalized, dtdDirectives);
+    }
+
+    /**
+     * 去除XML DTD 声明文本以避免解析器产出伪元素
+     * @param content - 待解析的文件内容
+     * @returns 返回移除 DTD 后的 XML 文本
+     */
+    private static stripXmlDtdDeclarations(content: string): string {
+        const lines = content.split('\n');
+        const keptLines: string[] = [];
+        let inDtdBlock = false;
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+
+            if (!inDtdBlock && /^<!DOCTYPE\b/i.test(trimmed)) {
+                if (trimmed.includes('[') && !trimmed.includes(']>')) {
+                    inDtdBlock = true;
+                }
+                continue;
+            }
+
+            if (inDtdBlock) {
+                if (trimmed.includes(']>')) {
+                    inDtdBlock = false;
+                }
+                continue;
+            }
+
+            keptLines.push(line);
+        }
+
+        return keptLines.join('\n');
+    }
+
+    /**
+     * 提取XML DTD 指令集合供后续流程复用
+     * @param content - 待解析的文件内容
+     * @returns 返回提取到的 DTD 指令集合
+     */
+    private static extractXmlDtdDirectives(content: string): XmlDtdDirective[] {
+        const directives: XmlDtdDirective[] = [];
+        const lines = content.split('\n');
+
+        for (const line of lines) {
+            const directive = this.extractXmlDtdDirectiveFromLine(line);
+            if (!directive) {
+                continue;
+            }
+            directives.push(directive);
+        }
+
+        return directives;
+    }
+
+    /**
+     * 提取单行XML DTD 指令并返回匹配结果
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回提取到的 DTD 指令
+     */
+    private static extractXmlDtdDirectiveFromLine(line: string): XmlDtdDirective | null {
+        const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
+        const trimmed = lineWithoutComments.trim();
+
+        if (
+            trimmed.length === 0
+            || trimmed.startsWith('<!--')
+            || trimmed.startsWith('<![CDATA[')
+            || !trimmed.startsWith('<!')
+        ) {
+            return null;
+        }
+
+        const match = trimmed.match(/^<!\s*([A-Za-z][\w:-]*)\b([\s\S]*)$/);
+        if (!match) {
+            return null;
+        }
+
+        const directiveName = match[1].toUpperCase();
+        const directiveBody = match[2].trim().replace(/>\s*$/, '').trim();
+        return {
+            key: `!${directiveName}`,
+            value: directiveBody,
+        };
+    }
+
+    /**
+     * 合并XML DTD 指令到解析结果供后续流程复用
+     * @param value - 解析后的 XML 数据
+     * @param directives - 提取到的 DTD 指令集合
+     * @returns 返回合并后的 XML 数据
+     */
+    private static attachXmlDtdDirectives(value: unknown, directives: XmlDtdDirective[]): unknown {
+        if (directives.length === 0) {
+            return value;
+        }
+
+        const directiveRecord: Record<string, unknown> = {};
+        for (const directive of directives) {
+            const existing = directiveRecord[directive.key];
+            if (existing === undefined) {
+                directiveRecord[directive.key] = directive.value;
+                continue;
+            }
+
+            directiveRecord[directive.key] = `${String(existing)} | ${directive.value}`;
+        }
+
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+            const normalized = value as Record<string, unknown>;
+            const merged: Record<string, unknown> = {};
+
+            if (Object.prototype.hasOwnProperty.call(normalized, '?xml')) {
+                merged['?xml'] = normalized['?xml'];
+            }
+
+            for (const [key, directiveValue] of Object.entries(directiveRecord)) {
+                merged[key] = directiveValue;
+            }
+
+            for (const [key, normalizedValue] of Object.entries(normalized)) {
+                if (key === '?xml') {
+                    continue;
+                }
+                merged[key] = normalizedValue;
+            }
+
+            return merged;
+        }
+
+        if (value === null || value === undefined) {
+            return directiveRecord;
+        }
+
+        return {
+            ...directiveRecord,
+            '#document': value,
+        };
     }
 
     /**
@@ -1388,6 +1537,7 @@ export class CodePreviewProvider {
      */
     private static extractXmlKeys(line: string): string[] {
         const keys: string[] = [];
+        keys.push(...this.extractXmlDtdDirectiveKeys(line));
         const matches = this.extractXmlTagMatches(line);
 
         for (const match of matches) {
@@ -1396,6 +1546,30 @@ export class CodePreviewProvider {
         }
 
         return keys;
+    }
+
+    /**
+     * 提取XML DTD 指令键供后续逻辑使用
+     * @param line - 当前处理的行内容或行号
+     * @returns 返回 XML 行中提取到的 DTD 指令键列表
+     */
+    private static extractXmlDtdDirectiveKeys(line: string): string[] {
+        const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
+        const trimmed = lineWithoutComments.trim();
+        if (
+            trimmed.length === 0
+            || trimmed.startsWith('<!--')
+            || trimmed.startsWith('<![CDATA[')
+        ) {
+            return [];
+        }
+
+        const match = trimmed.match(/^<!\s*([A-Za-z][\w:-]*)\b/);
+        if (!match) {
+            return [];
+        }
+
+        return [`!${match[1].toUpperCase()}`];
     }
 
     /**
