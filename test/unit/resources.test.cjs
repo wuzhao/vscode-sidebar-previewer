@@ -134,7 +134,7 @@ const {
     assert.ok(i18n.includes("tableSelectionTsv: 'Copy As TSV'"));
   });
 
-  test('Task H datatree highlight de-duplicates same-line parent-child matches', () => {
+  test('Task H datatree highlight prefers XML array index and avoids root over-highlight', () => {
     const datatreeJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-datatree.js'), 'utf8');
 
     function createClassList() {
@@ -181,6 +181,7 @@ const {
       const anchorElement = {
         textContent: label,
         classList: createClassList(),
+        addEventListener() {},
         getAttribute(name) {
           if (name === 'data-line') {
             return String(line);
@@ -202,17 +203,27 @@ const {
     const tomlChild = createTreeItem('dev', 60, tomlParent.item);
     tomlParent.item.descendants.add(tomlChild.item);
 
-    const xmlParent = createTreeItem('book', 12, null);
+    const xmlRoot = createTreeItem('catalog', 12, null);
+    const xmlParent = createTreeItem('book', 12, xmlRoot.item);
     const xmlAttr = createTreeItem('@id', 12, xmlParent.item);
+    xmlRoot.item.descendants.add(xmlParent.item);
+    xmlRoot.item.descendants.add(xmlAttr.item);
     xmlParent.item.descendants.add(xmlAttr.item);
 
-    const xmlTextParent = createTreeItem('meta:flag', 21, null);
+    const xmlTextRoot = createTreeItem('catalog', 21, null);
+    const xmlTextParent = createTreeItem('meta:flag', 21, xmlTextRoot.item);
     const xmlTextIndex = createTreeItem('0', 21, xmlTextParent.item, 'index');
-    const xmlTextAttr = createTreeItem('@name', 21, xmlTextParent.item);
-    const xmlTextValue = createTreeItem('#text', 21, xmlTextParent.item);
+    const xmlTextAttr = createTreeItem('@name', 21, xmlTextIndex.item);
+    const xmlTextValue = createTreeItem('#TEXT', 21, xmlTextIndex.item);
+    xmlTextRoot.item.descendants.add(xmlTextParent.item);
+    xmlTextRoot.item.descendants.add(xmlTextIndex.item);
+    xmlTextRoot.item.descendants.add(xmlTextAttr.item);
+    xmlTextRoot.item.descendants.add(xmlTextValue.item);
     xmlTextParent.item.descendants.add(xmlTextIndex.item);
     xmlTextParent.item.descendants.add(xmlTextAttr.item);
     xmlTextParent.item.descendants.add(xmlTextValue.item);
+    xmlTextIndex.item.descendants.add(xmlTextAttr.item);
+    xmlTextIndex.item.descendants.add(xmlTextValue.item);
 
     let activeAnchors = [tomlParent.anchorElement, tomlChild.anchorElement];
     let activeItems = [tomlParent.item, tomlChild.item];
@@ -239,7 +250,13 @@ const {
       window: {},
       document: documentMock,
       PreviewCommon: {
-        registerDomainInit() {},
+        registerDomainInit(_types, _domain, init) {
+          init('xml', {
+            selectionStartLine: null,
+            selectionEndLine: null,
+            editedLine: null,
+          });
+        },
       },
       PreviewCommentTooltip: undefined,
       VSCODE_API: {
@@ -253,21 +270,33 @@ const {
     assert.equal(tomlParent.item.classList.contains('is-highlight'), false);
     assert.equal(tomlChild.item.classList.contains('is-highlight'), true);
 
-    activeAnchors = [xmlParent.anchorElement, xmlAttr.anchorElement];
-    activeItems = [xmlParent.item, xmlAttr.item];
+    activeAnchors = [xmlRoot.anchorElement, xmlParent.anchorElement, xmlAttr.anchorElement];
+    activeItems = [xmlRoot.item, xmlParent.item, xmlAttr.item];
     context.window.PreviewDatatree.highlightTreeRange(12, 12);
 
+    assert.equal(xmlRoot.item.classList.contains('is-highlight'), false);
     assert.equal(xmlParent.item.classList.contains('is-highlight'), true);
     assert.equal(xmlAttr.item.classList.contains('is-highlight'), false);
 
-    activeAnchors = [xmlTextParent.anchorElement, xmlTextIndex.anchorElement, xmlTextAttr.anchorElement, xmlTextValue.anchorElement];
-    activeItems = [xmlTextParent.item, xmlTextIndex.item, xmlTextAttr.item, xmlTextValue.item];
+    activeAnchors = [xmlTextRoot.anchorElement, xmlTextParent.anchorElement, xmlTextIndex.anchorElement, xmlTextAttr.anchorElement, xmlTextValue.anchorElement];
+    activeItems = [xmlTextRoot.item, xmlTextParent.item, xmlTextIndex.item, xmlTextAttr.item, xmlTextValue.item];
     context.window.PreviewDatatree.highlightTreeRange(21, 21);
 
+    assert.equal(xmlTextRoot.item.classList.contains('is-highlight'), false);
     assert.equal(xmlTextParent.item.classList.contains('is-highlight'), false);
     assert.equal(xmlTextIndex.item.classList.contains('is-highlight'), true);
-    assert.equal(xmlTextAttr.item.classList.contains('is-highlight'), true);
-    assert.equal(xmlTextValue.item.classList.contains('is-highlight'), true);
+    assert.equal(xmlTextAttr.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextValue.item.classList.contains('is-highlight'), false);
+
+    activeAnchors = [xmlTextAttr.anchorElement, xmlTextValue.anchorElement];
+    activeItems = [xmlTextRoot.item, xmlTextParent.item, xmlTextIndex.item, xmlTextAttr.item, xmlTextValue.item];
+    context.window.PreviewDatatree.highlightTreeRange(21, 21);
+
+    assert.equal(xmlTextRoot.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextParent.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextIndex.item.classList.contains('is-highlight'), true);
+    assert.equal(xmlTextAttr.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextValue.item.classList.contains('is-highlight'), false);
   });
 
   test('Task C copy success resets immediately without fade animations', () => {

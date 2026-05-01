@@ -3,6 +3,8 @@
 
 (function() {
 
+let currentDataTreeFileType = null;
+
 /**
  * 展开树形视图到指定行
  * 处理目标行相关逻辑并返回结果
@@ -167,8 +169,258 @@ function isXmlTextLikeTreeItem(treeItem) {
         return false;
     }
 
-    const label = (anchor.textContent || '').trim();
-    return label === '#text' || label === '#cdata';
+    const label = (anchor.textContent || '').trim().toUpperCase();
+    return label === '#TEXT' || label === '#CDATA';
+}
+
+/**
+ * 读取树节点标签文本并返回结果
+ * @param treeItem - 树节点元素
+ * @returns 返回树节点标签文本
+ */
+function getTreeItemLabel(treeItem) {
+    const anchor = getTreeItemAnchorElement(treeItem);
+    if (!anchor || typeof anchor.textContent !== 'string') {
+        return '';
+    }
+
+    return anchor.textContent.trim();
+}
+
+/**
+ * 判断树节点是否属于 XML 特殊键
+ * @param treeItem - 树节点元素
+ * @returns 返回布尔判断结果
+ */
+function isXmlSpecialTreeItem(treeItem) {
+    const label = getTreeItemLabel(treeItem);
+    return label.startsWith('@') || label.startsWith('#') || label.startsWith('!') || label.startsWith('?');
+}
+
+/**
+ * 读取树节点父级元素并返回结果
+ * @param treeItem - 树节点元素
+ * @returns 返回父级树节点
+ */
+function getParentTreeItem(treeItem) {
+    if (!treeItem || !treeItem.parentElement || typeof treeItem.parentElement.closest !== 'function') {
+        return null;
+    }
+
+    return treeItem.parentElement.closest('.tree-item');
+}
+
+/**
+ * 读取树节点深度用于冲突判定
+ * @param treeItem - 树节点元素
+ * @returns 返回树节点深度
+ */
+function getTreeItemDepth(treeItem) {
+    let depth = 0;
+    let current = getParentTreeItem(treeItem);
+    while (current) {
+        depth += 1;
+        current = getParentTreeItem(current);
+    }
+
+    return depth;
+}
+
+/**
+ * 判断树节点祖先关系
+ * @param ancestor - 祖先节点
+ * @param treeItem - 目标节点
+ * @returns 返回布尔判断结果
+ */
+function isAncestorTreeItem(ancestor, treeItem) {
+    let current = treeItem;
+    while (current) {
+        if (current === ancestor) {
+            return true;
+        }
+        current = getParentTreeItem(current);
+    }
+
+    return false;
+}
+
+/**
+ * 查找命中集合中的共同父元素键
+ * @param lineItems - 同一行命中的树节点集合
+ * @returns 返回共同父元素键
+ */
+function findCommonParentTreeItemInMatches(lineItems) {
+    let best = null;
+    let bestDepth = -1;
+
+    lineItems.forEach(candidate => {
+        if (isTreeIndexTreeItem(candidate)) {
+            return;
+        }
+
+        const coversAll = lineItems.every(item => isAncestorTreeItem(candidate, item));
+        if (!coversAll) {
+            return;
+        }
+
+        const depth = getTreeItemDepth(candidate);
+        if (depth > bestDepth) {
+            best = candidate;
+            bestDepth = depth;
+        }
+    });
+
+    return best;
+}
+
+/**
+ * 查找命中集合中最优共同父元素
+ * @param lineItems - 同一行命中的树节点集合
+ * @param options - 筛选选项
+ * @returns 返回最优共同父元素
+ */
+function findBestCoveredTreeItem(lineItems, options = {}) {
+    const {
+        onlyIndex = false,
+        excludeIndex = false,
+    } = options;
+
+    let best = null;
+    let bestDepth = -1;
+    let bestCoverage = -1;
+
+    lineItems.forEach(candidate => {
+        const isIndex = isTreeIndexTreeItem(candidate);
+        if (onlyIndex && !isIndex) {
+            return;
+        }
+
+        if (excludeIndex && isIndex) {
+            return;
+        }
+
+        const coverage = lineItems.filter(item => isAncestorTreeItem(candidate, item)).length;
+        if (coverage < 2) {
+            return;
+        }
+
+        const depth = getTreeItemDepth(candidate);
+        if (depth > bestDepth || (depth === bestDepth && coverage > bestCoverage)) {
+            best = candidate;
+            bestDepth = depth;
+            bestCoverage = coverage;
+        }
+    });
+
+    return best;
+}
+
+/**
+ * 查找命中集合的最近共同外层节点
+ * @param lineItems - 同一行命中的树节点集合
+ * @returns 返回共同外层树节点
+ */
+function findNearestCommonAncestorTreeItem(lineItems) {
+    if (lineItems.length === 0) {
+        return null;
+    }
+
+    const ancestorChains = lineItems.map(item => {
+        const chain = [];
+        let current = item;
+        while (current) {
+            chain.push(current);
+            current = getParentTreeItem(current);
+        }
+        return chain;
+    });
+
+    for (const candidate of ancestorChains[0]) {
+        if (ancestorChains.every(chain => chain.includes(candidate))) {
+            return candidate;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * 查找命中集合中的最优成对共同外层
+ * @param lineItems - 同一行命中的树节点集合
+ * @returns 返回最优共同外层
+ */
+function findBestPairCommonAncestorTreeItem(lineItems) {
+    let best = null;
+    let bestDepth = -1;
+
+    for (let i = 0; i < lineItems.length; i++) {
+        for (let j = i + 1; j < lineItems.length; j++) {
+            const pairAncestor = findNearestCommonAncestorTreeItem([lineItems[i], lineItems[j]]);
+            if (!pairAncestor) {
+                continue;
+            }
+
+            const depth = getTreeItemDepth(pairAncestor);
+            if (depth > bestDepth) {
+                best = pairAncestor;
+                bestDepth = depth;
+            }
+        }
+    }
+
+    return best;
+}
+
+/**
+ * 选择命中集合中最深层树节点
+ * @param lineItems - 同一行命中的树节点集合
+ * @returns 返回最深层树节点集合
+ */
+function pickDeepestTreeItems(lineItems) {
+    return lineItems.filter(item => !lineItems.some(other => other !== item && isAncestorTreeItem(item, other)));
+}
+
+/**
+ * 解析同一行命中集合的最终高亮节点
+ * @param lineItems - 同一行命中的树节点集合
+ * @returns 返回最终高亮节点集合
+ */
+function resolveLineHighlightTreeItems(lineItems) {
+    if (lineItems.length <= 1) {
+        return [...lineItems];
+    }
+
+    const isXmlFileType = currentDataTreeFileType === 'xml';
+    if (!isXmlFileType) {
+        return pickDeepestTreeItems(lineItems);
+    }
+
+    const hasXmlSpecialKey = lineItems.some(item => isXmlSpecialTreeItem(item));
+    if (!hasXmlSpecialKey) {
+        return pickDeepestTreeItems(lineItems);
+    }
+
+    const bestIndexParent = findBestCoveredTreeItem(lineItems, { onlyIndex: true });
+    if (bestIndexParent) {
+        return [bestIndexParent];
+    }
+
+    const commonParent = findBestCoveredTreeItem(lineItems, { excludeIndex: true }) || findCommonParentTreeItemInMatches(lineItems);
+    if (commonParent) {
+        return [commonParent];
+    }
+
+    const commonAncestor = findBestPairCommonAncestorTreeItem(lineItems) || findNearestCommonAncestorTreeItem(lineItems);
+    if (commonAncestor) {
+        return [commonAncestor];
+    }
+
+    const deepest = pickDeepestTreeItems(lineItems);
+    if (deepest.length > 0) {
+        return [deepest[0]];
+    }
+
+    return [];
 }
 
 /**
@@ -177,89 +429,29 @@ function isXmlTextLikeTreeItem(treeItem) {
  * @returns 返回过滤后的树节点集合
  */
 function filterDuplicateLineTreeItems(matchedItems) {
-    const nextItems = new Set(matchedItems);
-    const lineMap = new Map();
-    const lineHasTextLike = new Map();
-    const lineHasIndex = new Map();
+    const groupedByLine = new Map();
+    const noLineItems = [];
 
     matchedItems.forEach(item => {
         const line = getTreeItemLine(item);
-        lineMap.set(item, line);
-
         if (line === null || line === undefined) {
+            noLineItems.push(item);
             return;
         }
 
-        const hasTextLike = lineHasTextLike.get(line) === true;
-        lineHasTextLike.set(line, hasTextLike || isXmlTextLikeTreeItem(item));
-        const hasIndex = lineHasIndex.get(line) === true;
-        lineHasIndex.set(line, hasIndex || isTreeIndexTreeItem(item));
+        const existing = groupedByLine.get(line) || [];
+        existing.push(item);
+        groupedByLine.set(line, existing);
     });
 
-    // XML 属性键与父节点同行时只保留父节点高亮
-    for (const item of Array.from(nextItems)) {
-        if (!isXmlAttributeTreeItem(item)) {
-            continue;
-        }
+    const resolved = new Set();
+    groupedByLine.forEach(lineItems => {
+        resolveLineHighlightTreeItems(lineItems).forEach(item => resolved.add(item));
+    });
 
-        const line = lineMap.get(item);
-        if (line === null || line === undefined) {
-            continue;
-        }
+    pickDeepestTreeItems(noLineItems).forEach(item => resolved.add(item));
 
-        // 同行存在 #text / #cdata 时保留属性节点高亮，便于观察同一行完整语义
-        if (lineHasTextLike.get(line) === true) {
-            continue;
-        }
-
-        let parent = item.parentElement ? item.parentElement.closest('.tree-item') : null;
-        while (parent) {
-            if (nextItems.has(parent) && lineMap.get(parent) === line) {
-                nextItems.delete(item);
-                break;
-            }
-
-            parent = parent.parentElement ? parent.parentElement.closest('.tree-item') : null;
-        }
-    }
-
-    // 非属性节点同行命中时只保留最深层节点
-    for (const item of Array.from(nextItems)) {
-        const line = lineMap.get(item);
-        if (line === null || line === undefined) {
-            continue;
-        }
-
-        const hasTextLike = lineHasTextLike.get(line) === true;
-        const hasIndex = lineHasIndex.get(line) === true;
-
-        // 纯元素 + 属性 + 文本场景保留联动高亮，避免误删当前元素
-        if (hasTextLike && !hasIndex) {
-            continue;
-        }
-
-        // 数组元素同行命中时优先保留索引节点与细粒度子节点，去除外层集合键
-        if (hasTextLike && (isTreeIndexTreeItem(item) || isXmlTextLikeTreeItem(item) || isXmlAttributeTreeItem(item))) {
-            continue;
-        }
-
-        for (const other of nextItems) {
-            if (other === item) {
-                continue;
-            }
-            if (lineMap.get(other) !== line) {
-                continue;
-            }
-            if (!item.contains(other)) {
-                continue;
-            }
-
-            nextItems.delete(item);
-            break;
-        }
-    }
-
-    return Array.from(nextItems);
+    return Array.from(resolved);
 }
 
 /**
@@ -390,6 +582,7 @@ PreviewCommon.registerDomainInit(
     ['json', 'yaml', 'toml', 'xml'],
     'datatree',
     function(fileType, messageData) {
+        currentDataTreeFileType = fileType;
         const dataTreeRoot = document.querySelector('.data-tree');
         if (dataTreeRoot) {
             dataTreeRoot.addEventListener('mousedown', () => {

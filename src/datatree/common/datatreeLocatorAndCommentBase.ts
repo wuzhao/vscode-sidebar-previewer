@@ -265,24 +265,89 @@ export class DatatreeLocatorAndCommentBase {
         protected static buildPrimaryKeyLineIndex(lines: string[], fileType: FileType): Map<string, number[]> {
             const index = new Map<string, number[]>();
             const xmlLastPushed = new Map<string, { line: number; indent: number }>();
+            const xmlStartTagLineIndex = fileType === 'xml'
+                ? this.buildXmlStartTagLineIndex(lines)
+                : null;
 
             for (let i = 0; i < lines.length; i++) {
                 const keys = this.extractKeysFromLine(lines[i], fileType);
                 for (const key of keys) {
+                    let targetLine = i;
+                    if (fileType === 'xml' && this.isXmlAttributeKey(key) && xmlStartTagLineIndex) {
+                        targetLine = xmlStartTagLineIndex[i] ?? i;
+                    }
+
                     if (fileType === 'xml' && !this.isXmlAttributeKey(key)) {
-                        const currentIndent = this.getIndentation(lines[i]);
+                        const currentIndent = this.getIndentation(lines[targetLine]);
                         const previous = xmlLastPushed.get(key);
-                        if (previous && previous.line === i - 1 && previous.indent === currentIndent) {
-                            previous.line = i;
+                        if (previous && previous.line === targetLine - 1 && previous.indent === currentIndent) {
+                            previous.line = targetLine;
                             continue;
                         }
-                        xmlLastPushed.set(key, { line: i, indent: currentIndent });
+                        xmlLastPushed.set(key, { line: targetLine, indent: currentIndent });
                     }
-                    this.pushIndexedLine(index, key, i);
+                    this.pushIndexedLine(index, key, targetLine);
                 }
             }
 
             return index;
+        }
+
+    /**
+         * 构建 XML 起始标签行索引供后续流程复用
+         * @param lines - 按行拆分后的源文本
+         * @returns 返回每行对应的起始标签行号集合
+         */
+        protected static buildXmlStartTagLineIndex(lines: string[]): number[] {
+            const startLineIndex = lines.map((_, line) => line);
+            let openTagStartLine = -1;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                let inSingleQuote = false;
+                let inDoubleQuote = false;
+
+                if (openTagStartLine >= 0) {
+                    startLineIndex[i] = openTagStartLine;
+                }
+
+                for (let cursor = 0; cursor < line.length; cursor++) {
+                    const ch = line[cursor];
+
+                    if (!inDoubleQuote && ch === '\'') {
+                        inSingleQuote = !inSingleQuote;
+                        continue;
+                    }
+
+                    if (!inSingleQuote && ch === '"') {
+                        inDoubleQuote = !inDoubleQuote;
+                        continue;
+                    }
+
+                    if (inSingleQuote || inDoubleQuote) {
+                        continue;
+                    }
+
+                    if (ch === '<') {
+                        const next = line[cursor + 1] ?? '';
+                        if (next === '/' || next === '?' || next === '!') {
+                            continue;
+                        }
+
+                        if (openTagStartLine < 0) {
+                            openTagStartLine = i;
+                            startLineIndex[i] = i;
+                        }
+                        continue;
+                    }
+
+                    if (ch === '>' && openTagStartLine >= 0) {
+                        openTagStartLine = -1;
+                    }
+                }
+            }
+
+            return startLineIndex;
         }
 
     /**
@@ -312,6 +377,8 @@ export class DatatreeLocatorAndCommentBase {
                     if (key.startsWith('@')) {
                         const attr = escapeRegex(key.slice(1));
                         patterns.push(new RegExp(`<[^>]*\\b${attr}\\s*=\\s*["']`));
+                    } else if (key === '#DECLARATION') {
+                        patterns.push(/^\s*<!DOCTYPE\b/i);
                     } else if (this.isXmlTextLikeKey(key)) {
                         return this.buildXmlTextLikeKeyLines(key, lines);
                     } else {

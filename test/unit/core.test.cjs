@@ -219,30 +219,33 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     const result = CodePreviewProvider.parse(source, 'xml');
     const lines = source.split('\n');
 
-    const textLines = extractKeyLines(result.html, '#text');
-    const cdataLines = extractKeyLines(result.html, '#cdata');
+    const textLines = extractKeyLines(result.html, '#TEXT');
+    const cdataLines = extractKeyLines(result.html, '#CDATA');
     const declarationLines = extractKeyLines(result.html, '?xml');
     const previewPiLines = extractKeyLines(result.html, '?preview');
+    const auditPiLines = extractKeyLines(result.html, '?audit');
 
     assert.ok(textLines.length > 0);
     assert.ok(cdataLines.length > 0);
     assert.ok(declarationLines.length > 0);
     assert.ok(previewPiLines.length > 0);
+    assert.ok(auditPiLines.length > 0);
     assert.deepEqual(textLines.slice(0, 2), [16, 17]);
 
     textLines.forEach(line => {
-      assert.equal(/^\s*<!/.test(lines[line]), false, `#text line ${line} should not bind to DTD directives`);
-      assert.notEqual(lines[line].trim(), ']>', `#text line ${line} should not bind to DTD closing marker`);
+      assert.equal(/^\s*<!/.test(lines[line]), false, `#TEXT line ${line} should not bind to DTD directives`);
+      assert.notEqual(lines[line].trim(), ']>', `#TEXT line ${line} should not bind to DTD closing marker`);
       const plainText = lines[line]
         .replace(/<!--.*?-->/g, ' ')
         .replace(/<[^>]*>/g, ' ')
         .trim();
-      assert.ok(plainText.length > 0, `#text line ${line} should include visible text content`);
+      assert.ok(plainText.length > 0, `#TEXT line ${line} should include visible text content`);
     });
 
     cdataLines.forEach(line => assertLineContains(source, '<![CDATA[', line));
     declarationLines.forEach(line => assertLineContains(source, '<?xml', line));
     previewPiLines.forEach(line => assertLineContains(source, '<?preview', line));
+    auditPiLines.forEach(line => assertLineContains(source, '<?audit', line));
   });
 
   test('XML DTD directive keys map to source lines for locate', () => {
@@ -250,18 +253,21 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     const result = CodePreviewProvider.parse(source, 'xml');
 
     const doctypeLines = extractKeyLines(result.html, '!DOCTYPE');
+    const declarationLines = extractKeyLines(result.html, '#DECLARATION');
     const elementLines = extractKeyLines(result.html, '!ELEMENT');
     const attlistLines = extractKeyLines(result.html, '!ATTLIST');
     const entityLines = extractKeyLines(result.html, '!ENTITY');
     const notationLines = extractKeyLines(result.html, '!NOTATION');
 
     assert.ok(doctypeLines.length > 0);
+    assert.ok(declarationLines.length > 0);
     assert.ok(elementLines.length > 0);
     assert.ok(attlistLines.length > 0);
     assert.ok(entityLines.length > 0);
     assert.ok(notationLines.length > 0);
 
     doctypeLines.forEach(line => assertLineContains(source, '<!DOCTYPE', line));
+    declarationLines.forEach(line => assertLineContains(source, '<!DOCTYPE', line));
     elementLines.forEach(line => assertLineContains(source, '<!ELEMENT', line));
     attlistLines.forEach(line => assertLineContains(source, '<!ATTLIST', line));
     entityLines.forEach(line => assertLineContains(source, '<!ENTITY', line));
@@ -325,6 +331,25 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(categoryPos < titlePos);
     assert.ok(idPos < authorPos);
     assert.ok(categoryPos < authorPos);
+  });
+
+  test('XML multiline tag attributes locate to opening tag line', () => {
+    const source = [
+      '<root>',
+      '  <entry',
+      '    code="A-01"',
+      '    mode="strict">ok</entry>',
+      '</root>',
+    ].join('\n');
+
+    const result = CodePreviewProvider.parse(source, 'xml');
+    const codeLines = extractKeyLines(result.html, '@code');
+    const modeLines = extractKeyLines(result.html, '@mode');
+
+    assert.deepEqual(codeLines, [1]);
+    assert.deepEqual(modeLines, [1]);
+    codeLines.forEach(line => assertLineContains(source, '<entry', line));
+    modeLines.forEach(line => assertLineContains(source, '<entry', line));
   });
 
   test('TablePreviewProvider parses CSV/TSV fixtures as HTML tables', () => {

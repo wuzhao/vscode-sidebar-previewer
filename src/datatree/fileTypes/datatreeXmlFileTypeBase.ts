@@ -17,6 +17,15 @@ import { DatatreeTomlFileTypeBase } from './datatreeTomlFileTypeBase';
  * 提供 XML 数据树能力
  */
 export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
+    // 标准化 XML 文本节点键
+    protected static readonly XML_TEXT_KEY = '#TEXT';
+
+    // 标准化 XML CDATA 节点键
+    protected static readonly XML_CDATA_KEY = '#CDATA';
+
+    // 标准化 XML DOCTYPE 声明键
+    protected static readonly XML_DECLARATION_KEY = '#DECLARATION';
+
     /**
          * 创建XML 结束行定位器并返回可复用实例
          * @param lines - 按行拆分后的源文本
@@ -105,8 +114,8 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             const parser = new XMLParser({
                 ignoreAttributes: false,
                 attributeNamePrefix: '@',
-                textNodeName: '#text',
-                cdataPropName: '#cdata',
+                textNodeName: this.XML_TEXT_KEY,
+                cdataPropName: this.XML_CDATA_KEY,
                 parseTagValue: false,
                 parseAttributeValue: false,
                 trimValues: true,
@@ -272,6 +281,14 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                 return null;
             }
 
+            const conditionalMatch = trimmed.match(/^<!\[\s*(INCLUDE|IGNORE)\s*\[([\s\S]*)$/i);
+            if (conditionalMatch) {
+                return {
+                    key: `!${conditionalMatch[1].toUpperCase()}`,
+                    value: conditionalMatch[2].trim().replace(/\]\]>\s*$/, '').trim(),
+                };
+            }
+
             const match = trimmed.match(/^<!\s*([A-Za-z][\w:-]*)\b([\s\S]*)$/);
             if (!match) {
                 return null;
@@ -324,7 +341,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                 const nested: Record<string, unknown> = {};
                 const declaration = dtdBlock.doctype.value.replace(/\[\s*$/, '').trim();
                 if (declaration.length > 0) {
-                    nested.declaration = declaration;
+                    nested[this.XML_DECLARATION_KEY] = declaration;
                 }
 
                 for (const directive of dtdBlock.directives) {
@@ -409,7 +426,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                 if (this.isXmlTextLikeKey(key)) {
                     const text = typeof next === 'string' ? next.trim() : String(next ?? '').trim();
                     if (text.length > 0) {
-                        others.push([key, text]);
+                        others.push([key.toUpperCase(), text]);
                     }
                     continue;
                 }
@@ -424,9 +441,19 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
 
                 if (this.isXmlAttributeKey(key)) {
                     attributes.push([key, next]);
-                } else {
-                    others.push([key, next]);
+                    continue;
                 }
+
+                const normalizedElementValue = this.normalizeXmlElementNodeValue(key, next);
+                if (normalizedElementValue === undefined) {
+                    continue;
+                }
+
+                if (Array.isArray(normalizedElementValue) && normalizedElementValue.length === 0) {
+                    continue;
+                }
+
+                others.push([key, normalizedElementValue]);
             }
 
             const normalized: Record<string, unknown> = {};
@@ -438,12 +465,64 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
         }
 
     /**
+         * 归一化XML 元素节点值以统一后续处理
+         * @param key - 当前处理的键名
+         * @param value - 待处理的值
+         * @returns 返回归一化后的节点值
+         */
+        protected static normalizeXmlElementNodeValue(key: string, value: unknown): unknown {
+            if (this.isXmlMetaKey(key)) {
+                return value;
+            }
+
+            if (Array.isArray(value)) {
+                return value.map(item => this.wrapXmlTextNodeIfPrimitive(item));
+            }
+
+            return this.wrapXmlTextNodeIfPrimitive(value);
+        }
+
+    /**
+         * 判断XML 元数据键是否成立
+         * @param key - 当前处理的键名
+         * @returns 返回布尔判断结果
+         */
+        protected static isXmlMetaKey(key: string): boolean {
+            return key.startsWith('!') || key.startsWith('?') || key.startsWith('#');
+        }
+
+    /**
+         * 将XML 元素原始值包装为文本节点对象
+         * @param value - 待处理的值
+         * @returns 返回包装后的值
+         */
+        protected static wrapXmlTextNodeIfPrimitive(value: unknown): unknown {
+            if (value === null || value === undefined) {
+                return value;
+            }
+
+            if (Array.isArray(value) || typeof value === 'object') {
+                return value;
+            }
+
+            const text = String(value).trim();
+            if (text.length === 0) {
+                return value;
+            }
+
+            return {
+                [this.XML_TEXT_KEY]: text,
+            };
+        }
+
+    /**
          * 判断XML 类文本键是否成立
          * @param key - 当前处理的键名
          * @returns 返回布尔判断结果
          */
         protected static isXmlTextLikeKey(key: string): boolean {
-            return key === '#text' || key === '#cdata';
+            const normalizedKey = key.toUpperCase();
+            return normalizedKey === this.XML_TEXT_KEY || normalizedKey === this.XML_CDATA_KEY;
         }
 
     /**
@@ -463,11 +542,34 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
         protected static extractXmlKeys(line: string): string[] {
             const keys: string[] = [];
             keys.push(...this.extractXmlDtdDirectiveKeys(line));
+            keys.push(...this.extractXmlProcessingInstructionKeys(line));
             const matches = this.extractXmlTagMatches(line);
 
             for (const match of matches) {
                 keys.push(match.tagName);
                 keys.push(...this.extractXmlAttributeKeys(match.attributesSource));
+            }
+
+            if (matches.length === 0) {
+                keys.push(...this.extractXmlMultilineAttributeKeys(line));
+            }
+
+            return keys;
+        }
+
+    /**
+         * 提取XML 处理指令键供后续逻辑使用
+         * @param line - 当前处理的行内容或行号
+         * @returns 返回 XML 行中提取到的处理指令键列表
+         */
+        protected static extractXmlProcessingInstructionKeys(line: string): string[] {
+            const keys: string[] = [];
+            const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
+            const pattern = /<\?\s*([A-Za-z_:][\w:.-]*)\b[\s\S]*?\?>/g;
+
+            let match: RegExpExecArray | null;
+            while ((match = pattern.exec(lineWithoutComments)) !== null) {
+                keys.push(`?${match[1]}`);
             }
 
             return keys;
@@ -489,12 +591,22 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                 return [];
             }
 
+            const conditionalMatch = trimmed.match(/^<!\[\s*(INCLUDE|IGNORE)\s*\[/i);
+            if (conditionalMatch) {
+                return [`!${conditionalMatch[1].toUpperCase()}`];
+            }
+
             const match = trimmed.match(/^<!\s*([A-Za-z][\w:-]*)\b/);
             if (!match) {
                 return [];
             }
 
-            return [`!${match[1].toUpperCase()}`];
+            const directiveKey = `!${match[1].toUpperCase()}`;
+            if (directiveKey === '!DOCTYPE') {
+                return [directiveKey, this.XML_DECLARATION_KEY];
+            }
+
+            return [directiveKey];
         }
 
     /**
@@ -541,6 +653,39 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
         }
 
     /**
+         * 提取XML 多行起始标签延续行中的属性键
+         * @param line - 当前处理的行内容或行号
+         * @returns 返回 XML 行中提取到的属性键列表
+         */
+        protected static extractXmlMultilineAttributeKeys(line: string): string[] {
+            const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
+            const trimmed = lineWithoutComments.trim();
+            if (!this.isXmlAttributeContinuationLine(trimmed)) {
+                return [];
+            }
+
+            return this.extractXmlAttributeKeys(trimmed);
+        }
+
+    /**
+         * 判断行是否为 XML 多行起始标签的属性延续行
+         * @param trimmedLine - 去除首尾空白后的行文本
+         * @returns 返回布尔判断结果
+         */
+        protected static isXmlAttributeContinuationLine(trimmedLine: string): boolean {
+            if (
+                trimmedLine.length === 0
+                || trimmedLine.startsWith('<')
+                || trimmedLine.startsWith('<?')
+                || trimmedLine.startsWith('<!')
+            ) {
+                return false;
+            }
+
+            return /([A-Za-z_:][\w:.-]*)\s*=\s*("[^"]*"|'[^']*')/.test(trimmedLine);
+        }
+
+    /**
          * 构建XML 文本类键行集合供后续流程复用
          * @param key - 当前处理的键名
          * @param lines - 按行拆分后的源文本
@@ -548,6 +693,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
          */
         protected static buildXmlTextLikeKeyLines(key: string, lines: string[]): number[] {
             const matches: number[] = [];
+            const normalizedKey = key.toUpperCase();
             let inDtdBlock = false;
 
             for (let i = 0; i < lines.length; i++) {
@@ -572,14 +718,14 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                     continue;
                 }
 
-                if (key === '#cdata') {
+                if (normalizedKey === this.XML_CDATA_KEY) {
                     if (lines[i].includes('<![CDATA[')) {
                         matches.push(i);
                     }
                     continue;
                 }
 
-                if (key === '#text' && this.lineContainsXmlTextContent(lines[i])) {
+                if (normalizedKey === this.XML_TEXT_KEY && this.lineContainsXmlTextContent(lines[i])) {
                     matches.push(i);
                 }
             }
@@ -598,6 +744,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             }
 
             const withoutComments = line.replace(/<!--.*?-->/g, ' ');
+            if (this.isXmlAttributeContinuationLine(withoutComments.trim())) {
+                return false;
+            }
             const withoutTags = withoutComments.replace(/<[^>]*>/g, ' ');
             return withoutTags.trim().length > 0;
         }
@@ -671,7 +820,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                 const currentDepth = xmlDepth;
                 const nextDepth = Math.max(0, currentDepth + this.countXmlElementDepthDelta(scan.nonCommentText));
                 const hasCode = scan.nonCommentText.trim().length > 0;
-                const bindableLine = this.extractXmlKeys(scan.nonCommentText).length > 0;
+                const bindableLine = this.hasXmlBindableKeysForComments(scan.nonCommentText);
                 const commentOnlyLine = scan.comments.length > 0 && !hasCode;
 
                 if (commentOnlyLine) {
@@ -741,6 +890,19 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             flushPendingStandalone(true);
 
             return { lineComments, standaloneGroups };
+        }
+
+    /**
+         * 判断 XML 行是否可绑定注释
+         * @param line - 当前处理的行内容或行号
+         * @returns 返回布尔判断结果
+         */
+        protected static hasXmlBindableKeysForComments(line: string): boolean {
+            if (this.extractXmlTagMatches(line).length > 0) {
+                return true;
+            }
+
+            return this.extractXmlMultilineAttributeKeys(line).length > 0;
         }
 
     /**
