@@ -52,7 +52,7 @@
 ┌───────────────────────────────────────────────────────────────────────┐
 │                         Webview（浏览器环境）                         │
 │                                                                       │
-│   resources/js/preview-*.js                                           │
+│   resources/js/*.js                                                   │
 │   ┌───────────────────────────────────────────────────────────────┐   │
 │   │  · 接收 update 消息，将 HTML 注入 DOM                         │   │
 │   │  · 触发 KaTeX 渲染（数学公式）                                │   │
@@ -71,9 +71,12 @@
 └───────────────────────────────────────────────────────────────────────┘
 
 消息协议（Extension Host ↔ Webview）：
-Host → Webview : update | loading | scrollToHeading | zoom |
-                 expandAll | collapseAll | highlightDataTreeRange
-Webview → Host : getVisibleHeading | locateEditor
+Host → Webview : update | loading | scrollToHeading | scrollToLine |
+                 getVisibleHeading | getVisibleLine | zoom |
+                 expandAll | collapseAll |
+                 highlightDataTreeRange | highlightTableRange
+Webview → Host : webviewReady | zoomChange | visibleHeading | visibleLine |
+                 toggleCheckbox | navigateToLine | updateEditorSelection
 ```
 
 ---
@@ -87,10 +90,6 @@ Webview → Host : getVisibleHeading | locateEditor
 5. **命令**：用户点击工具栏按钮，VS Code 命令触发 `PreviewProvider` 公开方法（如 `zoomIn()`），再通过 `postMessage` 通知 Webview 更新 UI 状态。
 
 ---
-
-## Datatree 拆分与职责映射
-
-Task F 已将原先超大文件 `src/datatreePreviewProvider.ts` 拆分为「通用基类 + 按文件类型基类 + 入口壳层」结构。
 
 ### 后端解析层文件映射
 
@@ -109,14 +108,14 @@ Task F 已将原先超大文件 `src/datatreePreviewProvider.ts` 拆分为「通
 
 | 交互能力 | 主要文件 |
 | --- | --- |
-| 点击 data-tree key 跳转到编辑器（`navigateToLine`） | `resources/js/preview-datatree.js` |
-| comment popup 展示与交互锁 | `resources/js/preview-comment-tooltip.js` |
-| datatree 展开与折叠（`expandAllNodes` / `collapseAllNodes`） | `resources/js/preview-datatree.js` |
+| 点击 data-tree key 本地高亮并跳转编辑器（`highlightTreeRange` + `navigateToLine`） | `resources/js/datatree.js` |
+| comment popup 展示与交互锁 | `resources/js/comment-tooltip.js` |
+| datatree 展开与折叠（`expandAllNodes` / `collapseAllNodes`） | `resources/js/datatree.js` |
 | datatree 展开/折叠命令分发（Host -> Webview） | `src/previewProvider.ts` |
 
 ### 关键调用关系
 
-1. `resources/js/preview-datatree.js` 的 `bindTreeKeyClicks()` 读取 `data-line` 并发送 `navigateToLine` 消息
+1. `resources/js/datatree.js` 的 `bindTreeKeyClicks()` 读取 `data-line`，先执行本地 `highlightTreeRange(line, line)`，再发送 `navigateToLine` 消息
 2. `src/previewProvider.ts` 接收消息后执行编辑器定位与高亮联动
-3. `resources/js/preview-comment-tooltip.js` 负责注释 icon 的浮层渲染与交互守卫
-4. `src/previewProvider.ts` 触发 `expandAll` / `collapseAll` 消息，由 `resources/js/preview-datatree.js` 执行节点开合
+3. `resources/js/comment-tooltip.js` 负责注释 icon 的浮层渲染与交互守卫
+4. `src/previewProvider.ts` 触发 `expandAll` / `collapseAll` 消息，由 `resources/js/datatree.js` 执行节点开合

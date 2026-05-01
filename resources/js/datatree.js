@@ -637,7 +637,7 @@ PreviewCommon.registerDomainInit(
                 }
             });
         }
-        // 首先初始化注释提示框（依赖 preview-comment-tooltip.js）
+        // 首先初始化注释提示框（依赖 comment-tooltip.js）
         if (typeof PreviewCommentTooltip !== 'undefined') {
             PreviewCommentTooltip.bindCommentTooltipInteractionGuard();
             PreviewCommentTooltip.bindCommentTooltips();

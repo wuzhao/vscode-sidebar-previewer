@@ -40,9 +40,9 @@ const {
   });
 
   test('Task G zoom keeps tooltip and table viewport behavior stable', () => {
-    const commonJsPath = path.join(RESOURCES_JS_DIR, 'preview-common.js');
+    const commonJsPath = path.join(RESOURCES_JS_DIR, 'common.js');
     const commonJs = fs.readFileSync(commonJsPath, 'utf8');
-    const commentTooltipJsPath = path.join(RESOURCES_JS_DIR, 'preview-comment-tooltip.js');
+    const commentTooltipJsPath = path.join(RESOURCES_JS_DIR, 'comment-tooltip.js');
     const commentTooltipJs = fs.readFileSync(commentTooltipJsPath, 'utf8');
 
     assert.ok(commonJs.includes('const TABLE_PREVIEW_VIEWPORT_OFFSET_PX = 24;'));
@@ -53,7 +53,7 @@ const {
   });
 
   test('Task G table locate/scroll logic compensates sticky header and index column', () => {
-    const tableJsPath = path.join(RESOURCES_JS_DIR, 'preview-table.js');
+    const tableJsPath = path.join(RESOURCES_JS_DIR, 'table.js');
     const tableJs = fs.readFileSync(tableJsPath, 'utf8');
 
     assert.ok(tableJs.includes('const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;'));
@@ -64,8 +64,8 @@ const {
 
   test('Task H table focus highlight and clipboard actions are wired with i18n labels', () => {
     const css = readResourceCssBundle();
-    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-table.js'), 'utf8');
-    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-common.js'), 'utf8');
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
     const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
     const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
 
@@ -135,7 +135,7 @@ const {
   });
 
   test('Task H datatree highlight prefers XML array index and avoids root over-highlight', () => {
-    const datatreeJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-datatree.js'), 'utf8');
+    const datatreeJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'datatree.js'), 'utf8');
 
     function createClassList() {
       const classes = new Set();
@@ -322,7 +322,7 @@ const {
 
   test('Task C copy success resets immediately without fade animations', () => {
     const css = readResourceCssBundle();
-    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-codeblock.js'), 'utf8');
+    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'codeblock.js'), 'utf8');
 
     assert.equal(css.includes('.copy-btn.fade-out'), false);
     assert.equal(css.includes('transition: opacity 0.15s, background-color 0.15s;'), false);
@@ -339,8 +339,8 @@ const {
   });
 
   test('Task E copy success remains while hovering and resets after leave', () => {
-    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-table.js'), 'utf8');
-    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-codeblock.js'), 'utf8');
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'codeblock.js'), 'utf8');
 
     assert.ok(tableJs.includes('function updateTableCopyButtonHoverState(copyBtn, isHovering, defaultText)'));
     assert.ok(tableJs.includes('function scheduleTableCopyButtonReset(copyBtn, defaultText)'));
@@ -352,10 +352,10 @@ const {
   });
 
   test('Task C comment tooltip hover shows after delay while click remains immediate', () => {
-    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-common.js'), 'utf8');
-    const commentTooltipJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-comment-tooltip.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const commentTooltipJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'comment-tooltip.js'), 'utf8');
 
-    assert.ok(commonJs.includes('const COMMENT_TOOLTIP_SHOW_DELAY_MS = 200;'));
+    assert.ok(commonJs.includes('const COMMENT_TOOLTIP_SHOW_DELAY_MS = 400;'));
     assert.ok(commentTooltipJs.includes('function scheduleCommentTooltipShow(target, delayMs = COMMENT_TOOLTIP_SHOW_DELAY_MS)'));
     assert.ok(commentTooltipJs.includes('commentTooltipShowTimer = setTimeout(() => {'));
     assert.ok(commentTooltipJs.includes('scheduleCommentTooltipShow(icon);'));
@@ -373,8 +373,8 @@ const {
       assert.equal(placeholderPattern.test(fileContent), false, `${fileName} should not contain placeholder JSDoc tags`);
     }
 
-    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-common.js'), 'utf8');
-    const mermaidJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-mermaid.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const mermaidJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'mermaid.js'), 'utf8');
     const prepareVendor = fs.readFileSync(path.join(__dirname, '..', '..', 'scripts', 'prepare-vendor.mjs'), 'utf8');
     const fileTypes = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'fileTypes.ts'), 'utf8');
     const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');

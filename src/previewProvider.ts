@@ -65,14 +65,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this._previewHighlightCssPath = path.join(cssPath, 'highlight.css');
         this._previewCodeblockCssPath = path.join(cssPath, 'codeblock.css');
         this._previewDatatreeCssPath = path.join(cssPath, 'datatree.css');
-        this._previewCommonJsPath = path.join(jsPath, 'preview-common.js');
-        this._previewCodeblockJsPath = path.join(jsPath, 'preview-codeblock.js');
-        this._previewKatexJsPath = path.join(jsPath, 'preview-katex.js');
-        this._previewMermaidJsPath = path.join(jsPath, 'preview-mermaid.js');
-        this._previewMarkdownJsPath = path.join(jsPath, 'preview-markdown.js');
-        this._previewDatatreeJsPath = path.join(jsPath, 'preview-datatree.js');
-        this._previewCommentTooltipJsPath = path.join(jsPath, 'preview-comment-tooltip.js');
-        this._previewTableJsPath = path.join(jsPath, 'preview-table.js');
+        this._previewCommonJsPath = path.join(jsPath, 'common.js');
+        this._previewCodeblockJsPath = path.join(jsPath, 'codeblock.js');
+        this._previewKatexJsPath = path.join(jsPath, 'katex.js');
+        this._previewMermaidJsPath = path.join(jsPath, 'mermaid.js');
+        this._previewMarkdownJsPath = path.join(jsPath, 'markdown.js');
+        this._previewDatatreeJsPath = path.join(jsPath, 'datatree.js');
+        this._previewCommentTooltipJsPath = path.join(jsPath, 'comment-tooltip.js');
+        this._previewTableJsPath = path.join(jsPath, 'table.js');
 
         const vendorPath = path.join(resourcesPath, 'vendor');
 
