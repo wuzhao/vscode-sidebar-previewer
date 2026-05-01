@@ -427,6 +427,15 @@ function resolveLineHighlightTreeItems(lineItems) {
 
     const hasXmlSpecialKey = lineItems.some(item => isXmlSpecialTreeItem(item));
     if (!hasXmlSpecialKey) {
+        // 当同行存在数组索引节点时优先查找共同父元素
+        // 避免 XML 数组索引错误分到与父级键同行时 pickDeepestTreeItems 取最深节点导致高亮不可见
+        const hasIndex = lineItems.some(item => isTreeIndexTreeItem(item));
+        if (hasIndex) {
+            const commonParent = findCommonParentTreeItemInMatches(lineItems);
+            if (commonParent) {
+                return [commonParent];
+            }
+        }
         return pickDeepestTreeItems(lineItems);
     }
 
