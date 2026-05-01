@@ -8,6 +8,7 @@
 let commentTooltip = null;
 let commentTooltipTarget = null;
 let commentTooltipHideTimer = null;
+let commentTooltipShowTimer = null;
 let commentTooltipHovering = false;
 let commentTooltipFocusLocked = false;
 let commentTooltipInteractionGuardBound = false;
@@ -231,6 +232,7 @@ function showCommentTooltip(target) {
         return;
     }
 
+    clearCommentTooltipShowTimer();
     clearCommentTooltipHideTimer();
     const tooltip = ensureCommentTooltip();
     renderCommentTooltipItems(tooltip, comments);
@@ -239,6 +241,33 @@ function showCommentTooltip(target) {
     tooltip.classList.add('is-visible');
     updateCommentTooltipFocusClass();
     positionCommentTooltip();
+}
+
+/**
+ * 清理注释提示框展示计时器，避免脏数据残留
+ */
+function clearCommentTooltipShowTimer() {
+    if (!commentTooltipShowTimer) {
+        return;
+    }
+    clearTimeout(commentTooltipShowTimer);
+    commentTooltipShowTimer = null;
+}
+
+/**
+ * 延迟展示注释提示框，避免鼠标掠过导致误触发
+ * @param target - 目标 DOM 节点
+ * @param delayMs - 展示延迟时间（毫秒）
+ */
+function scheduleCommentTooltipShow(target, delayMs = COMMENT_TOOLTIP_SHOW_DELAY_MS) {
+    clearCommentTooltipShowTimer();
+    commentTooltipShowTimer = setTimeout(() => {
+        commentTooltipShowTimer = null;
+        if (!commentTooltipHovering || commentTooltipFocusLocked) {
+            return;
+        }
+        showCommentTooltip(target);
+    }, delayMs);
 }
 
 /**
@@ -324,6 +353,7 @@ function hideCommentTooltip(force = false) {
         commentTooltipFocusLocked = false;
     }
 
+    clearCommentTooltipShowTimer();
     clearCommentTooltipHideTimer();
     clearCommentTooltipTargetFocusClass();
     commentTooltip.classList.remove('is-visible');
@@ -385,19 +415,23 @@ function bindCommentTooltips() {
                 return;
             }
             commentTooltipHovering = true;
-            showCommentTooltip(icon);
+            scheduleCommentTooltipShow(icon);
         });
         icon.addEventListener('mousemove', () => {
             if (isLockedToDifferentCommentTarget(icon)) {
                 return;
             }
             commentTooltipHovering = true;
+            if (!commentTooltip || commentTooltipTarget !== icon || !commentTooltip.classList.contains('is-visible')) {
+                return;
+            }
             positionCommentTooltip();
         });
         icon.addEventListener('mouseleave', (event) => {
             if (isLockedToDifferentCommentTarget(icon)) {
                 return;
             }
+            clearCommentTooltipShowTimer();
             if (isElementWithinCommentTooltip(event.relatedTarget)) {
                 commentTooltipHovering = true;
                 clearCommentTooltipHideTimer();
@@ -413,6 +447,7 @@ function bindCommentTooltips() {
             if (isLockedToDifferentCommentTarget(icon)) {
                 return;
             }
+            clearCommentTooltipShowTimer();
             commentTooltipFocusLocked = true;
             showCommentTooltip(icon);
         });
@@ -451,6 +486,8 @@ window.PreviewCommentTooltip = {
     isLockedToDifferentCommentTarget: isLockedToDifferentCommentTarget,
     stopEvent: stopEvent,
     scheduleCommentTooltipHide: scheduleCommentTooltipHide,
-    clearCommentTooltipHideTimer: clearCommentTooltipHideTimer
+    clearCommentTooltipHideTimer: clearCommentTooltipHideTimer,
+    scheduleCommentTooltipShow: scheduleCommentTooltipShow,
+    clearCommentTooltipShowTimer: clearCommentTooltipShowTimer
 };
 })();

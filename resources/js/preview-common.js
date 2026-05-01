@@ -38,6 +38,8 @@ const MERMAID_ZOOM_MULTIPLIER = 2;
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
 // 注释提示框离开后延迟隐藏时间（毫秒）
 const COMMENT_TOOLTIP_HIDE_DELAY_MS = 200;
+// 注释提示框悬停后延迟展示时间（毫秒）
+const COMMENT_TOOLTIP_SHOW_DELAY_MS = 400;
 // 注释提示框点击后屏蔽 hover 的时间窗口（毫秒）
 const COMMENT_TOOLTIP_CLICK_BLOCK_WINDOW_MS = 200;
 // 表格预览容器与视口高度差值（像素）

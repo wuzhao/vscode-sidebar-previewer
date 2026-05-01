@@ -381,12 +381,42 @@ function pickDeepestTreeItems(lineItems) {
 }
 
 /**
+ * 解析单个 XML 特殊键命中时的高亮目标
+ * @param treeItem - 命中的树节点
+ * @returns 返回最终高亮节点
+ */
+function resolveSingleXmlSpecialHighlightTarget(treeItem) {
+    if (!isXmlSpecialTreeItem(treeItem)) {
+        return treeItem;
+    }
+
+    let parent = getParentTreeItem(treeItem);
+    while (parent) {
+        if (isTreeIndexTreeItem(parent)) {
+            return parent;
+        }
+
+        // 仅跳过文本类与属性类键，其他父级键（包括元素与 DTD）可作为高亮目标
+        if (!isXmlTextLikeTreeItem(parent) && !isXmlAttributeTreeItem(parent)) {
+            return parent;
+        }
+
+        parent = getParentTreeItem(parent);
+    }
+
+    return treeItem;
+}
+
+/**
  * 解析同一行命中集合的最终高亮节点
  * @param lineItems - 同一行命中的树节点集合
  * @returns 返回最终高亮节点集合
  */
 function resolveLineHighlightTreeItems(lineItems) {
     if (lineItems.length <= 1) {
+        if (lineItems.length === 1 && currentDataTreeFileType === 'xml') {
+            return [resolveSingleXmlSpecialHighlightTarget(lineItems[0])];
+        }
         return [...lineItems];
     }
 
@@ -505,6 +535,13 @@ function highlightTreeRange(startLine, endLine) {
 
     if (inRange.length > 0) {
         const matchedItems = filterDuplicateLineTreeItems(collectNearestTreeItems(inRange));
+        if (matchedItems.length === 0) {
+            const fallbackItems = collectNearestTreeItems(inRange);
+            if (fallbackItems.length > 0) {
+                fallbackItems[0].classList.add('is-highlight');
+            }
+            return;
+        }
         matchedItems.forEach(item => item.classList.add('is-highlight'));
         return;
     }

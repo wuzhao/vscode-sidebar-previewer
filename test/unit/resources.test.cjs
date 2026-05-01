@@ -225,6 +225,10 @@ const {
     xmlTextIndex.item.descendants.add(xmlTextAttr.item);
     xmlTextIndex.item.descendants.add(xmlTextValue.item);
 
+    const xmlProductsRoot = createTreeItem('catalog', 34, null);
+    const xmlProductsKey = createTreeItem('products', 34, xmlProductsRoot.item);
+    xmlProductsRoot.item.descendants.add(xmlProductsKey.item);
+
     let activeAnchors = [tomlParent.anchorElement, tomlChild.anchorElement];
     let activeItems = [tomlParent.item, tomlChild.item];
 
@@ -297,6 +301,23 @@ const {
     assert.equal(xmlTextIndex.item.classList.contains('is-highlight'), true);
     assert.equal(xmlTextAttr.item.classList.contains('is-highlight'), false);
     assert.equal(xmlTextValue.item.classList.contains('is-highlight'), false);
+
+    activeAnchors = [xmlTextValue.anchorElement];
+    activeItems = [xmlTextRoot.item, xmlTextParent.item, xmlTextIndex.item, xmlTextAttr.item, xmlTextValue.item];
+    context.window.PreviewDatatree.highlightTreeRange(21, 21);
+
+    assert.equal(xmlTextRoot.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextParent.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextIndex.item.classList.contains('is-highlight'), true);
+    assert.equal(xmlTextAttr.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlTextValue.item.classList.contains('is-highlight'), false);
+
+    activeAnchors = [xmlProductsKey.anchorElement];
+    activeItems = [xmlProductsRoot.item, xmlProductsKey.item];
+    context.window.PreviewDatatree.highlightTreeRange(34, 34);
+
+    assert.equal(xmlProductsRoot.item.classList.contains('is-highlight'), false);
+    assert.equal(xmlProductsKey.item.classList.contains('is-highlight'), true);
   });
 
   test('Task C copy success resets immediately without fade animations', () => {
@@ -328,6 +349,18 @@ const {
     assert.ok(codeblockJs.includes('function updateCopyButtonHoverState(isHovering)'));
     assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseenter', () => {"));
     assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseleave', () => {"));
+  });
+
+  test('Task C comment tooltip hover shows after delay while click remains immediate', () => {
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-common.js'), 'utf8');
+    const commentTooltipJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'preview-comment-tooltip.js'), 'utf8');
+
+    assert.ok(commonJs.includes('const COMMENT_TOOLTIP_SHOW_DELAY_MS = 200;'));
+    assert.ok(commentTooltipJs.includes('function scheduleCommentTooltipShow(target, delayMs = COMMENT_TOOLTIP_SHOW_DELAY_MS)'));
+    assert.ok(commentTooltipJs.includes('commentTooltipShowTimer = setTimeout(() => {'));
+    assert.ok(commentTooltipJs.includes('scheduleCommentTooltipShow(icon);'));
+    assert.ok(commentTooltipJs.includes("icon.addEventListener('click', (event) => {"));
+    assert.ok(commentTooltipJs.includes('showCommentTooltip(icon);'));
   });
 
   test('Task F comment and global constant conventions are enforced', () => {
