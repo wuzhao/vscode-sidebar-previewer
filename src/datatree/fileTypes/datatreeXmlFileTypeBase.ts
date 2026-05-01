@@ -834,15 +834,15 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
         }
 
     /**
-         * 处理XML注释文本相关逻辑并返回结果
-         * @param text - 待处理的文本内容
-         * @returns 返回清洗后的 XML 注释文本
-         */
-        protected static cleanXmlCommentText(text: string): string {
-            return text
-                .split('\n')
-                .map(line => line.replace(/\r/g, '').trim())
-                .join('\n')
-                .trim();
-        }
+     * 处理XML注释文本相关逻辑并返回结果
+     * @param text - 待处理的文本内容
+     * @returns 返回清洗后的 XML 注释文本
+     */
+    protected static cleanXmlCommentText(text: string): string {
+        return text
+            .split('\n')
+            .map(line => line.replace(/\r/g, '').trim())
+            .join('\n')
+            .trim();
+    }
 }

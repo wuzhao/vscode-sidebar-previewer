@@ -104,7 +104,7 @@ li.task-list-item > ol {
 
 li.task-list-item:has(> input[type="checkbox"]:checked) {
     text-decoration: line-through;
-    color: color-mix(in srgb, var(--vscode-foreground) 50%, transparent 50%);
+    color: color-mix(in srgb, var(--vscode-foreground) 35%, transparent 65%);
 }
 
 li.task-list-item input[type="checkbox"] {
