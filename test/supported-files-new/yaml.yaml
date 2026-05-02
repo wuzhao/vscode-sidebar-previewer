@@ -1,0 +1,67 @@
+# Journey to the West YAML stress fixture
+# Focus: anchors, aliases, multiline blocks, mixed collections, comments
+meta:
+  book: "Journey to the West"
+  arc: "Havoc in Heaven"
+  language: English
+  revision: 2
+
+characters:
+  - &wukong
+    id: wukong
+    name: Sun Wukong
+    titles:
+      - Monkey King
+      - Great Sage Equal to Heaven
+    abilities:
+      transformations: 72
+      cloud_somersault_li: 108000
+      staff: Ruyi Jingu Bang
+  - &erlang
+    id: erlang
+    name: Erlang Shen
+    abilities:
+      third_eye: true
+      spear: tri-point
+      hound: celestial
+
+battle:
+  phases:
+    - id: 1
+      event: "Title insult escalates conflict"
+      severity: warning
+      actors: [*wukong]
+    - id: 2
+      event: "Peach banquet breach"
+      severity: critical
+      actors: [*wukong, *erlang]
+    - id: 3
+      event: "Elixir hall breach"
+      severity: critical
+      notes: |
+        The intruder consumed high-grade elixirs,
+        causing post-event power amplification and
+        making conventional restraint unreliable.
+
+telemetry:
+  gates:
+    south_heaven_gate: {integrity: 0.71, defenders: 3000}
+    peach_garden: {integrity: 0.38, defenders: 1200}
+    elixir_hall: {integrity: 0.32, defenders: 800}
+  log_excerpt: >
+    Heaven command reports repeated target identity mismatch due to rapid
+    transformation sequences and decoy artifacts.
+
+postmortem:
+  root_causes:
+    - Bureaucratic title mismatch
+    - Delayed inter-department escalation
+    - Static threat model for dynamic adversary
+  recommendations:
+    immediate:
+      - Activate adaptive suppression formations
+      - Isolate strategic assets with rotating seals
+    long_term:
+      - Cross-team drills
+      - Predictive anomaly detection
+      - Simplified emergency command paths

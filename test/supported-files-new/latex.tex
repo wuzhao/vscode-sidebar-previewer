@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Journey to the West: Havoc in Heaven --- LaTeX Stress Fixture}
+\author{Celestial QA Guild}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Scenario Overview}
+In this fixture, we model major events of \emph{Havoc in Heaven} as symbolic systems.
+
+\subsection{State Variables}
+Let
+\[
+\mathbf{s}(t)=\begin{bmatrix}
+R(t) \\
+E(t) \\
+C(t)
+\end{bmatrix}
+\]
+where $R$ is rebellion intensity, $E$ is heavenly enforcement, and $C$ is collateral impact.
+
+\subsection{Transition Dynamics}
+\begin{align}
+\frac{dR}{dt} &= \alpha T - \beta E + \eta, \\
+\frac{dE}{dt} &= \gamma \cdot \text{Decree}(t) - \delta R, \\
+\frac{dC}{dt} &= \lambda \, |R-E|.
+\end{align}
+
+\section{Event Matrix}
+\[
+A = \begin{pmatrix}
+0 & 1 & 0 \\
+-1 & 0 & 2 \\
+1 & -2 & 0
+\end{pmatrix}, \quad
+\det(A-\mu I)=0
+\]
+
+Characteristic polynomial:
+\[
+-\mu^3 - 5\mu + 4 = 0.
+\]
+
+\section{Optimization of Heavenly Response}
+Minimize cost functional
+\[
+J(u)=\int_0^T \left( w_1 R(t)^2 + w_2 u(t)^2 + w_3 C(t)^2 \right) dt
+\]
+subject to bounded command effort
+\[
+0 \le u(t) \le u_{\max}.
+\]
+
+\subsection{Constraint Table}
+\[
+\begin{array}{|c|c|c|}
+\hline
+\text{Resource} & \text{Lower Bound} & \text{Upper Bound} \\
+\hline
+\text{Cloud Troops} & 10^4 & 10^6 \\
+\text{Elixir Reserve} & 0 & 9\times 10^3 \\
+\text{Signal Beacons} & 64 & 4096 \\
+\hline
+\end{array}
+\]
+
+\section{Complex Identity}
+\[
+\sum_{k=1}^{n} k^3 = \left(\frac{n(n+1)}{2}\right)^2
+\]
+
+For strategic diffusion:
+\[
+\nabla^2 \phi = \frac{\partial^2 \phi}{\partial x^2} + \frac{\partial^2 \phi}{\partial y^2} + \frac{\partial^2 \phi}{\partial z^2}.
+\]
+
+\section{Narrative Footnote}
+Even with maximal bureaucratic coordination, adaptive adversaries invalidate static assumptions.
+
+\end{document}

@@ -1,0 +1,58 @@
+# Journey to the West TOML stress fixture
+[meta]
+book = "Journey to the West"
+arc = "Havoc in Heaven"
+language = "English"
+revision = 3
+
+[characters.wukong]
+name = "Sun Wukong"
+titles = ["Monkey King", "Great Sage Equal to Heaven"]
+transformations = 72
+cloud_somersault_li = 108000
+weapon = "Ruyi Jingu Bang"
+
+[characters.erlang]
+name = "Erlang Shen"
+third_eye = true
+companion = "Heavenly Hound"
+
+[[events]]
+id = 1
+name = "Mock horse-keeper appointment"
+severity = "warning"
+actors = ["wukong", "heaven-bureau"]
+
+[[events]]
+id = 2
+name = "Peach banquet breach"
+severity = "critical"
+actors = ["wukong", "immortals"]
+
+[[events]]
+id = 3
+name = "Elixir vault breach"
+severity = "critical"
+actors = ["wukong", "laozi"]
+notes = "Escalation exceeded protocol assumptions."
+
+[telemetry]
+integrity_south_gate = 0.73
+integrity_peach_garden = 0.39
+integrity_elixir_hall = 0.31
+
+[telemetry.counts]
+warning = 12
+critical = 27
+info = 108
+
+[postmortem]
+root_causes = [
+  "Title mismatch and symbolic disrespect",
+  "Insufficient response adaptability",
+  "Delayed command synchronization"
+]
+
+[postmortem.recommendations]
+immediate = ["Rapid deployment squads", "Asset lockdown"]
+long_term = ["Adaptive simulation", "Cross-team drills", "Policy refactor"]

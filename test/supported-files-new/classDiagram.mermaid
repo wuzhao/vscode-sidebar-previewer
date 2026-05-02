@@ -1,0 +1,41 @@
+%% Journey to the West - Havoc in Heaven fixture
+classDiagram
+    class CelestialAuthority {
+        +string seat
+        +issueDecree(code: string) void
+        +escalateThreat(level: string) void
+        +approveContainment(strategy: string) bool
+    }
+
+    class RebelActor {
+        +string name
+        +int transformations
+        +adapt(opponent: string) string
+        +breach(zone: string) bool
+    }
+
+    class TacticalUnit {
+        +string unitName
+        +engage(target: string) string
+        +retreat(reason: string) void
+    }
+
+    class IncidentLog {
+        +string id
+        +string arc
+        +append(event: string) void
+        +exportJSON() string
+    }
+
+    class AssetZone {
+        +string zone
+        +float integrity
+        +updateIntegrity(delta: float) void
+    }
+
+    CelestialAuthority "1" --> "*" TacticalUnit : commands
+    CelestialAuthority "1" --> "*" AssetZone : protects
+    RebelActor "1" --> "*" AssetZone : raids
+    TacticalUnit "*" --> "1" RebelActor : engages
+    IncidentLog ..> CelestialAuthority : records orders
+    IncidentLog ..> RebelActor : records actions

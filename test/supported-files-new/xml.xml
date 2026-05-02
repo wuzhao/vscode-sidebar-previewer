@@ -1,0 +1,54 @@
+<!-- Journey to the West XML stress fixture -->
+<?xml version="1.0" encoding="UTF-8"?>
+<?incident mode="combat" stage="havoc-in-heaven"?>
+<!DOCTYPE heavenReport [
+  <!ELEMENT heavenReport ANY>
+  <!ELEMENT alert (#PCDATA)>
+  <!ATTLIST alert level CDATA #REQUIRED>
+  <!ENTITY monkey "Sun Wukong">
+]>
+<heavenReport xmlns="https://example.org/heaven" xmlns:meta="https://example.org/meta" generatedAt="2026-05-02T12:00:00Z">
+  <meta:context>
+    <meta:book>Journey to the West</meta:book>
+    <meta:arc>Havoc in Heaven</meta:arc>
+    <meta:language>English</meta:language>
+  </meta:context>
+
+  <!-- [A] command chain -->
+  <commandCenter id="凌霄殿" clearance="high">
+    <commander role="supreme">Jade Emperor</commander>
+    <directive code="D-001">Contain &monkey; without collapsing morale.</directive>
+    <directive code="D-002"><![CDATA[Preserve artifacts: peaches, pills, and cloud records.]]></directive>
+  </commandCenter>
+
+  <alerts>
+    <alert level="warning">Horse stable protocol insult detected.</alert>
+    <alert level="critical">Unauthorized entry in Peach Garden.</alert>
+    <alert level="critical">Elixir vault inventory mismatch.</alert>
+  </alerts>
+
+  <?battle phase="duel" actor="Erlang Shen"?>
+  <engagements>
+    <engagement seq="1" result="stalemate">
+      <actors>
+        <actor side="heaven">Erlang Shen</actor>
+        <actor side="rebel">Sun Wukong</actor>
+      </actors>
+      <commentary><![CDATA[Form-switching caused target-lock failures in three consecutive attacks.]]></commentary>
+    </engagement>
+    <engagement seq="2" result="containment-attempt">
+      <actors>
+        <actor side="heaven">Heavenly Hound</actor>
+        <actor side="rebel">Sun Wukong</actor>
+      </actors>
+    </engagement>
+  </engagements>
+
+  <!-- [B] trailing diagnostics -->
+  <meta:diagnostics>
+    <meta:item key="protocolLatencyMs">1830</meta:item>
+    <meta:item key="unitsDeployed">108000</meta:item>
+    <meta:item key="confidence">0.921</meta:item>
+  </meta:diagnostics>
+</heavenReport>
+<!-- end -->

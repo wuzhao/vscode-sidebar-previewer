@@ -1,0 +1,73 @@
+{
+  "story": {
+    "book": "Journey to the West",
+    "arc": "Havoc in Heaven",
+    "language": "English",
+    "timeline": {
+      "chapterRange": [3, 8],
+      "majorEvents": [
+        "Mock appointment as keeper of heavenly horses",
+        "Self-declaration as Great Sage Equal to Heaven",
+        "Peach banquet disruption",
+        "Elixir vault breach",
+        "Battle against heavenly hosts"
+      ]
+    }
+  },
+  "characters": [
+    {
+      "id": "wukong",
+      "name": "Sun Wukong",
+      "titles": ["Monkey King", "Great Sage Equal to Heaven"],
+      "abilities": {
+        "transformations": 72,
+        "cloudSomersaultLi": 108000,
+        "weapon": {
+          "name": "Ruyi Jingu Bang",
+          "massWhenExpanded": "mythic",
+          "states": ["needle", "staff", "pillar"]
+        }
+      },
+      "resilience": {
+        "fire": true,
+        "blades": true,
+        "bureaucraticProtocol": false
+      }
+    },
+    {
+      "id": "erlang",
+      "name": "Erlang Shen",
+      "assets": ["Heavenly Hound", "Third Eye", "Tri-point Spear"],
+      "engagements": [
+        {"phase": 1, "result": "stalemate"},
+        {"phase": 2, "result": "pressure applied"},
+        {"phase": 3, "result": "requires external assist"}
+      ]
+    }
+  ],
+  "battlefieldTelemetry": {
+    "zones": [
+      {"name": "South Heavenly Gate", "integrity": 0.72},
+      {"name": "Peach Garden", "integrity": 0.41},
+      {"name": "Elixir Hall", "integrity": 0.33}
+    ],
+    "alerts": {
+      "critical": 17,
+      "warning": 36,
+      "info": 108,
+      "containsUnicode": "天宫警报：齐天大圣正在突破防线"
+    }
+  },
+  "postmortem": {
+    "rootCauses": [
+      "Title mismatch created identity conflict",
+      "Underestimation of shape-shifting threat",
+      "Slow inter-department coordination"
+    ],
+    "countermeasures": {
+      "shortTerm": ["Containment net", "Rapid-response squads"],
+      "longTerm": ["Dynamic risk modeling", "Cross-domain training", "Protocol simplification"]
+    },
+    "score": 9.87
+  }
+}

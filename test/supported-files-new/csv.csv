@@ -1,0 +1,7 @@
+id,chapter,event,actor,location,severity,success,quote,notes,multiline
+1,3,Mock Appointment,Sun Wukong,Heavenly Stables,warning,false,"""I am no mere stable boy.""","Administrative insult triggered escalation","phase-1\nidentity-conflict"
+2,4,Self Coronation,Sun Wukong,Cloud Banner Ridge,critical,true,"""Great Sage Equal to Heaven!""","Symbolic challenge to authority","phase-2\npropaganda-surge"
+3,5,Peach Banquet Breach,Sun Wukong,Queen Mother's Garden,critical,true,"""These peaches are now strategic resources.""","Unauthorized feast consumption","phase-3\nasset-loss"
+4,6,Elixir Vault Breach,Sun Wukong,Laozi Pavilion,critical,true,"""Pills should not be locked from immortals.""","Power amplification event","phase-4\ncapability-jump"
+5,7,Duel with Erlang,Erlang Shen,South Heavenly Gate,critical,false,"""Yield, Monkey King.""","Extended combat with transformations","phase-5\ncombat-stalemate"
+6,8,Containment Order,Jade Emperor,High Court,warning,true,"""Contain without total destruction.""","Shift from suppression to containment","phase-6\npolicy-shift"

@@ -1,0 +1,59 @@
+/*
+ * Journey to the West JSONC stress fixture
+ * Purpose: mixed comment styles + trailing commas + nested ownership
+ */
+{
+  // [A] top-level metadata
+  "meta": {
+    "arc": "Havoc in Heaven", // [B] inline comment
+    "language": "English", // [C]
+    "source": "Ming dynasty classic", /* [D] block comment */
+    "version": "2.1.0", // [E]
+  },
+
+  /** [F] character list with trailing commas */
+  "characters": [
+    {
+      "id": "wukong",
+      "aliases": ["Monkey King", "Great Sage Equal to Heaven"],
+      "flags": {
+        "rebellious": true, /* [G] */
+        "predictable": false, // [H]
+      },
+    },
+    {
+      "id": "jade-emperor",
+      "stance": "defensive",
+      // [I] nested mixed comments
+      "orders": [
+        "mobilize-thunder-generals", // [J]
+        "secure-peach-garden", /* [K] */
+        "protect-elixir-vault", // [L]
+      ],
+    },
+  ],
+
+  // [M] event stream
+  "events": [
+    {
+      "tick": 1,
+      "event": "mock-title-issued",
+      "severity": "warning",
+    },
+    {
+      "tick": 2,
+      "event": "peach-banquet-breach",
+      "severity": "critical", // [N]
+    },
+    {
+      "tick": 3,
+      "event": "elixir-hall-breach",
+      "severity": "critical",
+      "note": "string with // inside should stay literal: https://heaven.example/a//b",
+    },
+  ],
+
+  /*! [O] final advisory */
+  "advisory": "Do not underestimate adaptive immortals", // [P]
+}
+/* [Q] end marker */

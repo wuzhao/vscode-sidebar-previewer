@@ -1,0 +1,22 @@
+%% Journey to the West - Havoc in Heaven fixture
+stateDiagram-v2
+    [*] --> BureaucraticCalm
+    BureaucraticCalm --> SymbolicInsult : mock title issued
+    SymbolicInsult --> OpenDefiance : self-coronation
+    OpenDefiance --> BanquetBreach : unauthorized feast
+    BanquetBreach --> ElixirBreach : vault intrusion
+
+    ElixirBreach --> Counterattack
+    state Counterattack {
+      [*] --> MobilizeForces
+      MobilizeForces --> DirectEngagement
+      DirectEngagement --> AdaptationFailure : transformations detected
+      AdaptationFailure --> RequestSpecialist
+      RequestSpecialist --> ErlangDuel
+      ErlangDuel --> TacticalStalemate
+    }
+
+    Counterattack --> StrategicContainment : high command approval
+    StrategicContainment --> TemporaryStability
+    TemporaryStability --> PostmortemReview
+    PostmortemReview --> [*]

@@ -1,0 +1,26 @@
+# Journey to the West - Havoc in Heaven fixture
+# Additional .yml variant fixture for extension handling
+scenario:
+  name: havoc-in-heaven-secondary
+  locale: en-US
+  narrator: "Celestial Clerk #42"
+
+timeline:
+  - t: "00:00"
+    action: "Monkey enters heaven under disputed appointment"
+    risk: low
+  - t: "01:25"
+    action: "Public declaration of Great Sage title"
+    risk: medium
+  - t: "03:10"
+    action: "Banquet disruption and peach theft"
+    risk: high
+  - t: "05:40"
+    action: "Open battle with heavenly divisions"
+    risk: critical
+
+commentary:
+  summary: |
+    This file intentionally mirrors yaml.yaml semantics but in .yml form,
+    ensuring extension-to-parser mapping is tested for both suffixes.
+  labels: [journey-west, havoc-heaven, parser-coverage]

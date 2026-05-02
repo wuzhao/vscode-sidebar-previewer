@@ -1,0 +1,53 @@
+%% Journey to the West - Havoc in Heaven fixture
+erDiagram
+    CELESTIAL_AUTHORITY ||--o{ DECREE : issues
+    CELESTIAL_AUTHORITY ||--o{ RESPONSE_UNIT : commands
+    RESPONSE_UNIT ||--o{ ENGAGEMENT : performs
+    REBEL_ACTOR ||--o{ ENGAGEMENT : participates
+    ASSET_ZONE ||--o{ INCIDENT_EVENT : impacted_by
+    INCIDENT_EVENT }o--|| DECREE : triggers
+
+    CELESTIAL_AUTHORITY {
+      string id PK
+      string title
+      string doctrine
+    }
+
+    REBEL_ACTOR {
+      string id PK
+      string name
+      int transformations
+      string mobility
+    }
+
+    RESPONSE_UNIT {
+      string id PK
+      string unit_name
+      string specialization
+    }
+
+    ENGAGEMENT {
+      string id PK
+      string phase
+      string outcome
+      float duration_hours
+    }
+
+    ASSET_ZONE {
+      string id PK
+      string zone_name
+      float integrity
+    }
+
+    INCIDENT_EVENT {
+      string id PK
+      string event_name
+      string severity
+      string timestamp
+    }
+
+    DECREE {
+      string id PK
+      string code
+      string objective
+    }

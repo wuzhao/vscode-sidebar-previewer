@@ -1,0 +1,6 @@
+id	unit	mission	target	status	latency_ms	error_rate	comment	raw_payload
+u-01	Thunder Division	Seal Gate	South Gate	ok	21.5	0.002	First contact with clone decoys	"{""phase"":1,""decoy"":true}"
+u-02	Cloud Cavalry	Protect Banquet	Peach Garden	ok	34.1	0.007	Encountered high mobility target	"{""phase"":2,""mobility"":""extreme""}"
+u-03	Alchemy Guard	Defend Elixir Hall	Pill Vault	degraded	88.0	0.091	Transformation spoofing bypassed checkpoints	"{""phase"":3,""spoofing"":true}"
+u-04	Judicial Spear Team	Direct Engagement	Wukong	degraded	120.6	0.133	""Erlang duel unresolved after prolonged exchange""	"{""phase"":4,""duel"":""stalemate""}"
+u-05	Seal Formation	Containment	Five Elements	ok	55.2	0.021	Containment initiated with external divine support	"{""phase"":5,""containment"":true}"
