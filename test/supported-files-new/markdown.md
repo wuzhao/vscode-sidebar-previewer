@@ -5,7 +5,7 @@ author: Celestial Archive Team
 version: 2.0.0
 tags:
   - journey-to-the-west
-  - havok-in-heaven
+  - havoc-in-heaven
   - markdown
   - sidebar-preview
 ---
@@ -110,8 +110,8 @@ $$
 Outcome = (P_{adaptability}^{72\ forms} + P_{mobility}^{somersault}) - P_{protocol}
 $$
 
-egin{equation}
-	ext{ContainmentCost} = \int_{t_0}^{t_1} (	ext{casualties} + 	ext{reputationLoss})\,dt
+\begin{equation}
+\text{ContainmentCost} = \int_{t_0}^{t_1} (\text{casualties} + \text{reputationLoss})\,dt
 \end{equation}
 
 ---
