@@ -1,0 +1,99 @@
+# Journey to the West mission configuration (TOML deep fixture)
+# English primary language, Chinese as auxiliary notes
+
+[meta]
+fixture_name = "journey-to-the-west-copilot"
+version = "1.1.0"
+primary_language = "English"
+aux_languages = ["Chinese"]
+focus = "81 tribulations and branch-aware execution"
+features = ["nested-route-model", "fallback-policy", "risk-matrix"] # inline comment style
+
+[mission]
+code = "JTW-81"
+origin = "Chang'an"
+destination = "Thunder Monastery"
+objective = "Retrieve true sutras and return with canonical integrity"
+status = "completed"
+
+[mission.control]
+priority = ["civilian-safety", "evidence", "escort-integrity", "scripture-authenticity"]
+allow_non_lethal_only = true
+
+[mission.control.thresholds]
+evidence_min = 0.65
+witness_min = 2
+escalation_timeout_sec = 180
+
+[[mission.control.escalation]]
+level = 1
+name = "observe"
+actions = ["recon", "witness-collection"]
+requires = { evidence_min = 0.2, witness_min = 1 }
+
+[[mission.control.escalation]]
+level = 2
+name = "contain"
+actions = ["protective-formation", "lock-rear-lane"]
+requires = { evidence_min = 0.5, witness_min = 2 }
+
+[[mission.control.escalation]]
+level = 3
+name = "mediate"
+actions = ["petition-guanyin", "witness-tribunal"]
+requires = { evidence_min = 0.7, witness_min = 3 }
+
+[[route.phases]]
+name = "early-route"
+chapters = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+checkpoints = [
+  { code = "ER-09", location = "Black Wind Cave", branch = "main-route", risk = 73.4 },
+  { code = "ER-12", location = "Flower-Fruit Mountain", branch = "branch-river-detour", risk = 79.6 }
+]
+fallbacks = [
+  { condition = "ifHostage", actions = ["protective-formation", "rear-lane-lock"] },
+  { condition = "ifEvidenceLow", actions = ["recon", "request-witness"] }
+]
+
+[[route.phases]]
+name = "final-approach"
+chapters = [79, 80, 81, 82, 83, 84, 85, 86, 87, 88]
+checkpoints = [
+  { code = "FA-80", location = "Small Thunderclap Monastery", branch = "branch-river-detour", risk = 141.8 },
+  { code = "FA-81", location = "Thunder Monastery", branch = "main-route", risk = 52.1 }
+]
+fallbacks = [
+  { condition = "ifIllusionSpike", actions = ["counter-illusion", "monk-visual-anchor"] },
+  { condition = "ifCanonMismatch", actions = ["correction-loop", "archive-recheck"] }
+]
+
+[route.decisions]
+branch_priority = { main_route = 1, branch_river_detour = 2, branch_west_ridge = 3 }
+
+[risk_model]
+formula = "risk = alpha*hostility + beta*terrain + gamma*deception - delta*allied_support"
+
+[risk_model.coefficients]
+alpha = 1.35
+beta = 0.92
+gamma = 1.11
+delta = 0.74
+
+[risk_model.matrix]
+hostility_vs_terrain = [
+  [1.00, 0.82, 0.70],
+  [1.18, 0.95, 0.79],
+  [1.36, 1.08, 0.91]
+]
+
+audit_samples = [
+  { cp = "CP-009", evidence = 0.72, witness = 3, branch = "main-route" },
+  { cp = "CP-036", evidence = 0.81, witness = 4, branch = "branch-river-detour" },
+  { cp = "CP-081", evidence = 0.93, witness = 5, branch = "main-route" }
+]
+
+[thresholds]
+low = 55.0
+medium = 70.0
+high = 82.5
+extreme = 90.0

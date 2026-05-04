@@ -1,0 +1,135 @@
+# Journey to the West YAML fixture (deep nested)
+# Comments are intentionally distributed across different positions
+meta:
+  fixture: journey-to-the-west-copilot
+  version: 1.1.0
+  language_primary: English
+  language_aux:
+    - Chinese
+  focus: branch-aware route execution
+
+# Defaults reused by merge keys
+defaults: &decision_defaults
+  evidence_threshold: 0.65
+  witness_min: 2
+  retry_limit: 3
+  prefer_non_lethal: true
+
+mission:
+  code: JTW-81
+  origin: Chang'an
+  destination: Thunder Monastery
+  objective: Retrieve true sutras and return with canonical integrity
+  principles:
+    - evidence-first
+    - civilian-safety
+    - disciplined-escalation
+  control:
+    <<: *decision_defaults
+    priority:
+      - civilian-safety
+      - evidence
+      - escort-integrity
+      - scripture-authenticity
+  cn_note: 辅助：先证据后行动
+
+team:
+  master: &master
+    name: Xuanzang
+    role: monk
+    doctrine: compassion-first
+  disciples:
+    - &wukong
+      name: Sun Wukong
+      role: defender
+      capabilities:
+        - 72-transform
+        - cloud-somersault
+        - staff-control
+    - &bajie
+      name: Zhu Bajie
+      role: support
+      capabilities:
+        - heavy-engagement
+        - logistics
+    - &wujing
+      name: Sha Wujing
+      role: rear-guard
+      capabilities:
+        - convoy-protection
+        - stability
+
+route_plan:
+  - name: early-route
+    chapters: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    checkpoints:
+      - id: ER-09
+        location: Black Wind Cave
+        branch: main-route
+        signals:
+          - forged-invitation
+          - hostage-rumor
+        actors:
+          - { name: Sun Wukong, role: lead-defense }
+          - { name: Xuanzang, role: verification }
+        fallback:
+          if_hostage:
+            - action: protective-formation
+              requires: [rear-lane-lock, monk-visual-anchor]
+          if_evidence_low:
+            - action: recon
+              timeout_sec: 300
+            - action: request-witness
+              timeout_sec: 600
+      - id: ER-12
+        location: Flower-Fruit Mountain
+        branch: branch-river-detour
+        signals:
+          - forged-seal
+        actors:
+          - { name: Zhu Bajie, role: support }
+          - { name: Sha Wujing, role: rear-guard }
+  - name: final-approach
+    chapters: [79, 80, 81, 82, 83, 84, 85, 86, 87, 88]
+    checkpoints:
+      - id: FA-80
+        location: Small Thunderclap Monastery
+        branch: branch-river-detour
+        signals:
+          - illusion-spike
+          - false-hostage
+      - id: FA-81
+        location: Thunder Monastery
+        branch: main-route
+        signals:
+          - canon-verification
+
+risk_matrices:
+  hostility_vs_terrain:
+    - [1.00, 0.82, 0.70]
+    - [1.18, 0.95, 0.79]
+    - [1.36, 1.08, 0.91]
+  deception_vs_visibility:
+    - [0.40, 0.66, 0.88]
+    - [0.35, 0.58, 0.82]
+
+# Object merge example based on anchored object
+dispatch_profiles:
+  default: &dispatch_default
+    lead: Xuanzang
+    defenders:
+      - Sun Wukong
+    support:
+      - Zhu Bajie
+      - Sha Wujing
+  extreme:
+    <<: *dispatch_default
+    defenders:
+      - Sun Wukong
+      - Zhu Bajie
+
+anchors_demo:
+  master_ref: *master
+  wukong_ref: *wukong
+  bajie_ref: *bajie
+  wujing_ref: *wujing

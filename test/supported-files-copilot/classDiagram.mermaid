@@ -1,0 +1,69 @@
+%% Class model of a narrative execution system for Journey to the West
+classDiagram
+    class PilgrimageMission {
+      +String missionCode
+      +String objective
+      +String origin
+      +String destination
+      +start()
+      +recordTribulation(record)
+      +verifyCanon()
+      +closeMission()
+    }
+
+    class Character {
+      +String id
+      +String name
+      +String role
+      +String alignment
+      +act(context)
+    }
+
+    class Monk {
+      +String doctrine
+      +negotiate()
+      +reciteMantra()
+    }
+
+    class Disciple {
+      +int powerIndex
+      +String specialty
+      +protectMaster()
+      +counterThreat()
+    }
+
+    class DemonForce {
+      +String faction
+      +String domain
+      +String deceptionStyle
+      +launchTrap()
+      +escalate()
+    }
+
+    class TribulationRecord {
+      +int no
+      +String location
+      +String cause
+      +String tactic
+      +String outcome
+      +toSummary()
+    }
+
+    class Artifact {
+      +String name
+      +String origin
+      +String effect
+      +activate()
+    }
+
+    PilgrimageMission "1" --> "many" TribulationRecord : tracks
+    PilgrimageMission "1" --> "1" Monk : ledBy
+    PilgrimageMission "1" --> "many" Disciple : escortedBy
+    TribulationRecord "many" --> "many" DemonForce : conflictsWith
+    Disciple --> Artifact : uses
+
+    Monk --|> Character
+    Disciple --|> Character
+    DemonForce --|> Character
+
+    note for PilgrimageMission "English-major model, Chinese auxiliary comments allowed"

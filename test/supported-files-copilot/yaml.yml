@@ -1,0 +1,40 @@
+# Alternate .yml variant for Journey to the West fixture
+# More branching detail and inline maps
+meta:
+  fixture: journey-to-the-west-copilot-yml
+  version: 1.0.0
+  language: { primary: English, auxiliary: Chinese }
+
+route:
+  phases:
+    - name: early-route
+      checkpoints: [1, 2, 3, 4, 5, 6, 7, 8]
+    - name: mid-route
+      checkpoints: [9, 10, 11, 12, 13, 14, 15, 16]
+    - name: late-route
+      checkpoints: [17, 18, 19, 20]
+  branches:
+    main-route:
+      condition: default
+      risk_bias: medium
+    branch-river-detour:
+      condition: flood_or_fortress
+      risk_bias: high
+    branch-west-ridge:
+      condition: sandstorm_or_ambush
+      risk_bias: high
+
+characters:
+  xuanzang: { role: monk, priority: doctrine, cn: "慈悲" }
+  sun_wukong: { role: defender, priority: adaptive-combat, cn: "悟空" }
+  zhu_bajie: { role: support, priority: disruption, cn: "八戒" }
+  sha_wujing: { role: rear-guard, priority: stability, cn: "悟净" }
+
+validation:
+  canonical_check:
+    required: true
+    fallback_loop: true
+    evidence_threshold: 0.65
+    notes: >
+      Canon verification must pass before return;
+      if mismatched, re-enter the monastery loop.

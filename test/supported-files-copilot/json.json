@@ -1,0 +1,345 @@
+{
+  "storyMeta": {
+    "book": "Journey to the West",
+    "primaryLanguage": "English",
+    "auxiliaryLanguage": [
+      "Chinese"
+    ],
+    "focus": "Havoc in Heaven legacy across 81 tribulations",
+    "fixtureVersion": "copilot-1.1.0",
+    "narrativeAxes": [
+      "discipline-vs-impulse",
+      "evidence-vs-rumor",
+      "mercy-vs-force"
+    ]
+  },
+  "mission": {
+    "code": "JTW-81",
+    "objective": "Retrieve true sutras and return with canonical integrity",
+    "origin": "Chang'an",
+    "destination": "Thunder Monastery",
+    "status": "completed",
+    "branches": [
+      "main-route",
+      "branch-river-detour",
+      "branch-west-ridge"
+    ],
+    "governance": {
+      "celestialOversight": true,
+      "localDiplomacy": true,
+      "civilianSafetyFirst": true
+    },
+    "controlPolicy": {
+      "priorityOrder": [
+        "civilian-safety",
+        "evidence",
+        "escort-integrity",
+        "scripture-authenticity"
+      ],
+      "escalationLadder": [
+        {
+          "level": 1,
+          "name": "observe",
+          "actions": [
+            "recon",
+            "witness-collection"
+          ],
+          "requires": {
+            "evidenceScoreMin": 0.2,
+            "witnessCountMin": 1
+          }
+        },
+        {
+          "level": 2,
+          "name": "contain",
+          "actions": [
+            "protective-formation",
+            "monk-isolation-lane"
+          ],
+          "requires": {
+            "evidenceScoreMin": 0.5,
+            "witnessCountMin": 2
+          }
+        },
+        {
+          "level": 3,
+          "name": "mediate",
+          "actions": [
+            "petition-guanyin",
+            "witness-tribunal"
+          ],
+          "requires": {
+            "evidenceScoreMin": 0.7,
+            "witnessCountMin": 3
+          }
+        }
+      ],
+      "fallbackRules": {
+        "ifMonkSeparated": [
+          {
+            "step": "lock-rear-lane",
+            "timeoutSec": 90
+          },
+          {
+            "step": "signal-cloud-recall",
+            "timeoutSec": 120
+          }
+        ],
+        "ifHeatBarrier": [
+          {
+            "route": "river-detour",
+            "cost": {
+              "water": 12,
+              "timeHours": 3.5
+            }
+          },
+          {
+            "route": "night-passage",
+            "cost": {
+              "water": 8,
+              "timeHours": 4.2
+            }
+          }
+        ]
+      }
+    }
+  },
+  "team": [
+    {
+      "id": "xuan-zang",
+      "name": "Xuanzang",
+      "role": "Monk",
+      "strengths": [
+        "doctrine",
+        "negotiation",
+        "moral authority"
+      ],
+      "constraints": [
+        "physical vulnerability"
+      ]
+    },
+    {
+      "id": "sun-wukong",
+      "name": "Sun Wukong",
+      "role": "Defender",
+      "strengths": [
+        "72 transformations",
+        "cloud mobility",
+        "staff combat"
+      ],
+      "constraints": [
+        "temper under provocation"
+      ]
+    },
+    {
+      "id": "zhu-bajie",
+      "name": "Zhu Bajie",
+      "role": "Support",
+      "strengths": [
+        "shock engagement",
+        "carrying capacity"
+      ],
+      "constraints": [
+        "discipline variance"
+      ]
+    },
+    {
+      "id": "sha-wujing",
+      "name": "Sha Wujing",
+      "role": "Rear Guard",
+      "strengths": [
+        "convoy integrity",
+        "stability under pressure"
+      ],
+      "constraints": [
+        "lower burst mobility"
+      ]
+    }
+  ],
+  "routePlan": [
+    {
+      "segment": "early-route",
+      "chapters": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "checkpoints": [
+        {
+          "code": "ER-09",
+          "location": "Black Wind Cave",
+          "branch": "main-route",
+          "risk": {
+            "base": 73.4,
+            "hostility": 0.82,
+            "deception": 0.67
+          },
+          "actors": [
+            {
+              "id": "sun-wukong",
+              "role": "lead-defense"
+            },
+            {
+              "id": "xuan-zang",
+              "role": "verification"
+            }
+          ]
+        },
+        {
+          "code": "ER-12",
+          "location": "Flower-Fruit Mountain",
+          "branch": "branch-river-detour",
+          "risk": {
+            "base": 79.6,
+            "hostility": 0.69,
+            "deception": 0.92
+          },
+          "actors": [
+            {
+              "id": "zhu-bajie",
+              "role": "flank-support"
+            },
+            {
+              "id": "sha-wujing",
+              "role": "rear-lane"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "segment": "final-approach",
+      "chapters": [
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88
+      ],
+      "checkpoints": [
+        {
+          "code": "FA-80",
+          "location": "Small Thunderclap Monastery",
+          "branch": "branch-river-detour",
+          "risk": {
+            "base": 141.8,
+            "hostility": 0.74,
+            "deception": 0.96
+          },
+          "actors": [
+            {
+              "id": "sun-wukong",
+              "role": "counter-illusion"
+            },
+            {
+              "id": "sha-wujing",
+              "role": "escort-stability"
+            }
+          ]
+        },
+        {
+          "code": "FA-81",
+          "location": "Thunder Monastery",
+          "branch": "main-route",
+          "risk": {
+            "base": 52.1,
+            "hostility": 0.18,
+            "deception": 0.44
+          },
+          "actors": [
+            {
+              "id": "xuan-zang",
+              "role": "canon-verification"
+            },
+            {
+              "id": "sun-wukong",
+              "role": "security"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "analytics": {
+    "totalTribulations": 81,
+    "categoryCounts": {
+      "directCombat": 24,
+      "diplomacy": 11,
+      "rescue": 13,
+      "logistics": 10,
+      "illusion": 12,
+      "moralTrials": 11
+    },
+    "heatmap": [
+      {
+        "branch": "main-route",
+        "bins": [
+          {
+            "label": "40-59",
+            "count": 18
+          },
+          {
+            "label": "60-79",
+            "count": 27
+          },
+          {
+            "label": "80+",
+            "count": 9
+          }
+        ]
+      },
+      {
+        "branch": "branch-river-detour",
+        "bins": [
+          {
+            "label": "40-59",
+            "count": 6
+          },
+          {
+            "label": "60-79",
+            "count": 14
+          },
+          {
+            "label": "80+",
+            "count": 7
+          }
+        ]
+      }
+    ]
+  },
+  "samples": [
+    {
+      "tribulationNo": 9,
+      "location": "Black Wind Cave",
+      "trigger": "forged invitation and scripture seizure attempt",
+      "outcome": "controlled resolution",
+      "cnAux": "辅助：先证据后行动"
+    },
+    {
+      "tribulationNo": 36,
+      "location": "Flaming Mountain Corridor",
+      "trigger": "environmental blockade and alliance refusal",
+      "outcome": "fan route secured",
+      "cnAux": "辅助：借力破局"
+    },
+    {
+      "tribulationNo": 81,
+      "location": "Thunder Monastery",
+      "trigger": "canonical authenticity verification",
+      "outcome": "mission complete",
+      "cnAux": "辅助：功德圆满"
+    }
+  ]
+}
