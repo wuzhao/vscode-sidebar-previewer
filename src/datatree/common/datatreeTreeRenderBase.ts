@@ -276,14 +276,10 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
         ): string {
             let html = '<div class="tree-children">';
             if (Array.isArray(data)) {
-                const items = data.map(item => ({
-                    value: item,
-                    line: arrayItemLineLocator.next(),
-                }));
-
-                for (let i = 0; i < items.length; i++) {
-                    const itemInfo = items[i];
-                    const line = itemInfo.line;
+                for (let i = 0; i < data.length; i++) {
+                    const itemValue = data[i];
+                    // Consume array lines lazily so nested arrays don't shift sibling item mapping.
+                    const line = arrayItemLineLocator.next();
                     const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                     const deferredXmlIcon =
                         fileType === 'xml'
@@ -294,22 +290,19 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                             : '';
                     const commentIcon = deferredXmlIcon || this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines);
                     const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
-                    const nextBoundary = i + 1 < items.length
-                        ? this.resolveBoundaryLine(items[i + 1].line, boundaryExclusive)
-                        : boundaryExclusive;
 
                     html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary, false);
 
-                    if (this.isCompound(itemInfo.value)) {
-                        const bracket = Array.isArray(itemInfo.value)
-                            ? `[${itemInfo.value.length}]`
-                            : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
-                        let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
+                    if (this.isCompound(itemValue)) {
+                        const bracket = Array.isArray(itemValue)
+                            ? `[${itemValue.length}]`
+                            : `{${Object.keys(itemValue as Record<string, unknown>).length}}`;
+                        let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, boundaryExclusive, jsonCloseLineLocator);
                         childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                         childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, parentPath, null)}</details></div>`;
+                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, parentPath, null)}</details></div>`;
                     } else {
-                        html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
+                        html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemValue)}</div>`;
                     }
                 }
             } else if (typeof data === 'object' && data !== null) {
@@ -438,37 +431,34 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                     ? this.findYamlDocumentStartLines(sourceLines)
                     : null;
                 const isYamlDocumentRootArray = fileType === 'yaml' && yamlDocumentRootLines !== null;
-                const items = data.map((item, index) => ({
-                    value: item,
-                    line: (yamlDocumentRootLines && index < yamlDocumentRootLines.length)
-                        ? yamlDocumentRootLines[index]
-                        : arrayItemLineLocator.next(),
-                }));
-
-                for (let i = 0; i < items.length; i++) {
-                    const itemInfo = items[i];
-                    const line = itemInfo.line;
+                for (let i = 0; i < data.length; i++) {
+                    const itemValue = data[i];
+                    const line = (yamlDocumentRootLines && i < yamlDocumentRootLines.length)
+                        ? yamlDocumentRootLines[i]
+                        : arrayItemLineLocator.next();
+                    const nextBoundary = (yamlDocumentRootLines && i + 1 < yamlDocumentRootLines.length)
+                        ? this.resolveBoundaryLine(yamlDocumentRootLines[i + 1], rootBoundary)
+                        : rootBoundary;
                     const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                     const commentIcon = this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines);
                     const itemBoundary = this.resolveBoundaryLine(line, rootBoundary);
-                    const nextBoundary = i + 1 < items.length
-                        ? this.resolveBoundaryLine(items[i + 1].line, rootBoundary)
-                        : rootBoundary;
 
                     html += this.renderStandaloneBeforeBoundary(cursor, itemBoundary, true);
 
-                    if (this.isCompound(itemInfo.value)) {
-                        const bracket = Array.isArray(itemInfo.value)
-                            ? `[${itemInfo.value.length}]`
-                            : `{${Object.keys(itemInfo.value as Record<string, unknown>).length}}`;
+                    if (this.isCompound(itemValue)) {
+                        const bracket = Array.isArray(itemValue)
+                            ? `[${itemValue.length}]`
+                            : `{${Object.keys(itemValue as Record<string, unknown>).length}}`;
                         let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
-                        if (!isYamlDocumentRootArray) {
+                        if (isYamlDocumentRootArray) {
+                            childBoundary = nextBoundary;
+                        } else {
                             childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                         }
                         childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemInfo.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [], null)}</details></div>`;
+                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [], null)}</details></div>`;
                     } else {
-                        html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemInfo.value)}</div>`;
+                        html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemValue)}</div>`;
                     }
                 }
             } else if (typeof data === 'object' && data !== null) {

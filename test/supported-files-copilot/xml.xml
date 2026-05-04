@@ -1,4 +1,5 @@
 <!-- Journey to the West XML deep fixture [A] -->
+<!-- Root preamble comment: validates standalone root comments -->
 <?xml version="1.0" encoding="UTF-8"?>
 <?mission version="1.1" stage="westward"?>
 <!DOCTYPE pilgrimage SYSTEM "journey.dtd" [
@@ -18,15 +19,20 @@
 
 <!-- Top-level note: English primary, Chinese auxiliary comments are allowed [B] -->
 <pilgrimage xmlns="https://example.com/jtw" xmlns:meta="https://example.com/jtw/meta" generatedAt="2026-05-04T20:00:00Z">
+  <!-- Mission section begins -->
   <meta:mission code="JTW-81" origin="Chang'an" destination="Thunder Monastery">
     <meta:objective>Retrieve true sutras and return with canonical integrity</meta:objective>
     <meta:principle><![CDATA[&doctrine; / &strategy;]]></meta:principle>
+
+    <!-- Control policy tree -->
     <meta:control>
       <meta:priority>
         <meta:item order="1">civilian-safety</meta:item>
         <meta:item order="2">evidence</meta:item>
         <meta:item order="3">escort-integrity</meta:item>
       </meta:priority>
+
+      <!-- Escalation stages are intentionally verbose for locate testing -->
       <meta:escalation>
         <meta:stage level="1">
           <meta:name>observe</meta:name>
@@ -35,20 +41,26 @@
             <meta:action>witness-collection</meta:action>
           </meta:actions>
         </meta:stage>
+
+        <!-- Stage 2 should map to its own line, not root -->
         <meta:stage level="2">
           <meta:name>contain</meta:name>
           <meta:actions>
+            <!-- action comment near protective-formation -->
             <meta:action>protective-formation</meta:action>
             <meta:action>rear-lane-lock</meta:action>
           </meta:actions>
         </meta:stage>
       </meta:escalation>
     </meta:control>
+
+    <!-- Inline semantic CN hint -->
     <meta:cn>辅助：先护人，再破敌</meta:cn>
   </meta:mission>
 
   <?audit actor="celestial-observer" mode="strict"?>
 
+  <!-- Team section with repeated member nodes -->
   <team>
     <member role="master" name="Xuanzang">Doctrine and negotiation authority</member>
     <member role="disciple" name="Sun Wukong">Adaptive combat and high mobility</member>
@@ -69,6 +81,7 @@
           <actor id="xuan-zang" role="verification" />
         </actors>
         <fallback>
+          <!-- Rule comment before nested actions -->
           <rule when="ifEvidenceLow">
             <action timeoutSec="300">recon</action>
             <action timeoutSec="600">request witness</action>
@@ -76,6 +89,7 @@
         </fallback>
       </checkpoint>
 
+      <!-- Second checkpoint in same leg -->
       <checkpoint id="ER-12" branch="branch-river-detour" location="Flower-Fruit Mountain">
         <signals>
           <signal type="seal">forged temple seal</signal>
@@ -87,6 +101,7 @@
       </checkpoint>
     </leg>
 
+    <!-- Final approach leg -->
     <leg name="final-approach" chapters="79-88">
       <checkpoint id="FA-80" branch="branch-river-detour" location="Small Thunderclap Monastery">
         <signals>
@@ -110,6 +125,7 @@
     <category name="logistics" count="10" />
     <category name="illusion" count="12" />
     <category name="moral-trials" count="11" />
+
     <!-- Nested object-like matrix -->
     <riskMatrix>
       <row terrain="mountain" deception="0.70" hostility="1.00" />
@@ -119,4 +135,5 @@
   </analytics>
 
   <!-- Tail standalone comment [C] -->
+  <!-- End of document comment for root-level standalone behavior -->
 </pilgrimage>

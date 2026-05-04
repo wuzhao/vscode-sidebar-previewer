@@ -99,6 +99,11 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     continue;
                 }
 
+                if (/^\s*\[\[.*\]\]\s*$/.test(trimmed)) {
+                    result.push(i);
+                    continue;
+                }
+
                 if (arrayDepth > 0) {
                     const firstToken = this.findTomlArrayItemFirstToken(trimmed);
                     if (firstToken && firstToken !== ']') {
@@ -112,7 +117,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     continue;
                 }
 
-                if (/^\s*\[\[.*\]\]\s*$/.test(trimmed) || /^\s*\[.*\]\s*$/.test(trimmed)) {
+                if (/^\s*\[.*\]\s*$/.test(trimmed)) {
                     continue;
                 }
 
@@ -127,12 +132,13 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     continue;
                 }
 
-                const afterStart = rhs.slice(arrayStart + 1).trim();
-                if (afterStart.length > 0 && !afterStart.startsWith(']')) {
+                const arraySegment = rhs.slice(arrayStart);
+                const inlineItemCount = this.countTomlTopLevelArrayItems(arraySegment);
+                for (let count = 0; count < inlineItemCount; count++) {
                     result.push(i);
                 }
 
-                arrayDepth = this.countSquareBracketDelta(rhs.slice(arrayStart));
+                arrayDepth = this.countSquareBracketDelta(arraySegment);
                 if (arrayDepth < 0) {
                     arrayDepth = 0;
                 }
@@ -252,6 +258,123 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
 
             return -1;
+        }
+
+    /**
+         * 统计 TOML 顶层数组项数量并返回结果
+         * @param arraySegment - 以 `[` 开始的数组片段
+         * @returns 返回数组项数量
+         */
+        protected static countTomlTopLevelArrayItems(arraySegment: string): number {
+            let inSingle = false;
+            let inDouble = false;
+            let escape = false;
+            let squareDepth = 0;
+            let curlyDepth = 0;
+            let itemStarted = false;
+            let count = 0;
+
+            for (let i = 0; i < arraySegment.length; i++) {
+                const ch = arraySegment[i];
+
+                if (inDouble) {
+                    if (escape) {
+                        escape = false;
+                        continue;
+                    }
+                    if (ch === '\\') {
+                        escape = true;
+                        continue;
+                    }
+                    if (ch === '"') {
+                        inDouble = false;
+                    }
+                    continue;
+                }
+
+                if (inSingle) {
+                    if (ch === '\'') {
+                        inSingle = false;
+                    }
+                    continue;
+                }
+
+                if (ch === '"') {
+                    inDouble = true;
+                    if (squareDepth > 0) {
+                        itemStarted = true;
+                    }
+                    continue;
+                }
+
+                if (ch === '\'') {
+                    inSingle = true;
+                    if (squareDepth > 0) {
+                        itemStarted = true;
+                    }
+                    continue;
+                }
+
+                if (ch === '[') {
+                    squareDepth += 1;
+                    if (squareDepth > 1) {
+                        itemStarted = true;
+                    }
+                    continue;
+                }
+
+                if (ch === ']') {
+                    squareDepth -= 1;
+                    if (squareDepth <= 0) {
+                        if (itemStarted) {
+                            count += 1;
+                            itemStarted = false;
+                        }
+                        break;
+                    }
+                    continue;
+                }
+
+                if (squareDepth === 0) {
+                    continue;
+                }
+
+                if (ch === '{') {
+                    curlyDepth += 1;
+                    if (squareDepth >= 1) {
+                        itemStarted = true;
+                    }
+                    continue;
+                }
+
+                if (ch === '}') {
+                    if (curlyDepth > 0) {
+                        curlyDepth -= 1;
+                    }
+                    if (squareDepth >= 1) {
+                        itemStarted = true;
+                    }
+                    continue;
+                }
+
+                if (ch === ',' && squareDepth === 1 && curlyDepth === 0) {
+                    if (itemStarted) {
+                        count += 1;
+                        itemStarted = false;
+                    }
+                    continue;
+                }
+
+                if (!/\s/.test(ch)) {
+                    itemStarted = true;
+                }
+            }
+
+            if (itemStarted) {
+                count += 1;
+            }
+
+            return count;
         }
 
     /**

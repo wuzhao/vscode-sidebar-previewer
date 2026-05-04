@@ -1,40 +1,58 @@
 # Alternate .yml variant for Journey to the West fixture
-# More branching detail and inline maps
-meta:
-  fixture: journey-to-the-west-copilot-yml
-  version: 1.0.0
-  language: { primary: English, auxiliary: Chinese }
+# This file intentionally adds many comments in different positions
 
+meta:
+  fixture: journey-to-the-west-copilot-yml # fixture id
+  version: 1.1.1 # task-A marker
+  language: { primary: English, auxiliary: Chinese } # inline map comment
+
+# Route section with phased checkpoints
 route:
   phases:
-    - name: early-route
+    - name: early-route # first phase
       checkpoints: [1, 2, 3, 4, 5, 6, 7, 8]
-    - name: mid-route
+    - name: mid-route # middle phase
       checkpoints: [9, 10, 11, 12, 13, 14, 15, 16]
-    - name: late-route
+    - name: late-route # final phase
       checkpoints: [17, 18, 19, 20]
   branches:
+    # Default branch
     main-route:
       condition: default
       risk_bias: medium
+    # Branch for flood or fortress lock
     branch-river-detour:
       condition: flood_or_fortress
       risk_bias: high
+    # Branch for sandstorm or ambush
     branch-west-ridge:
       condition: sandstorm_or_ambush
       risk_bias: high
 
 characters:
-  xuanzang: { role: monk, priority: doctrine, cn: "慈悲" }
-  sun_wukong: { role: defender, priority: adaptive-combat, cn: "悟空" }
-  zhu_bajie: { role: support, priority: disruption, cn: "八戒" }
-  sha_wujing: { role: rear-guard, priority: stability, cn: "悟净" }
+  xuanzang: { role: monk, priority: doctrine, cn: "慈悲" } # leader
+  sun_wukong: { role: defender, priority: adaptive-combat, cn: "悟空" } # main defender
+  zhu_bajie: { role: support, priority: disruption, cn: "八戒" } # support
+  sha_wujing: { role: rear-guard, priority: stability, cn: "悟净" } # rear guard
 
 validation:
   canonical_check:
-    required: true
-    fallback_loop: true
-    evidence_threshold: 0.65
+    required: true # mandatory check
+    fallback_loop: true # re-enter if mismatch
+    evidence_threshold: 0.65 # numeric threshold
     notes: >
       Canon verification must pass before return;
       if mismatched, re-enter the monastery loop.
+
+# Additional diagnostic section with comments before list items
+diagnostics:
+  checkpoints:
+    - id: CP-009 # black wind cave
+      note: forged invitation
+    - id: CP-036 # flaming mountain corridor
+      note: fire barrier and alliance refusal
+    - id: CP-081 # thunder monastery
+      note: canonical authenticity validation
+
+# Tail comment for standalone-end behavior
+# Auxiliary CN: 此文件用于测试 yml 注释密集场景

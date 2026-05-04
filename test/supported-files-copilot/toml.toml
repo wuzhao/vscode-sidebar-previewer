@@ -1,14 +1,16 @@
 # Journey to the West mission configuration (TOML deep fixture)
-# English primary language, Chinese as auxiliary notes
+# This file intentionally contains dense comments for parser and renderer tests
 
+# [META] Root identity and language behavior
 [meta]
-fixture_name = "journey-to-the-west-copilot"
-version = "1.1.0"
-primary_language = "English"
-aux_languages = ["Chinese"]
-focus = "81 tribulations and branch-aware execution"
-features = ["nested-route-model", "fallback-policy", "risk-matrix"] # inline comment style
+fixture_name = "journey-to-the-west-copilot" # unique fixture id
+version = "1.1.1" # bumped for today's task A
+primary_language = "English" # UI-facing language
+aux_languages = ["Chinese"] # auxiliary hints for CN notes
+focus = "81 tribulations and branch-aware execution" # semantic scope
+features = ["nested-route-model", "fallback-policy", "risk-matrix"] # inline list comment
 
+# [MISSION] Mission envelope and final objective
 [mission]
 code = "JTW-81"
 origin = "Chang'an"
@@ -16,45 +18,52 @@ destination = "Thunder Monastery"
 objective = "Retrieve true sutras and return with canonical integrity"
 status = "completed"
 
+# [MISSION.CONTROL] Behavior policy from low to high escalation
 [mission.control]
 priority = ["civilian-safety", "evidence", "escort-integrity", "scripture-authenticity"]
-allow_non_lethal_only = true
+allow_non_lethal_only = true # global force limiter
 
+# Threshold comments live near values for easier locate behavior
 [mission.control.thresholds]
-evidence_min = 0.65
-witness_min = 2
-escalation_timeout_sec = 180
+evidence_min = 0.65 # below this value force should not escalate
+witness_min = 2 # minimum witness count for escalation
+escalation_timeout_sec = 180 # single-stage timeout
 
+# Escalation stage 1 comment before AoT section
 [[mission.control.escalation]]
 level = 1
 name = "observe"
-actions = ["recon", "witness-collection"]
-requires = { evidence_min = 0.2, witness_min = 1 }
+actions = ["recon", "witness-collection"] # action list keeps order
+requires = { evidence_min = 0.2, witness_min = 1 } # inline table comment
 
+# Escalation stage 2 contains containment strategy
 [[mission.control.escalation]]
 level = 2
 name = "contain"
 actions = ["protective-formation", "lock-rear-lane"]
 requires = { evidence_min = 0.5, witness_min = 2 }
 
+# Escalation stage 3 is mediation route
 [[mission.control.escalation]]
 level = 3
 name = "mediate"
 actions = ["petition-guanyin", "witness-tribunal"]
 requires = { evidence_min = 0.7, witness_min = 3 }
 
+# Route phase comments test long/short/inline placement styles
 [[route.phases]]
 name = "early-route"
-chapters = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+chapters = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16] # chapter span comment
 checkpoints = [
-  { code = "ER-09", location = "Black Wind Cave", branch = "main-route", risk = 73.4 },
-  { code = "ER-12", location = "Flower-Fruit Mountain", branch = "branch-river-detour", risk = 79.6 }
+  { code = "ER-09", location = "Black Wind Cave", branch = "main-route", risk = 73.4 }, # first checkpoint
+  { code = "ER-12", location = "Flower-Fruit Mountain", branch = "branch-river-detour", risk = 79.6 } # second checkpoint
 ]
 fallbacks = [
   { condition = "ifHostage", actions = ["protective-formation", "rear-lane-lock"] },
   { condition = "ifEvidenceLow", actions = ["recon", "request-witness"] }
 ]
 
+# Route phase 2 comments separated as standalone paragraphs
 [[route.phases]]
 name = "final-approach"
 chapters = [79, 80, 81, 82, 83, 84, 85, 86, 87, 88]
@@ -67,33 +76,41 @@ fallbacks = [
   { condition = "ifCanonMismatch", actions = ["correction-loop", "archive-recheck"] }
 ]
 
+# Decision map comment block
 [route.decisions]
-branch_priority = { main_route = 1, branch_river_detour = 2, branch_west_ridge = 3 }
+branch_priority = { main_route = 1, branch_river_detour = 2, branch_west_ridge = 3 } # stable sort order
 
+# Risk model formula comment and coefficient notes
 [risk_model]
 formula = "risk = alpha*hostility + beta*terrain + gamma*deception - delta*allied_support"
 
 [risk_model.coefficients]
-alpha = 1.35
-beta = 0.92
-gamma = 1.11
-delta = 0.74
+alpha = 1.35 # hostility weight
+beta = 0.92 # terrain weight
+gamma = 1.11 # deception weight
+delta = 0.74 # allied support offset
 
+# Matrix comment: nested arrays in TOML
 [risk_model.matrix]
 hostility_vs_terrain = [
-  [1.00, 0.82, 0.70],
-  [1.18, 0.95, 0.79],
-  [1.36, 1.08, 0.91]
+  [1.00, 0.82, 0.70], # mountain heavy
+  [1.18, 0.95, 0.79], # river heavy
+  [1.36, 1.08, 0.91] # fortress heavy
 ]
 
+# Array-of-inline-tables comment test
 audit_samples = [
   { cp = "CP-009", evidence = 0.72, witness = 3, branch = "main-route" },
   { cp = "CP-036", evidence = 0.81, witness = 4, branch = "branch-river-detour" },
   { cp = "CP-081", evidence = 0.93, witness = 5, branch = "main-route" }
 ]
 
+# Final threshold comments
 [thresholds]
 low = 55.0
 medium = 70.0
 high = 82.5
 extreme = 90.0
+
+# Tail standalone comment for end-of-file behavior
+# Auxiliary CN: 注释密度用于覆盖注释定位与渲染路径
