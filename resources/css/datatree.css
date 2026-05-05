@@ -29,7 +29,8 @@
 
 .data-tree summary::before {
     content: '\25B6';
-    display: inline-block;
+    display: block;
+    float: left;
     width: 12px;
     font-size: 12px;
     text-align: center;
@@ -40,6 +41,7 @@
 
 .data-tree details[open] > summary::before {
     transform: rotate(90deg);
+    vertical-align: middle;
 }
 
 .data-tree .tree-key {

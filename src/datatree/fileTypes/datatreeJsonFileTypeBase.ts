@@ -161,17 +161,10 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
         protected static buildJsonArrayItemLineIndex(lines: string[]): number[] {
             const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
             const result: number[] = [];
-            const stack: Array<'object' | 'array'> = [];
+            const stack: Array<{ kind: 'object' } | { kind: 'array'; expectingValue: boolean }> = [];
 
             for (let i = 0; i < sanitizedLines.length; i++) {
                 const line = sanitizedLines[i];
-                const top = stack.length > 0 ? stack[stack.length - 1] : null;
-                const firstToken = this.findJsonLineFirstToken(line);
-
-                if (top === 'array' && this.isJsonArrayValueStart(firstToken)) {
-                    result.push(i);
-                }
-
                 let inString = false;
                 let escape = false;
 
@@ -194,18 +187,73 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
                     }
 
                     if (ch === '"') {
+                        const top = stack.length > 0 ? stack[stack.length - 1] : null;
+                        if (top && top.kind === 'array' && top.expectingValue) {
+                            result.push(i);
+                            top.expectingValue = false;
+                        }
+
                         inString = true;
                         continue;
                     }
 
                     if (ch === '[') {
-                        stack.push('array');
+                        const top = stack.length > 0 ? stack[stack.length - 1] : null;
+                        if (top && top.kind === 'array' && top.expectingValue) {
+                            result.push(i);
+                            top.expectingValue = false;
+                        }
+
+                        stack.push({ kind: 'array', expectingValue: true });
                         continue;
                     }
+
                     if (ch === '{') {
-                        stack.push('object');
+                        const top = stack.length > 0 ? stack[stack.length - 1] : null;
+                        if (top && top.kind === 'array' && top.expectingValue) {
+                            result.push(i);
+                            top.expectingValue = false;
+                        }
+
+                        stack.push({ kind: 'object' });
                         continue;
                     }
+
+                    if (ch === ',') {
+                        const top = stack.length > 0 ? stack[stack.length - 1] : null;
+                        if (top && top.kind === 'array') {
+                            top.expectingValue = true;
+                        }
+                        continue;
+                    }
+
+                    if (ch === ']') {
+                        const top = stack.length > 0 ? stack[stack.length - 1] : null;
+                        if (top && top.kind === 'array') {
+                            stack.pop();
+                        }
+                        continue;
+                    }
+
+                    if (ch === '}') {
+                        const top = stack.length > 0 ? stack[stack.length - 1] : null;
+                        if (top && top.kind === 'object') {
+                            stack.pop();
+                        }
+                        continue;
+                    }
+
+                    if (/\s|:/.test(ch)) {
+                        continue;
+                    }
+
+                    const top = stack.length > 0 ? stack[stack.length - 1] : null;
+                    if (top && top.kind === 'array' && top.expectingValue && this.isJsonArrayValueStart(ch)) {
+                        result.push(i);
+                        top.expectingValue = false;
+                        continue;
+                    }
+
                     if ((ch === ']' || ch === '}') && stack.length > 0) {
                         stack.pop();
                     }
