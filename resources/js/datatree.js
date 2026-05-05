@@ -381,6 +381,29 @@ function pickDeepestTreeItems(lineItems) {
 }
 
 /**
+ * 选择命中集合中最外层树节点
+ * @param lineItems - 同一行命中的树节点集合
+ * @returns 返回最外层树节点
+ */
+function pickOutermostTreeItem(lineItems) {
+    if (lineItems.length === 0) {
+        return null;
+    }
+
+    let outermost = lineItems[0];
+    let outermostDepth = getTreeItemDepth(outermost);
+    for (let i = 1; i < lineItems.length; i++) {
+        const depth = getTreeItemDepth(lineItems[i]);
+        if (depth < outermostDepth) {
+            outermost = lineItems[i];
+            outermostDepth = depth;
+        }
+    }
+
+    return outermost;
+}
+
+/**
  * 解析单个 XML 特殊键命中时的高亮目标
  * @param treeItem - 命中的树节点
  * @returns 返回最终高亮节点
@@ -410,56 +433,24 @@ function resolveSingleXmlSpecialHighlightTarget(treeItem) {
 /**
  * 解析同一行命中集合的最终高亮节点
  * @param lineItems - 同一行命中的树节点集合
- * @returns 返回最终高亮节点集合
+ * @returns 返回最终高亮节点
  */
-function resolveLineHighlightTreeItems(lineItems) {
-    if (lineItems.length <= 1) {
-        if (lineItems.length === 1 && currentDataTreeFileType === 'xml') {
-            return [resolveSingleXmlSpecialHighlightTarget(lineItems[0])];
-        }
-        return [...lineItems];
+function resolveLineHighlightTreeItem(lineItems) {
+    if (lineItems.length === 0) {
+        return null;
     }
 
-    const isXmlFileType = currentDataTreeFileType === 'xml';
-    if (!isXmlFileType) {
-        return pickDeepestTreeItems(lineItems);
+    if (currentDataTreeFileType !== 'xml') {
+        return pickOutermostTreeItem(lineItems);
     }
 
-    const hasXmlSpecialKey = lineItems.some(item => isXmlSpecialTreeItem(item));
-    if (!hasXmlSpecialKey) {
-        // 当同行存在数组索引节点时优先查找共同父元素
-        // 避免 XML 数组索引错误分到与父级键同行时 pickDeepestTreeItems 取最深节点导致高亮不可见
-        const hasIndex = lineItems.some(item => isTreeIndexTreeItem(item));
-        if (hasIndex) {
-            const commonParent = findCommonParentTreeItemInMatches(lineItems);
-            if (commonParent) {
-                return [commonParent];
-            }
-        }
-        return pickDeepestTreeItems(lineItems);
+    const xmlSpecialItems = lineItems.filter(item => isXmlSpecialTreeItem(item));
+    if (xmlSpecialItems.length > 0) {
+        const specialTargets = Array.from(new Set(xmlSpecialItems.map(item => resolveSingleXmlSpecialHighlightTarget(item))));
+        return pickOutermostTreeItem(specialTargets);
     }
 
-    const bestIndexParent = findBestCoveredTreeItem(lineItems, { onlyIndex: true });
-    if (bestIndexParent) {
-        return [bestIndexParent];
-    }
-
-    const commonParent = findBestCoveredTreeItem(lineItems, { excludeIndex: true }) || findCommonParentTreeItemInMatches(lineItems);
-    if (commonParent) {
-        return [commonParent];
-    }
-
-    const commonAncestor = findBestPairCommonAncestorTreeItem(lineItems) || findNearestCommonAncestorTreeItem(lineItems);
-    if (commonAncestor) {
-        return [commonAncestor];
-    }
-
-    const deepest = pickDeepestTreeItems(lineItems);
-    if (deepest.length > 0) {
-        return [deepest[0]];
-    }
-
-    return [];
+    return pickOutermostTreeItem(lineItems);
 }
 
 /**
@@ -469,12 +460,10 @@ function resolveLineHighlightTreeItems(lineItems) {
  */
 function filterDuplicateLineTreeItems(matchedItems) {
     const groupedByLine = new Map();
-    const noLineItems = [];
 
     matchedItems.forEach(item => {
         const line = getTreeItemLine(item);
         if (line === null || line === undefined) {
-            noLineItems.push(item);
             return;
         }
 
@@ -483,14 +472,94 @@ function filterDuplicateLineTreeItems(matchedItems) {
         groupedByLine.set(line, existing);
     });
 
-    const resolved = new Set();
-    groupedByLine.forEach(lineItems => {
-        resolveLineHighlightTreeItems(lineItems).forEach(item => resolved.add(item));
+    const resolvedByLine = [];
+    const sortedLines = Array.from(groupedByLine.keys()).sort((a, b) => a - b);
+    sortedLines.forEach(line => {
+        const lineItems = groupedByLine.get(line) || [];
+        const target = resolveLineHighlightTreeItem(lineItems);
+        if (target) {
+            resolvedByLine.push(target);
+        }
     });
 
-    pickDeepestTreeItems(noLineItems).forEach(item => resolved.add(item));
+    return resolvedByLine;
+}
 
-    return Array.from(resolved);
+/**
+ * 聚合多行命中并返回唯一高亮目标
+ * @param matchedItems - 命中的树节点集合
+ * @returns 返回唯一高亮目标
+ */
+function resolveSingleRangeHighlightTarget(matchedItems) {
+    if (matchedItems.length === 0) {
+        return null;
+    }
+
+    const uniqueItems = Array.from(new Set(matchedItems));
+    if (uniqueItems.length === 1) {
+        return uniqueItems[0];
+    }
+
+    const commonAncestor = findNearestCommonAncestorTreeItem(uniqueItems);
+    if (commonAncestor) {
+        return commonAncestor;
+    }
+
+    return pickOutermostTreeItem(uniqueItems);
+}
+
+/**
+ * 按范围优先返回上一行锚点，不存在时返回下一行锚点
+ * @param anchors - 带行号的锚点集合
+ * @param range - 当前选中行范围
+ * @returns 返回匹配到的锚点
+ */
+function resolveFallbackAnchorByRange(anchors, range) {
+    let previousAnchor = null;
+    let previousLine = Number.NEGATIVE_INFINITY;
+    let nextAnchor = null;
+    let nextLine = Number.POSITIVE_INFINITY;
+
+    for (const anchor of anchors) {
+        const line = parseInt(anchor.getAttribute('data-line'), 10);
+        if (isNaN(line)) {
+            continue;
+        }
+
+        if (line <= range.from && line > previousLine) {
+            previousLine = line;
+            previousAnchor = anchor;
+        }
+
+        if (line > range.to && line < nextLine) {
+            nextLine = line;
+            nextAnchor = anchor;
+        }
+    }
+
+    return previousAnchor || nextAnchor;
+}
+
+/**
+ * 解析回退锚点的最终高亮目标
+ * @param anchor - 回退锚点
+ * @returns 返回最终高亮目标
+ */
+function resolveFallbackHighlightTarget(anchor) {
+    if (!anchor || typeof anchor.closest !== 'function') {
+        return null;
+    }
+
+    const treeItem = anchor.closest('.tree-item');
+    if (!treeItem) {
+        return null;
+    }
+
+    const baseTarget = currentDataTreeFileType === 'xml'
+        ? resolveSingleXmlSpecialHighlightTarget(treeItem)
+        : treeItem;
+
+    return getParentTreeItem(baseTarget) || baseTarget;
 }
 
 /**
@@ -544,36 +613,22 @@ function highlightTreeRange(startLine, endLine) {
 
     if (inRange.length > 0) {
         const matchedItems = filterDuplicateLineTreeItems(collectNearestTreeItems(inRange));
-        if (matchedItems.length === 0) {
-            const fallbackItems = collectNearestTreeItems(inRange);
-            if (fallbackItems.length > 0) {
-                fallbackItems[0].classList.add('is-highlight');
+        const highlightTarget = resolveSingleRangeHighlightTarget(matchedItems);
+        if (!highlightTarget) {
+            const fallbackTarget = resolveFallbackHighlightTarget(inRange[0]);
+            if (fallbackTarget) {
+                fallbackTarget.classList.add('is-highlight');
             }
             return;
         }
-        matchedItems.forEach(item => item.classList.add('is-highlight'));
+        highlightTarget.classList.add('is-highlight');
         return;
     }
 
-    let closestKey = null;
-    let closestDist = Number.POSITIVE_INFINITY;
-    for (const anchor of anchors) {
-        const line = parseInt(anchor.getAttribute('data-line'), 10);
-        if (isNaN(line)) {
-            continue;
-        }
-        const dist = line < range.from ? range.from - line : line - range.to;
-        if (dist < closestDist) {
-            closestDist = dist;
-            closestKey = anchor;
-        }
-    }
-
-    if (closestKey) {
-        const closestItem = closestKey.closest('.tree-item');
-        if (closestItem) {
-            closestItem.classList.add('is-highlight');
-        }
+    const fallbackAnchor = resolveFallbackAnchorByRange(anchors, range);
+    const fallbackTarget = resolveFallbackHighlightTarget(fallbackAnchor);
+    if (fallbackTarget) {
+        fallbackTarget.classList.add('is-highlight');
     }
 }
 
@@ -582,9 +637,9 @@ function highlightTreeRange(startLine, endLine) {
  * 绑定数据树键名点击事件并回传导航行号
  */
 function bindTreeKeyClicks() {
-    const keys = document.querySelectorAll('.data-tree .tree-key[data-line]');
-    keys.forEach(key => {
-        key.addEventListener('click', (e) => {
+    const anchors = document.querySelectorAll('.data-tree .tree-key[data-line], .data-tree .tree-index[data-line]');
+    anchors.forEach(anchor => {
+        anchor.addEventListener('click', (e) => {
             if (typeof PreviewCommon !== 'undefined' && PreviewCommon.focusPreviewContent) {
                 PreviewCommon.focusPreviewContent();
             }
@@ -594,7 +649,7 @@ function bindTreeKeyClicks() {
             }
             e.stopPropagation();
             e.preventDefault();
-            const line = parseInt(key.getAttribute('data-line'), 10);
+            const line = parseInt(anchor.getAttribute('data-line'), 10);
             if (!isNaN(line) && line >= 0) {
                 VSCODE_API.postMessage({
                     type: 'navigateToLine',
