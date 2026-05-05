@@ -224,7 +224,7 @@ export class DatatreeLocatorAndCommentBase {
                 case 'toml':
                     return this.buildTomlArrayItemLineIndex(lines);
                 case 'xml':
-                    return this.buildXmlArrayItemLineIndex(lines);
+                    return this.buildXmlArrayItemLineIndex(lines, parsedData);
                 default:
                     return [];
             }

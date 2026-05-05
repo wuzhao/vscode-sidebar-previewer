@@ -413,6 +413,11 @@ function resolveSingleXmlSpecialHighlightTarget(treeItem) {
         return treeItem;
     }
 
+    const label = getTreeItemLabel(treeItem);
+    if (label.startsWith('?')) {
+        return treeItem;
+    }
+
     let parent = getParentTreeItem(treeItem);
     while (parent) {
         if (isTreeIndexTreeItem(parent)) {
@@ -448,6 +453,14 @@ function resolveLineHighlightTreeItem(lineItems) {
     if (xmlSpecialItems.length > 0) {
         const specialTargets = Array.from(new Set(xmlSpecialItems.map(item => resolveSingleXmlSpecialHighlightTarget(item))));
         return pickOutermostTreeItem(specialTargets);
+    }
+
+    const xmlNonAttributeItems = lineItems.filter(item => !isXmlAttributeTreeItem(item));
+    if (xmlNonAttributeItems.length > 0) {
+        const deepestCandidates = pickDeepestTreeItems(xmlNonAttributeItems);
+        if (deepestCandidates.length > 0) {
+            return pickOutermostTreeItem(deepestCandidates);
+        }
     }
 
     return pickOutermostTreeItem(lineItems);

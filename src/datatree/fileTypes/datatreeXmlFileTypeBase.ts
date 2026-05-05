@@ -89,19 +89,102 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
     /**
          * 构建XML数组元素行索引供后续流程复用
          * @param lines - 按行拆分后的源文本
+         * @param parsedData - 已解析的结构化数据
          * @returns 返回构建后的数据结构
          */
-        protected static buildXmlArrayItemLineIndex(lines: string[]): number[] {
+        protected static buildXmlArrayItemLineIndex(lines: string[], parsedData: unknown): number[] {
+            if (!parsedData || typeof parsedData !== 'object') {
+                return [];
+            }
+
+            const pathLineIndex = this.buildXmlElementPathLineIndex(lines);
+            const pathCursor = new Map<string, number>();
             const result: number[] = [];
+            this.collectXmlArrayItemLines(parsedData, [], pathLineIndex, pathCursor, result);
+            return result;
+        }
+
+    /**
+         * 构建XML 元素路径行索引供后续流程复用
+         * @param lines - 按行拆分后的源文本
+         * @returns 返回构建后的数据结构
+         */
+        protected static buildXmlElementPathLineIndex(lines: string[]): Map<string, number[]> {
+            const index = new Map<string, number[]>();
+            const stack: string[] = [];
+            const scanState: XmlCommentScanState = {
+                inComment: false,
+                parts: [],
+            };
 
             for (let i = 0; i < lines.length; i++) {
-                const tagMatches = this.extractXmlTagMatches(lines[i]);
-                for (let j = 0; j < tagMatches.length; j++) {
-                    result.push(i);
+                const scan = this.scanXmlLineComments(lines[i], scanState);
+                const code = scan.nonCommentText;
+                const pattern = /<\s*(\/)?\s*([A-Za-z_:][\w:.-]*)([^<>]*?)>/g;
+
+                let match: RegExpExecArray | null;
+                while ((match = pattern.exec(code)) !== null) {
+                    const raw = match[0];
+                    const isClosing = Boolean(match[1]);
+                    const tagName = match[2];
+
+                    if (raw.startsWith('<?') || raw.startsWith('<!')) {
+                        continue;
+                    }
+
+                    if (isClosing) {
+                        for (let j = stack.length - 1; j >= 0; j--) {
+                            if (stack[j] !== tagName) {
+                                continue;
+                            }
+                            stack.splice(j, 1);
+                            break;
+                        }
+                        continue;
+                    }
+
+                    this.pushIndexedLine(index, [...stack, tagName].join('.'), i);
+                    const isSelfClosing = /\/\s*>$/.test(raw);
+                    if (!isSelfClosing) {
+                        stack.push(tagName);
+                    }
                 }
             }
 
-            return result;
+            return index;
+        }
+
+    /**
+         * 递归提取XML数组元素行并写入结果
+         * @param value - 待处理的数据对象
+         * @param parentPath - 父级路径片段集合
+         * @param pathLineIndex - 路径行索引
+         * @param pathCursor - 路径消费游标
+         * @param result - 数组元素行结果集合
+         */
+        protected static collectXmlArrayItemLines(
+            value: unknown,
+            parentPath: string[],
+            pathLineIndex: Map<string, number[]>,
+            pathCursor: Map<string, number>,
+            result: number[]
+        ): void {
+            if (Array.isArray(value)) {
+                const path = parentPath.join('.');
+                for (const item of value) {
+                    result.push(this.consumeIndexedLine(pathLineIndex, pathCursor, path));
+                    this.collectXmlArrayItemLines(item, parentPath, pathLineIndex, pathCursor, result);
+                }
+                return;
+            }
+
+            if (!value || typeof value !== 'object') {
+                return;
+            }
+
+            for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+                this.collectXmlArrayItemLines(child, [...parentPath, key], pathLineIndex, pathCursor, result);
+            }
         }
 
     /**
