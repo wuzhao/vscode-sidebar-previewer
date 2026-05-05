@@ -220,7 +220,9 @@ export class DatatreeLocatorAndCommentBase {
                 case 'json':
                     return this.buildJsonArrayItemLineIndex(lines);
                 case 'yaml':
-                    return this.buildYamlArrayItemLineIndex(lines, this.shouldUseYamlDocumentArrayLines(parsedData, lines));
+                    // Root YAML document entries are resolved by renderTree directly.
+                    // Keep the global array-item locator focused on real "-" items only.
+                    return this.buildYamlArrayItemLineIndex(lines, false);
                 case 'toml':
                     return this.buildTomlArrayItemLineIndex(lines);
                 case 'xml':

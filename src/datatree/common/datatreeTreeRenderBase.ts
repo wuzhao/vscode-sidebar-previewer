@@ -310,6 +310,133 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
             return false;
         }
 
+        /**
+             * 判断当前容器是否为 YAML 内联数组
+             * @param fileType - 当前文件类型标识
+             * @param sourceLines - 原始文本行集合
+             * @param containerLine - 容器绑定行号
+             * @returns 返回布尔判断结果
+             */
+            protected static isYamlInlineArrayContainer(
+                fileType: FileType,
+                sourceLines: string[],
+                containerLine: number | null
+            ): boolean {
+                if (fileType !== 'yaml' || containerLine === null || containerLine < 0 || containerLine >= sourceLines.length) {
+                    return false;
+                }
+
+                return this.isYamlInlineArrayLine(sourceLines[containerLine]);
+            }
+
+        /**
+             * 判断 YAML 行是否为内联数组定义
+             * @param line - 当前处理的行内容或行号
+             * @returns 返回布尔判断结果
+             */
+            protected static isYamlInlineArrayLine(line: string): boolean {
+                const code = this.stripHashCommentText(line).trim();
+                if (code.length === 0) {
+                    return false;
+                }
+
+                return /^-\s*\[.*\]\s*$/.test(code)
+                    || /:\s*\[.*\]\s*$/.test(code)
+                    || /^\[.*\]\s*$/.test(code);
+            }
+
+            /**
+                 * 查找 YAML 数组容器的直属元素行集合并返回匹配结果
+                 * @param sourceLines - 原始文本行集合
+                 * @param containerLine - 容器绑定行号
+                 * @param boundaryExclusive - 边界行号（不含边界本行）
+                 * @returns 返回匹配结果
+                 */
+                protected static findYamlDirectArrayItemLines(
+                    sourceLines: string[],
+                    containerLine: number,
+                    boundaryExclusive: number
+                ): number[] {
+                    if (containerLine < 0 || containerLine >= sourceLines.length) {
+                        return [];
+                    }
+
+                    const containerRaw = sourceLines[containerLine];
+                    const containerCode = this.stripHashCommentText(containerRaw).trim();
+                    if (containerCode.length === 0 || containerCode.startsWith('-')) {
+                        return [];
+                    }
+
+                    const result: number[] = [];
+                    const containerIndent = this.getIndentation(containerRaw);
+                    const limit = Number.isFinite(boundaryExclusive)
+                        ? Math.min(boundaryExclusive, sourceLines.length)
+                        : sourceLines.length;
+                    let itemIndent = -1;
+
+                    for (let row = containerLine + 1; row < limit; row++) {
+                        const line = sourceLines[row];
+                        const trimmed = line.trim();
+                        if (trimmed.length === 0 || trimmed.startsWith('#')) {
+                            continue;
+                        }
+
+                        const indent = this.getIndentation(line);
+                        if (indent <= containerIndent) {
+                            break;
+                        }
+
+                        if (!trimmed.startsWith('-')) {
+                            continue;
+                        }
+
+                        if (itemIndent < 0) {
+                            itemIndent = indent;
+                        }
+
+                        if (indent === itemIndent) {
+                            result.push(row);
+                        }
+                    }
+
+                    return result;
+                }
+
+        /**
+             * 解析数组项行号并返回最终结果
+             * @param arrayItemLineLocator - 数组元素行号定位器
+             * @param fileType - 当前文件类型标识
+             * @param sourceLines - 原始文本行集合
+             * @param containerLine - 容器绑定行号
+                 * @param yamlDirectItemLines - YAML 直属元素行集合
+                 * @param itemIndex - 当前元素索引
+             * @returns 返回最终结果
+             */
+            protected static resolveArrayItemLine(
+                arrayItemLineLocator: ArrayItemLineLocator,
+                fileType: FileType,
+                sourceLines: string[],
+                    containerLine: number | null,
+                    yamlDirectItemLines: number[],
+                    itemIndex: number
+            ): number {
+                    const fallbackLine = arrayItemLineLocator.next();
+
+                    if (fileType !== 'yaml') {
+                        return fallbackLine;
+                    }
+
+                if (this.isYamlInlineArrayContainer(fileType, sourceLines, containerLine)) {
+                        return containerLine as number;
+                    }
+
+                    if (itemIndex >= 0 && itemIndex < yamlDirectItemLines.length) {
+                        return yamlDirectItemLines[itemIndex];
+                }
+
+                    return fallbackLine;
+            }
+
     /**
          * 渲染复合值的子节点
          * @param data - 待处理的数据对象
@@ -326,6 +453,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
          * @param xmlConsumedLines - 已消费的 XML 注释行集合
          * @param parentPath - 父级路径片段集合
          * @param xmlDeferredFirstItemComments - 首个数组项延迟注释映射
+         * @param containerLine - 容器绑定行号
          * @returns 返回渲染后的内容
          */
         protected static renderCompoundChildren(
@@ -342,14 +470,31 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
             xmlCloseLineLocator: XmlCloseLineLocator | null,
             xmlConsumedLines: Set<number> | null,
             parentPath: string[],
-            xmlDeferredFirstItemComments: CommentEntry[] | null = null
+            xmlDeferredFirstItemComments: CommentEntry[] | null = null,
+            containerLine: number | null = null
         ): string {
             let html = '<div class="tree-children">';
             if (Array.isArray(data)) {
+                const isYamlInlineArray = this.isYamlInlineArrayContainer(fileType, sourceLines, containerLine);
+                const yamlDirectItemLines = (
+                    fileType === 'yaml'
+                    && !isYamlInlineArray
+                    && containerLine !== null
+                )
+                    ? this.findYamlDirectArrayItemLines(sourceLines, containerLine, boundaryExclusive)
+                    : [];
+
                 for (let i = 0; i < data.length; i++) {
                     const itemValue = data[i];
                     // Consume array lines lazily so nested arrays don't shift sibling item mapping.
-                    const line = arrayItemLineLocator.next();
+                    const line = this.resolveArrayItemLine(
+                        arrayItemLineLocator,
+                        fileType,
+                        sourceLines,
+                        containerLine,
+                        yamlDirectItemLines,
+                        i
+                    );
                     const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                     const deferredXmlIcon =
                         fileType === 'xml'
@@ -358,7 +503,10 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                         && xmlDeferredFirstItemComments.length > 0
                             ? this.renderCommentIcon(xmlDeferredFirstItemComments)
                             : '';
-                    const commentIcon = deferredXmlIcon || this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines);
+                    const commentIcon = deferredXmlIcon
+                        || (isYamlInlineArray
+                            ? ''
+                            : this.renderCommentIconForEntry(line, commentLines, fileType, null, sourceLines, xmlConsumedLines));
                     const itemBoundary = this.resolveBoundaryLine(line, boundaryExclusive);
 
                     html += this.renderStandaloneBeforeBoundary(standaloneCursor, itemBoundary, false);
@@ -370,7 +518,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                         let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, boundaryExclusive, jsonCloseLineLocator);
                         childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                         childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, parentPath, null)}</details></div>`;
+                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, parentPath, null, line)}</details></div>`;
                     } else {
                         html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemValue)}</div>`;
                     }
@@ -416,7 +564,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                         let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
                         childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                         childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                        html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, entryPath, Array.isArray(entry.value) ? deferredXmlArrayComments : null)}</details></div>`;
+                        html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, entryPath, Array.isArray(entry.value) ? deferredXmlArrayComments : null, line)}</details></div>`;
                     } else {
                         html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                     }
@@ -526,7 +674,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                             childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                         }
                         childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [], null)}</details></div>`;
+                        html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [], null, line)}</details></div>`;
                     } else {
                         html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemValue)}</div>`;
                     }
@@ -571,7 +719,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                         let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, nextBoundary, jsonCloseLineLocator);
                         childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                         childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                        html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [entry.key], Array.isArray(entry.value) ? deferredXmlArrayComments : null)}</details></div>`;
+                        html += `<div class="tree-item"><details><summary><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(entry.value, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [entry.key], Array.isArray(entry.value) ? deferredXmlArrayComments : null, line)}</details></div>`;
                     } else {
                         html += `<div class="tree-item"><span class="tree-key"${lineAttr}>${escapeHtml(entry.key)}</span>${commentIcon}: ${this.renderPrimitive(entry.value)}</div>`;
                     }
