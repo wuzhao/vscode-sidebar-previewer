@@ -1,5 +1,10 @@
 import { DatatreeYamlFileTypeBase } from './datatreeYamlFileTypeBase';
 
+type TomlCursor = {
+    line: number;
+    column: number;
+};
+
 /**
  * 提供 TOML 数据树能力
  */
@@ -90,10 +95,10 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
          */
         protected static buildTomlArrayItemLineIndex(lines: string[]): number[] {
             const result: number[] = [];
-            let arrayDepth = 0;
+            const codeLines = lines.map(line => this.stripHashCommentText(line));
 
-            for (let i = 0; i < lines.length; i++) {
-                const codeLine = this.stripHashCommentText(lines[i]);
+            for (let i = 0; i < codeLines.length; i++) {
+                const codeLine = codeLines[i];
                 const trimmed = codeLine.trim();
                 if (trimmed.length === 0) {
                     continue;
@@ -104,43 +109,22 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     continue;
                 }
 
-                if (arrayDepth > 0) {
-                    const firstToken = this.findTomlArrayItemFirstToken(trimmed);
-                    if (firstToken && firstToken !== ']') {
-                        result.push(i);
-                    }
-
-                    arrayDepth += this.countSquareBracketDelta(codeLine);
-                    if (arrayDepth < 0) {
-                        arrayDepth = 0;
-                    }
-                    continue;
-                }
-
                 if (/^\s*\[.*\]\s*$/.test(trimmed)) {
                     continue;
                 }
 
-                const equalIndex = codeLine.indexOf('=');
+                const equalIndex = this.findTomlAssignmentEqualIndex(codeLine);
                 if (equalIndex < 0) {
                     continue;
                 }
 
-                const rhs = codeLine.slice(equalIndex + 1);
-                const arrayStart = this.findTomlArrayStart(rhs);
-                if (arrayStart < 0) {
-                    continue;
-                }
-
-                const arraySegment = rhs.slice(arrayStart);
-                const inlineItemCount = this.countTomlTopLevelArrayItems(arraySegment);
-                for (let count = 0; count < inlineItemCount; count++) {
-                    result.push(i);
-                }
-
-                arrayDepth = this.countSquareBracketDelta(arraySegment);
-                if (arrayDepth < 0) {
-                    arrayDepth = 0;
+                const cursor: TomlCursor = {
+                    line: i,
+                    column: equalIndex + 1,
+                };
+                this.collectTomlArrayItemLinesFromValue(codeLines, cursor, result);
+                if (cursor.line > i) {
+                    i = Math.min(cursor.line, codeLines.length - 1);
                 }
             }
 
@@ -191,6 +175,368 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
 
             return depthAtLineStart;
+        }
+
+    /**
+         * 查找TOML 赋值语句等号位置并返回匹配结果
+         * @param line - 当前处理的行内容或行号
+         * @returns 返回匹配结果
+         */
+        protected static findTomlAssignmentEqualIndex(line: string): number {
+            let inSingle = false;
+            let inDouble = false;
+            let escape = false;
+            let squareDepth = 0;
+            let curlyDepth = 0;
+
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+
+                if (inDouble) {
+                    if (escape) {
+                        escape = false;
+                        continue;
+                    }
+                    if (ch === '\\') {
+                        escape = true;
+                        continue;
+                    }
+                    if (ch === '"') {
+                        inDouble = false;
+                    }
+                    continue;
+                }
+
+                if (inSingle) {
+                    if (ch === '\'') {
+                        inSingle = false;
+                    }
+                    continue;
+                }
+
+                if (ch === '"') {
+                    inDouble = true;
+                    continue;
+                }
+                if (ch === '\'') {
+                    inSingle = true;
+                    continue;
+                }
+                if (ch === '[') {
+                    squareDepth += 1;
+                    continue;
+                }
+                if (ch === ']') {
+                    squareDepth = Math.max(0, squareDepth - 1);
+                    continue;
+                }
+                if (ch === '{') {
+                    curlyDepth += 1;
+                    continue;
+                }
+                if (ch === '}') {
+                    curlyDepth = Math.max(0, curlyDepth - 1);
+                    continue;
+                }
+                if (ch === '=' && squareDepth === 0 && curlyDepth === 0) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+    /**
+         * 递归提取 TOML 值中的数组元素行并写入结果
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         * @param result - 数组元素行结果集合
+         */
+        protected static collectTomlArrayItemLinesFromValue(
+            lines: string[],
+            cursor: TomlCursor,
+            result: number[]
+        ): void {
+            this.skipTomlCursorWhitespace(lines, cursor, true);
+            const ch = this.peekTomlCursorChar(lines, cursor);
+            if (!ch) {
+                return;
+            }
+
+            if (ch === '[') {
+                this.collectTomlArrayItemLinesFromArray(lines, cursor, result);
+                return;
+            }
+
+            if (ch === '{') {
+                this.collectTomlArrayItemLinesFromInlineTable(lines, cursor, result);
+                return;
+            }
+
+            if (ch === '"' || ch === '\'') {
+                this.consumeTomlQuotedString(lines, cursor, ch);
+                return;
+            }
+
+            this.consumeTomlBareValue(lines, cursor);
+        }
+
+    /**
+         * 递归提取 TOML 数组值中的元素行并写入结果
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         * @param result - 数组元素行结果集合
+         */
+        protected static collectTomlArrayItemLinesFromArray(
+            lines: string[],
+            cursor: TomlCursor,
+            result: number[]
+        ): void {
+            if (this.peekTomlCursorChar(lines, cursor) !== '[') {
+                return;
+            }
+            this.advanceTomlCursor(lines, cursor);
+
+            while (true) {
+                this.skipTomlCursorWhitespace(lines, cursor, true);
+                const ch = this.peekTomlCursorChar(lines, cursor);
+
+                if (!ch) {
+                    return;
+                }
+
+                if (ch === ']') {
+                    this.advanceTomlCursor(lines, cursor);
+                    return;
+                }
+
+                if (ch === ',') {
+                    this.advanceTomlCursor(lines, cursor);
+                    continue;
+                }
+
+                result.push(cursor.line);
+                this.collectTomlArrayItemLinesFromValue(lines, cursor, result);
+                this.skipTomlCursorWhitespace(lines, cursor, true);
+
+                const separator = this.peekTomlCursorChar(lines, cursor);
+                if (separator === ',') {
+                    this.advanceTomlCursor(lines, cursor);
+                    continue;
+                }
+
+                if (separator === ']') {
+                    this.advanceTomlCursor(lines, cursor);
+                    return;
+                }
+
+                if (!separator) {
+                    return;
+                }
+
+                this.advanceTomlCursor(lines, cursor);
+            }
+        }
+
+    /**
+         * 递归提取 TOML 内联表中的数组元素行并写入结果
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         * @param result - 数组元素行结果集合
+         */
+        protected static collectTomlArrayItemLinesFromInlineTable(
+            lines: string[],
+            cursor: TomlCursor,
+            result: number[]
+        ): void {
+            if (this.peekTomlCursorChar(lines, cursor) !== '{') {
+                return;
+            }
+            this.advanceTomlCursor(lines, cursor);
+
+            while (true) {
+                this.skipTomlCursorWhitespace(lines, cursor, true);
+                const ch = this.peekTomlCursorChar(lines, cursor);
+
+                if (!ch) {
+                    return;
+                }
+
+                if (ch === '}') {
+                    this.advanceTomlCursor(lines, cursor);
+                    return;
+                }
+
+                if (ch === ',') {
+                    this.advanceTomlCursor(lines, cursor);
+                    continue;
+                }
+
+                this.consumeTomlInlineTableKey(lines, cursor);
+                this.skipTomlCursorWhitespace(lines, cursor, true);
+
+                if (this.peekTomlCursorChar(lines, cursor) === '=') {
+                    this.advanceTomlCursor(lines, cursor);
+                    this.collectTomlArrayItemLinesFromValue(lines, cursor, result);
+                }
+
+                this.skipTomlCursorWhitespace(lines, cursor, true);
+                const separator = this.peekTomlCursorChar(lines, cursor);
+                if (separator === ',') {
+                    this.advanceTomlCursor(lines, cursor);
+                    continue;
+                }
+                if (separator === '}') {
+                    this.advanceTomlCursor(lines, cursor);
+                    return;
+                }
+                if (!separator) {
+                    return;
+                }
+
+                this.advanceTomlCursor(lines, cursor);
+            }
+        }
+
+    /**
+         * 处理 TOML 内联表键消费逻辑
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         */
+        protected static consumeTomlInlineTableKey(lines: string[], cursor: TomlCursor): void {
+            this.skipTomlCursorWhitespace(lines, cursor, true);
+            const ch = this.peekTomlCursorChar(lines, cursor);
+            if (!ch) {
+                return;
+            }
+
+            if (ch === '"' || ch === '\'') {
+                this.consumeTomlQuotedString(lines, cursor, ch);
+                return;
+            }
+
+            while (true) {
+                const current = this.peekTomlCursorChar(lines, cursor);
+                if (!current || current === '=' || current === ',' || current === '}' || current === '\n' || /\s/.test(current)) {
+                    return;
+                }
+                this.advanceTomlCursor(lines, cursor);
+            }
+        }
+
+    /**
+         * 处理 TOML 引号字符串消费逻辑
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         * @param quote - 引号类型
+         */
+        protected static consumeTomlQuotedString(lines: string[], cursor: TomlCursor, quote: '"' | '\''): void {
+            if (this.peekTomlCursorChar(lines, cursor) !== quote) {
+                return;
+            }
+
+            this.advanceTomlCursor(lines, cursor);
+            let escaped = false;
+
+            while (true) {
+                const ch = this.peekTomlCursorChar(lines, cursor);
+                if (!ch) {
+                    return;
+                }
+
+                this.advanceTomlCursor(lines, cursor);
+
+                if (quote === '"') {
+                    if (escaped) {
+                        escaped = false;
+                        continue;
+                    }
+                    if (ch === '\\') {
+                        escaped = true;
+                        continue;
+                    }
+                }
+
+                if (ch === quote) {
+                    return;
+                }
+            }
+        }
+
+    /**
+         * 处理 TOML 裸值消费逻辑
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         */
+        protected static consumeTomlBareValue(lines: string[], cursor: TomlCursor): void {
+            while (true) {
+                const ch = this.peekTomlCursorChar(lines, cursor);
+                if (!ch || ch === ',' || ch === ']' || ch === '}' || ch === '\n' || /\s/.test(ch)) {
+                    return;
+                }
+                this.advanceTomlCursor(lines, cursor);
+            }
+        }
+
+    /**
+         * 处理 TOML 游标空白跳过逻辑
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         * @param includeNewline - 是否跳过换行
+         */
+        protected static skipTomlCursorWhitespace(lines: string[], cursor: TomlCursor, includeNewline: boolean): void {
+            while (true) {
+                const ch = this.peekTomlCursorChar(lines, cursor);
+                if (!ch) {
+                    return;
+                }
+                if (ch === '\n' && !includeNewline) {
+                    return;
+                }
+                if (ch !== '\n' && !/\s/.test(ch)) {
+                    return;
+                }
+                this.advanceTomlCursor(lines, cursor);
+            }
+        }
+
+    /**
+         * 读取 TOML 游标当前字符并返回结果
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         * @returns 返回当前字符
+         */
+        protected static peekTomlCursorChar(lines: string[], cursor: TomlCursor): string | null {
+            if (cursor.line < 0 || cursor.line >= lines.length) {
+                return null;
+            }
+
+            const line = lines[cursor.line];
+            if (cursor.column < line.length) {
+                return line[cursor.column];
+            }
+
+            return cursor.line + 1 < lines.length ? '\n' : null;
+        }
+
+    /**
+         * 推进 TOML 游标并返回下一位置
+         * @param lines - 去注释后的源码行集合
+         * @param cursor - 当前游标
+         */
+        protected static advanceTomlCursor(lines: string[], cursor: TomlCursor): void {
+            if (cursor.line < 0 || cursor.line >= lines.length) {
+                return;
+            }
+
+            const line = lines[cursor.line];
+            if (cursor.column < line.length) {
+                cursor.column += 1;
+                return;
+            }
+
+            cursor.line += 1;
+            cursor.column = 0;
         }
 
     /**

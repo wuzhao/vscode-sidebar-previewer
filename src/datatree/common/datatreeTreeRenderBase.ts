@@ -63,13 +63,31 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                 return '';
             }
 
+            const sourceLine = line < sourceLines.length ? sourceLines[line] : '';
+            const isTomlTableArrayLine = fileType === 'toml' && this.isTomlTableArrayLine(sourceLine);
+            const shouldBindTomlTableArrayToIndex = isTomlTableArrayLine && this.shouldRenderTomlTableArrayOnIndex(line, sourceLines);
+
             if (
                 entryKey === null &&
                 (fileType === 'yaml' || fileType === 'toml') &&
                 line < sourceLines.length &&
-                this.extractKeysFromLine(sourceLines[line], fileType).length > 0
+                this.extractKeysFromLine(sourceLine, fileType).length > 0 &&
+                !(isTomlTableArrayLine && shouldBindTomlTableArrayToIndex)
             ) {
                 return '';
+            }
+
+            if (fileType === 'toml' && entryKey !== null && isTomlTableArrayLine && shouldBindTomlTableArrayToIndex) {
+                return '';
+            }
+
+            if (fileType === 'toml' && entryKey === null) {
+                if (xmlConsumedLines && xmlConsumedLines.has(line)) {
+                    return '';
+                }
+                if (xmlConsumedLines) {
+                    xmlConsumedLines.add(line);
+                }
             }
 
             if (fileType !== 'xml') {
@@ -95,6 +113,58 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
 
             xmlConsumedLines.add(line);
             return this.renderCommentIcon(commentLines.get(line) as CommentEntry[]);
+        }
+
+    /**
+         * 判断 TOML 行是否为数组表头
+         * @param line - 当前处理的行内容或行号
+         * @returns 返回布尔判断结果
+         */
+        protected static isTomlTableArrayLine(line: string): boolean {
+            const code = this.stripHashCommentText(line).trim();
+            return /^\[\[.*\]\]$/.test(code);
+        }
+
+    /**
+         * 判断 TOML 数组表头是否应绑定到索引节点
+         * @param line - 当前处理的行内容或行号
+         * @param sourceLines - 原始文本行集合
+         * @returns 返回布尔判断结果
+         */
+        protected static shouldRenderTomlTableArrayOnIndex(line: number, sourceLines: string[]): boolean {
+            if (line < 0 || line >= sourceLines.length) {
+                return false;
+            }
+
+            const path = this.extractTomlTableArrayPath(sourceLines[line]);
+            if (!path) {
+                return false;
+            }
+
+            let count = 0;
+            for (const sourceLine of sourceLines) {
+                if (this.extractTomlTableArrayPath(sourceLine) !== path) {
+                    continue;
+                }
+
+                count += 1;
+                if (count > 1) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+    /**
+         * 提取 TOML 数组表头路径并返回结果
+         * @param line - 当前处理的行内容或行号
+         * @returns 返回路径表达式
+         */
+        protected static extractTomlTableArrayPath(line: string): string | null {
+            const code = this.stripHashCommentText(line).trim();
+            const match = code.match(/^\[\[\s*([^\]]+?)\s*\]\]$/);
+            return match ? match[1].trim() : null;
         }
 
     /**
@@ -415,7 +485,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
             xmlCloseLineLocator: XmlCloseLineLocator | null
         ): string {
             const cursor = this.createStandaloneCursor(standaloneGroups);
-            const xmlConsumedLines = fileType === 'xml' ? new Set<number>() : null;
+            const xmlConsumedLines = (fileType === 'xml' || fileType === 'toml') ? new Set<number>() : null;
             const rootBoundary = Number.POSITIVE_INFINITY;
 
             if (!this.isCompound(data)) {

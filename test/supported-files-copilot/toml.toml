@@ -18,16 +18,16 @@ destination = "Thunder Monastery"
 objective = "Retrieve true sutras and return with canonical integrity"
 status = "completed"
 
-# [MISSION.CONTROL] Behavior policy from low to high escalation
-[mission.control]
-priority = ["civilian-safety", "evidence", "escort-integrity", "scripture-authenticity"]
-allow_non_lethal_only = true # global force limiter
-
 # Threshold comments live near values for easier locate behavior
 [mission.control.thresholds]
 evidence_min = 0.65 # below this value force should not escalate
 witness_min = 2 # minimum witness count for escalation
 escalation_timeout_sec = 180 # single-stage timeout
+
+# [MISSION.CONTROL] Behavior policy from low to high escalation
+[mission.control]
+priority = ["civilian-safety", "evidence", "escort-integrity", "scripture-authenticity"]
+allow_non_lethal_only = true # global force limiter
 
 # Escalation stage 1 comment before AoT section
 [[mission.control.escalation]]
@@ -63,6 +63,15 @@ fallbacks = [
   { condition = "ifEvidenceLow", actions = ["recon", "request-witness"] }
 ]
 
+# Decision map comment block
+[route.decisions]
+branch_priority = { main_route = 1, branch_river_detour = 2, branch_west_ridge = 3 } # stable sort order
+
+# Risk model formula comment and coefficient notes
+[risk_model]
+formula = "risk = alpha*hostility + beta*terrain + gamma*deception - delta*allied_support"
+
+
 # Route phase 2 comments separated as standalone paragraphs
 [[route.phases]]
 name = "final-approach"
@@ -75,14 +84,6 @@ fallbacks = [
   { condition = "ifIllusionSpike", actions = ["counter-illusion", "monk-visual-anchor"] },
   { condition = "ifCanonMismatch", actions = ["correction-loop", "archive-recheck"] }
 ]
-
-# Decision map comment block
-[route.decisions]
-branch_priority = { main_route = 1, branch_river_detour = 2, branch_west_ridge = 3 } # stable sort order
-
-# Risk model formula comment and coefficient notes
-[risk_model]
-formula = "risk = alpha*hostility + beta*terrain + gamma*deception - delta*allied_support"
 
 [risk_model.coefficients]
 alpha = 1.35 # hostility weight
