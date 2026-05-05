@@ -2,113 +2,65 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{geometry}
+\geometry{margin=1in}
 
-\title{Mathematical Analysis and Physics}
-\author{Test Maintainers}
+\title{Journey to the West: Quantitative Notes on 81 Tribulations}
+\author{Copilot Fixture Generator}
+\date{\today}
 
 \begin{document}
-
 \maketitle
 
-\section{Calculus}
+\section{Problem Setting}
+We model the pilgrimage as a constrained mission with sequential and branching hazards.
+English is the primary narrative language, with occasional auxiliary Chinese notes.
 
-The fundamental theorem of calculus connects differentiation and integration:
+\subsection{State Vector}
+Let
+\[
+\mathbf{x}_t = [S_t, D_t, R_t, C_t]^\top
+\]
+where $S_t$ is safety margin, $D_t$ is doctrinal stability,
+$R_t$ is resource sufficiency, and $C_t$ is conflict pressure.
 
-$$\int_a^b f'(x)\,dx = f(b) - f(a)$$
-
-\subsection{Limits and Continuity}
-
-The epsilon-delta definition of a limit:
-
-$\forall \varepsilon > 0,\;\exists \delta > 0$ such that $|x - c| < \delta \implies |f(x) - L| < \varepsilon$
-
-L'Hôpital's rule for indeterminate forms:
-
-$$\lim_{x \to c} \frac{f(x)}{g(x)} = \lim_{x \to c} \frac{f'(x)}{g'(x)}$$
-
-\subsection{Taylor Series}
-
-The Taylor expansion of $e^x$ around $x=0$:
-
-$$e^x = \sum_{n=0}^{\infty} \frac{x^n}{n!} = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \cdots$$
-
-Euler's identity emerges when $x = i\pi$:
-
-$$e^{i\pi} + 1 = 0$$
-
-\subsection{Multivariable Calculus}
-
-The gradient of a scalar field $f(x, y, z)$:
-
-$$\nabla f = \frac{\partial f}{\partial x}\hat{i} + \frac{\partial f}{\partial y}\hat{j} + \frac{\partial f}{\partial z}\hat{k}$$
-
-The divergence theorem (Gauss's theorem):
-
-$$\oint_S \mathbf{F} \cdot d\mathbf{A} = \int_V (\nabla \cdot \mathbf{F})\,dV$$
-
-\section{Linear Algebra}
-
-\subsection{Matrix Operations}
-
-Matrix multiplication and determinant:
-
-$$\begin{pmatrix} a & b \\ c & d \end{pmatrix}^{-1} = \frac{1}{ad - bc} \begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$$
-
-\subsection{Eigenvalues}
-
-The characteristic equation $\det(A - \lambda I) = 0$ yields eigenvalues. For a $2 \times 2$ matrix:
-
-$$\lambda_{1,2} = \frac{\text{tr}(A) \pm \sqrt{\text{tr}(A)^2 - 4\det(A)}}{2}$$
-
-\section{Physics}
-
-\subsection{Maxwell's Equations}
-
-The four Maxwell's equations in differential form:
-
+\subsection{Transition Rule}
 \begin{align}
-\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
-\nabla \cdot \mathbf{B} &= 0 \\
-\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
-\nabla \times \mathbf{B} &= \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}
+\mathbf{x}_{t+1} &= A\mathbf{x}_t + B\mathbf{u}_t + \boldsymbol{\epsilon}_t, \\
+\mathbf{u}_t &= [u_t^{\text{combat}}, u_t^{\text{diplomacy}}, u_t^{\text{detour}}]^\top.
 \end{align}
 
-\subsection{Quantum Mechanics}
+\section{Risk Aggregation}
+Define per-tribulation risk as
+\[
+\rho_i = \alpha \cdot \text{hostility}_i + \beta \cdot \text{terrain}_i + \gamma \cdot \text{deception}_i - \delta \cdot \text{alliedSupport}_i.
+\]
 
-The time-dependent Schrödinger equation:
+Total mission stress score:
+\[
+\mathcal{R} = \sum_{i=1}^{81} w_i \rho_i.
+\]
 
-$$i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r}, t) = \hat{H} \Psi(\mathbf{r}, t)$$
+\section{Constraint Table}
+\begin{longtable}{llll}
+\toprule
+Constraint & Symbol & Bound & Interpretation \\
+\midrule
+\endhead
+Civilian harm & $H_c$ & $H_c \approx 0$ & Ethical baseline \\
+Escort separation time & $T_s$ & $T_s \le 2$ hours & Avoid illusion exploit \\
+Water deficit & $W_d$ & $W_d \le 15\%$ & Desert segment viability \\
+Doctrinal drift & $\Delta D$ & $\Delta D < 0.2$ & Mission identity integrity \\
+\bottomrule
+\end{longtable}
 
-The uncertainty principle:
+\section{Auxiliary Note}
+\textbf{CN hint:} 先证据，后开战；先护人，再破敌
 
-$$\Delta x \cdot \Delta p \geq \frac{\hbar}{2}$$
-
-\subsection{Special Relativity}
-
-The Lorentz factor: $\gamma = \frac{1}{\sqrt{1 - v^2/c^2}}$
-
-Mass-energy equivalence: $E = mc^2$
-
-The spacetime interval:
-
-$$ds^2 = -c^2\,dt^2 + dx^2 + dy^2 + dz^2$$
-
-\section{Probability and Statistics}
-
-\subsection{Distributions}
-
-The normal (Gaussian) distribution:
-
-$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)$$
-
-Bayes' theorem:
-
-$$P(A|B) = \frac{P(B|A)\,P(A)}{P(B)}$$
-
-\subsection{Entropy}
-
-Shannon entropy: $H(X) = -\sum_{i} p_i \log_2 p_i$
-
-% End of mathematical content
+\section{Conclusion}
+The 81 tribulations can be treated as a mixed-control process where doctrine,
+combat adaptability, and logistics jointly determine mission success.
 
 \end{document}

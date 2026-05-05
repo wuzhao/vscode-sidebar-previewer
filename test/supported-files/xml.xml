@@ -1,70 +1,139 @@
-<!-- START [A] -->
-
+<!-- Journey to the West XML deep fixture [A] -->
+<!-- Root preamble comment: validates standalone root comments -->
 <?xml version="1.0" encoding="UTF-8"?>
-<?preview mode="strict" version="2026.04"?>
-<!DOCTYPE catalog SYSTEM "catalog.dtd" [
-  <!ELEMENT catalog ANY>
-  <!ELEMENT meta:flag (#PCDATA)>
-  <!ATTLIST meta:flag name CDATA #REQUIRED>
-  <!ENTITY release "2026.04">
-  <!NOTATION svg SYSTEM "image/svg+xml">
+<?mission version="1.1" stage="westward"?>
+<!DOCTYPE pilgrimage SYSTEM "journey.dtd" [
+  <!ELEMENT pilgrimage ANY>
+  <!ELEMENT routePlan ANY>
+  <!ELEMENT leg ANY>
+  <!ELEMENT checkpoint ANY>
+  <!ELEMENT signal ANY>
+  <!ELEMENT action ANY>
+  <!ATTLIST checkpoint id CDATA #REQUIRED>
+  <!ATTLIST checkpoint branch CDATA #IMPLIED>
+  <!ATTLIST leg name CDATA #REQUIRED>
+  <!ENTITY doctrine "compassion-first">
+  <!ENTITY strategy "evidence-first-escalation-second">
+  <!NOTATION map SYSTEM "image/svg+xml">
 ]>
-<!-- catalog fixture with namespaces, comments, CDATA, attributes and repeated nodes [B] -->
-<catalog xmlns="https://example.com/catalog" xmlns:meta="https://example.com/meta" generatedAt="2026-04-21T12:00:00Z">
-  <meta:source system="erp" batch="B-0421">
-    <meta:owner><![CDATA[Ops & "QA" Team]]></meta:owner>
-    <meta:flags>
-      <meta:flag name="preview.enabled">true</meta:flag>
-      <meta:flag name="strict-mode">false</meta:flag>
-    </meta:flags>
-  </meta:source>
 
-  <?audit stage="ingest" actor="bot"?>
-  <meta:samples>
-    <meta:plain>Plain text payload for #text locate</meta:plain>
-    <meta:raw><![CDATA[Raw payload for #cdata locate with <angle> tags.]]></meta:raw>
-  </meta:samples>
+<!-- Top-level note: English primary, Chinese auxiliary comments are allowed [B] -->
+<pilgrimage xmlns="https://example.com/jtw" xmlns:meta="https://example.com/jtw/meta" generatedAt="2026-05-04T20:00:00Z">
+  <!-- Mission section begins -->
+  <meta:mission code="JTW-81" origin="Chang'an" destination="Thunder Monastery">
+    <meta:objective>Retrieve true sutras and return with canonical integrity</meta:objective>
+    <meta:principle><![CDATA[&doctrine; / &strategy;]]></meta:principle>
 
-  <!-- primary products [C] -->
-  <products>
-    <product id="P-1001" sku="SKU-001" available="true">
-      <name>4K Monitor 27&quot;</name> <!-- product name [D] -->
-      <price currency="USD">399.99</price>
-      <tags>
-        <tag>display</tag>
-        <tag>ips</tag>
-        <tag>usb-c</tag>
-      </tags>
-      <dimensions unit="mm" width="613" height="366" depth="46" />
-      <description><![CDATA[Supports HDR10, USB-C, and "Picture-in-Picture".]]></description>
-    </product>
+    <!-- Control policy tree -->
+    <meta:control>
+      <meta:priority>
+        <meta:item order="1">civilian-safety</meta:item>
+        <meta:item order="2">evidence</meta:item>
+        <meta:item order="3">escort-integrity</meta:item>
+      </meta:priority>
 
-    <product id="P-1002" sku="SKU-002" available="false">
-      <name>Compact Keyboard</name>
-      <price currency="USD">129.50</price>
-      <tags>
-    <!-- tags for second product [E] -->
-        <tag>peripheral</tag>
-        <tag>wireless</tag>
-      </tags>
-      <stock>
-        <warehouse code="SZ-01">0</warehouse>
-        <warehouse code="LA-07">42</warehouse>
-      </stock>
-      <notes>
-        <note priority="high">Backordered for 2-3 weeks &amp; requires allocation.</note>
-        <note priority="low">Packaging updated in revision R4.</note>
-      </notes>
-    </product>
-  </products>
+      <!-- Escalation stages are intentionally verbose for locate testing -->
+      <meta:escalation>
+        <meta:stage level="1">
+          <meta:name>observe</meta:name>
+          <meta:actions>
+            <meta:action>recon</meta:action>
+            <meta:action>witness-collection</meta:action>
+          </meta:actions>
+        </meta:stage>
 
-<!-- statistics section [F] -->
-  <meta:statistics>
-    <meta:count type="products">2</meta:count>
-    <meta:count type="warehouses">2</meta:count>
-    <meta:lastSync timezone="UTC">2026-04-21T12:30:45Z</meta:lastSync>
-    <!-- trailing statistics comment [G] -->
-  </meta:statistics>
-</catalog>
+        <!-- Stage 2 should map to its own line, not root -->
+        <meta:stage level="2">
+          <meta:name>contain</meta:name>
+          <meta:actions>
+            <!-- action comment near protective-formation -->
+            <meta:action>protective-formation</meta:action>
+            <meta:action>rear-lane-lock</meta:action>
+          </meta:actions>
+        </meta:stage>
+      </meta:escalation>
+    </meta:control>
 
-<!-- END [H] -->
+    <!-- Inline semantic CN hint -->
+    <meta:cn>辅助：先护人，再破敌</meta:cn>
+  </meta:mission>
+
+  <?audit actor="celestial-observer" mode="strict"?>
+
+  <!-- Team section with repeated member nodes -->
+  <team>
+    <member role="master" name="Xuanzang">Doctrine and negotiation authority</member>
+    <member role="disciple" name="Sun Wukong">Adaptive combat and high mobility</member>
+    <member role="disciple" name="Zhu Bajie">Shock support and carrying capacity</member>
+    <member role="disciple" name="Sha Wujing">Rear guard and convoy integrity</member>
+  </team>
+
+  <routePlan>
+    <!-- Array-like repeated leg nodes -->
+    <leg name="early-route" chapters="7-20">
+      <checkpoint id="ER-09" branch="main-route" location="Black Wind Cave">
+        <signals>
+          <signal type="intel">forged invitation</signal>
+          <signal type="rumor">hostage panic</signal>
+        </signals>
+        <actors>
+          <actor id="sun-wukong" role="lead-defense" />
+          <actor id="xuan-zang" role="verification" />
+        </actors>
+        <fallback>
+          <!-- Rule comment before nested actions -->
+          <rule when="ifEvidenceLow">
+            <action timeoutSec="300">recon</action>
+            <action timeoutSec="600">request witness</action>
+          </rule>
+        </fallback>
+      </checkpoint>
+
+      <!-- Second checkpoint in same leg -->
+      <checkpoint id="ER-12" branch="branch-river-detour" location="Flower-Fruit Mountain">
+        <signals>
+          <signal type="seal">forged temple seal</signal>
+        </signals>
+        <actors>
+          <actor id="zhu-bajie" role="support" />
+          <actor id="sha-wujing" role="rear-guard" />
+        </actors>
+      </checkpoint>
+    </leg>
+
+    <!-- Final approach leg -->
+    <leg name="final-approach" chapters="79-88">
+      <checkpoint id="FA-80" branch="branch-river-detour" location="Small Thunderclap Monastery">
+        <signals>
+          <signal type="illusion">clone phantoms</signal>
+          <signal type="trap">false hostage relay</signal>
+        </signals>
+      </checkpoint>
+      <checkpoint id="FA-81" branch="main-route" location="Thunder Monastery">
+        <signals>
+          <signal type="verification">canonical authenticity check</signal>
+        </signals>
+        <result><![CDATA[Mission complete; archive hash stable]]></result>
+      </checkpoint>
+    </leg>
+  </routePlan>
+
+  <analytics>
+    <category name="direct-combat" count="24" />
+    <category name="diplomacy" count="11" />
+    <category name="rescue" count="13" />
+    <category name="logistics" count="10" />
+    <category name="illusion" count="12" />
+    <category name="moral-trials" count="11" />
+
+    <!-- Nested object-like matrix -->
+    <riskMatrix>
+      <row terrain="mountain" deception="0.70" hostility="1.00" />
+      <row terrain="river" deception="0.82" hostility="1.18" />
+      <row terrain="fortress" deception="0.91" hostility="1.36" />
+    </riskMatrix>
+  </analytics>
+
+  <!-- Tail standalone comment [C] -->
+  <!-- End of document comment for root-level standalone behavior -->
+</pilgrimage>

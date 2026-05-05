@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.11 - 2026-05-05
+
+- Reworked JSON/YAML/TOML/XML tree highlight behavior to follow editor selection lines and consistently resolve to a single continuous highlight range.
+- Fixed YAML array-item locate mapping in nested container scenarios to avoid incorrect jumps into child nodes.
+- Fixed JSON array-item locate mapping for inline arrays and nested arrays, eliminating wrong jumps and no-response clicks.
+- Improved TOML array comment ownership so inline matrix and array-of-tables comments bind to the correct array element.
+- Improved JSON/YAML/TOML/XML standalone comment placement at document tail to keep comments in the correct root-level scope.
+
+～～～
+
+- 重构 JSON/YAML/TOML/XML 树形高亮逻辑，使其以编辑器选中行为基准，并稳定收敛为单一连续高亮区域。
+- 修复 YAML 在嵌套容器场景下的数组元素定位问题，避免跳转到子节点导致错位。
+- 修复 JSON 在内联数组与嵌套数组场景下的数组元素定位问题，解决错跳和点击无响应。
+- 优化 TOML 数组注释归属，使内联矩阵与 array-of-tables 注释绑定到正确数组元素。
+- 优化 JSON/YAML/TOML/XML 文档尾部独立注释落位，确保注释保留在正确的根层作用域。
+
 ## 0.3.10 - 2026-04-29
 
 - Fixed Markdown task-list styling so parent item state and style are no longer affected by checked child task items.

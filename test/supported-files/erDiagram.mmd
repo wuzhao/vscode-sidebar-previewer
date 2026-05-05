@@ -1,30 +1,66 @@
+%% ER model for 81-tribulation data
 erDiagram
-    USER ||--o{ ORDER : places
-    USER {
-        int id PK
-        string name
-        string email
+    MISSION ||--o{ TRIBULATION : contains
+    TRIBULATION }o--|| LOCATION : occurs_at
+    TRIBULATION }o--o{ ACTOR : involves
+    TRIBULATION }o--o{ ARTIFACT : references
+    ACTOR ||--o{ ALIAS : has
+    LOCATION ||--o{ CHECKPOINT : includes
+
+    MISSION {
+      string mission_code PK
+      string title
+      string objective
+      string origin
+      string destination
+      string completion_status
     }
 
-    ORDER ||--|{ ORDER_ITEM : contains
-    ORDER {
-        int id PK
-        int user_id FK
-        string status
-        date created_at
+    TRIBULATION {
+      int tribulation_no PK
+      string chapter_span
+      string primary_cause
+      string conflict_level
+      string branch_path
+      string outcome
+      string cn_aux_note
     }
 
-    PRODUCT ||--o{ ORDER_ITEM : "ordered as"
-    PRODUCT {
-        int id PK
-        string name
-        float price
-        int stock
+    LOCATION {
+      string location_id PK
+      string name
+      string terrain
+      string hazard_profile
+      string governance_context
     }
 
-    ORDER_ITEM {
-        int id PK
-        int order_id FK
-        int product_id FK
-        int quantity
+    ACTOR {
+      string actor_id PK
+      string display_name
+      string faction
+      string role_type
+      string status
+    }
+
+    ARTIFACT {
+      string artifact_id PK
+      string artifact_name
+      string owner_actor_id
+      string ability
+      string risk
+    }
+
+    CHECKPOINT {
+      string checkpoint_id PK
+      string location_id FK
+      string weather
+      string supply_state
+      string branch_flag
+    }
+
+    ALIAS {
+      string alias_id PK
+      string actor_id FK
+      string alias_name
+      string usage_context
     }

@@ -1,186 +1,160 @@
 ---
-title: Markdown Preview Test
-description: This file is used to test the preview effect of all Markdown (.md) features.
-author: Test Maintainers
-date: 2026-01-01
-version: 0.0.1-test
+title: Journey to the West Markdown Mega Fixture
+description: Comprehensive markdown syntax coverage using Havoc in Heaven and the full pilgrimage narrative
+author: Copilot Fixture Team
+date: 2026-05-04
+version: 1.0.0
 tags:
-  - markdown
-  - preview
-  - vscode
-license: CC0-1.0
-repository:
-  type: git
-  url: https://example.com/public-test-fixtures
+  - journey-to-the-west
+  - havoc-in-heaven
+  - 81-tribulations
+  - markdown-full-coverage
 ---
 
-# Markdown Preview Test
+## Journey to the West - Full Markdown Coverage
 
-> This file contains all standard Markdown formats for testing the preview sidebar.
+> [!IMPORTANT]
+> This markdown file intentionally stresses parser behavior, renderer layout, heading locate metadata, and mixed-format resilience.
 
 ---
 
-## Headings
+## Headings Showcase
 
-# Heading 1
-## Heading 2
-### Heading 3
-#### Heading 4
-##### Heading 5
-###### Heading 6
+### H3 Mountain Trials
+
+#### H4 River Crossings
+
+##### H5 Fortress Negotiations
+
+###### H6 Canon Verification
 
 ---
 
 ## Text Formatting
 
-This is a regular paragraph. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Sun Wukong's strategic doctrine is **adaptive**, while Xuanzang's doctrine is **compassion-first**.
 
-**Bold text** and __also bold text__.
+The convoy treats *evidence* and *discipline* as dual constraints.
 
-*Italic text* and _also italic text_.
+Complex emphasis: ***truth under pressure*** and ***restraint under victory***.
 
-***Bold and italic*** and ___also bold and italic___.
+~~Immediate retaliation~~ is replaced by proportional response.
 
-~~Strikethrough text~~
+Inline code sample: `if (risk > threshold) { switchToProtectiveFormation(); }`
 
-This is `inline code` in a sentence.
+Superscript and subscript examples: mission phase x^2, risk_i.
 
 ---
 
-## Links
+## Links and References
 
-[GitHub](https://github.com)
+[Journey to the West (Wikipedia)](https://en.wikipedia.org/wiki/Journey_to_the_West)
 
-[Link with title](https://github.com "GitHub Homepage")
+[Havoc in Heaven article](https://en.wikipedia.org/wiki/Monkey_King "Background arc")
 
-Autolink: https://github.com
+Autolink equivalent: [VS Code repository](https://github.com/microsoft/vscode)
+
+Reference link to [pilgrimage appendix][appendix].
+
+[appendix]: https://example.com/jtw/appendix "Structured appendix"
 
 ---
 
 ## Images
 
-![Image](https://picsum.photos/600/400?random=1)
+![Celestial cloud route map](https://picsum.photos/seed/jtw-route/960/420)
 
 ---
 
 ## Lists
 
-### Unordered List
+### Mixed Strategy List (Unordered + Ordered + Task)
 
-- Item 1
-  - Item 1.1
-    - Item 1.1.a
-  - Item 1.2 with ordered mix
-    1. Item 1.2.1
-    2. Item 1.2.2
-- Item 2
-  - [x] Task under unordered item
-  - [ ] Pending task under unordered item
-    - Deep note for pending task
-- Item 3
+- Route Phase Alpha
+  1. Recon and witness capture
+     - [x] Record weather and terrain
+     - [ ] Validate monastery seal integrity
+       1. Deep check level 1
+          - [x] Compare witness signatures
+          - [ ] Compare decree timestamp
+            1. If mismatch, branch to mediation
+               - [ ] Notify Xuanzang
+               - [ ] Trigger rear-guard isolation lane
+  2. Conflict handling
+     - Prefer negotiation
+     - If hostile intent confirmed
+       - [x] Enable protective formation
+       - [ ] Request Guanyin mediation token
+- Route Phase Beta
+  - Supply and logistics matrix
+    1. Waterline
+       - threshold: 35%
+       - actions
+         - [x] reduce march speed
+         - [ ] switch branch-river-detour
+    2. Foodline
+       - threshold: 25%
+       - actions
+         - [ ] request temple resupply
 
-### Ordered List
+### Cross-Type Nested List (Task + Ordered + Bullet)
 
-1. Phase 1
-   1. Step 1.1
-      - Bullet detail A
-      - Bullet detail B
-   2. Step 1.2
-      - [x] Checklist done
-      - [ ] Checklist todo
-2. Phase 2
-   1. Step 2.1
-      1. Deep ordered item 2.1.1
-      2. Deep ordered item 2.1.2
-3. Phase 3
-
-### Mixed Nested List
-
-1. Sprint planning
-   - Backend
-     1. API draft
-     2. Schema review
-   - Frontend
-     - [x] Component sketch
-     - [ ] Interaction polish
-2. Release checklist
-   - Docs
-     - [x] README updated
-     - [ ] i18n screenshots
-   - QA
-     1. Unit tests
-     2. Manual smoke test
-3. Wrap up
-
-### Task List
-
-- [x] Release Program Alpha
-  - [x] Backend track
-    1. [x] API milestone
-       - [x] Contract lock completed
-         1. [x] Response examples approved
-         2. [ ] Error matrix final review
-       - [ ] Compatibility validation
-    2. [ ] Data migration rehearsal
-  - [ ] Frontend track
-    - [x] Layout baseline
-    - [ ] Interaction polish
-      1. [ ] Keyboard navigation
-      2. [ ] Accessibility audit
-- [ ] Release Program Beta
-  1. [x] Draft implementation
-  2. [ ] Edge-case verification
-     - [ ] Add regression sample for mixed lists
-     - [ ] Validate ordered task nesting behavior
-  3. [ ] Performance check
-- [ ] Final release review
-  - [ ] Changelog proofreading
-  - [ ] Multi-language screenshot refresh
-    1. [ ] zh-CN capture
-    2. [ ] ja-JP capture
+- [ ] Mission Review Board
+  - [x] Chapter 1-20 validated
+  - [ ] Chapter 21-60 pending
+    1. Priority incidents
+       - White Bone deception chain
+       - Flaming Mountain heat blockade
+         1. Countermeasure set
+            - [x] fan intelligence
+            - [ ] dual-route fallback
+    2. Low-risk incidents
+       - [ ] village rumor false alarms
+- [x] Canonical verification checklist
+  1. Archive hash verified
+  2. Translation branch merged
+     - Notes
+       - reviewer-A signed
+       - reviewer-B signed
 
 ---
 
-## GitHub Alerts
+## Alerts
+
+### !NOTE
 
 > [!NOTE]
-> Useful information that users should know, even when skimming content.
+> Some episodes blend political negotiation and direct combat in a single checkpoint.
+
+### !TIP
 
 > [!TIP]
-> Helpful advice for doing things better or more easily.
+> Keep role separation clear: doctrine decision and tactical execution should not collapse into one actor.
 
-> [!IMPORTANT]
-> Key information users need to know to achieve their goal.
+### !WARNING
 
 > [!WARNING]
-> Urgent info that needs immediate user attention to avoid problems.
+> Illusion-heavy arcs can cause false positives in identity checks.
+
+### !CAUTION
 
 > [!CAUTION]
-> Advises about risks or negative outcomes of certain actions.
+> Over-aggressive pursuit may violate civilian-safety constraints.
 
 ---
 
 ## Blockquotes
 
-> This is a blockquote.
-
-> Multi-line blockquote.
->
-> Second paragraph in blockquote.
-
-> Nested blockquotes:
->
-> > This is a nested blockquote.
-> >
-> > > Even deeper nesting.
-
-> **Blockquote** with *formatted* text and `inline code`.
+> "The road is long, but the vow is longer."
+> Nested strategic note:
+> > Verify identity, then verify intent, then choose force.
+> > > Auxiliary Chinese hint: 先证据后行动
 
 ---
 
 ## Middle Divider Locate Check
 
-This section verifies that a middle horizontal rule is rendered correctly and can be used as a stable locate boundary.
+This explicit section is used as a middle locator anchor for preview scrolling.
 
 ---
 
@@ -189,237 +163,232 @@ This section verifies that a middle horizontal rule is rendered correctly and ca
 ### JavaScript
 
 ```javascript
-function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
+function chooseAction(riskScore, monkSafety, evidenceConfidence) {
+  if (monkSafety === 'critical') return 'protective-formation';
+  if (evidenceConfidence < 0.6) return 'recon';
+  if (riskScore > 80) return 'escalate-to-mediation';
+  return 'controlled-engagement';
 }
-
-const result = fibonacci(10);
-console.log(`Fibonacci(10) = ${result}`);
 ```
 
 ### TypeScript
 
 ```typescript
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
+type Branch = 'main-route' | 'branch-river-detour' | 'branch-west-ridge';
 
-async function fetchUser(id: number): Promise<User> {
-  const response = await fetch(`/api/users/${id}`);
-  return response.json();
+type TeamStatus = {
+  monk: 'stable' | 'captured-briefly';
+  wukong: 'ready' | 'drained';
+  bajie: 'support' | 'frontline';
+  wujing: 'stable' | 'injured-light';
+};
+
+interface TribulationCase {
+  no: number;
+  location: string;
+  trigger: string;
+  outcome: string;
+  branch: Branch;
 }
 ```
 
 ### Python
 
 ```python
-class Calculator:
-    def __init__(self):
-        self.history = []
+from dataclasses import dataclass
 
-    def add(self, a: float, b: float) -> float:
-        result = a + b
-        self.history.append(f"{a} + {b} = {result}")
-        return result
+@dataclass
+class Tribulation:
+    no: int
+    location: str
+    demon: str
+    outcome: str
 
-calc = Calculator()
-print(calc.add(3, 5))
+sample = Tribulation(36, "Flaming Mountain", "Bull Demon King", "fan route secured")
+print(sample)
 ```
 
-### HTML
+### SQL
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Hello World</title>
-</head>
-<body>
-  <h1>Hello, World!</h1>
-  <p>This is a paragraph.</p>
-</body>
-</html>
-```
-
-### CSS
-
-```css
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
+```sql
+SELECT tribulation_no, location, demon_or_force, outcome
+FROM tribulation_log
+WHERE conflict_level IN ('high', 'extreme')
+ORDER BY tribulation_no;
 ```
 
 ### JSON
 
 ```json
 {
-  "name": "markdown-preview-sidebar",
-  "author": "Test Maintainers",
-  "description": "A generic Markdown fixture for preview testing",
-  "keywords": ["markdown", "preview", "sidebar"]
+  "tribulation": 81,
+  "location": "Thunder Monastery",
+  "verification": "true canon",
+  "status": "mission complete"
 }
 ```
 
-### Shell
+### YAML
+
+```yaml
+mission:
+  code: JTW-81
+  objective: retrieve-true-sutras
+  status: complete
+team:
+  - Xuanzang
+  - Sun Wukong
+  - Zhu Bajie
+  - Sha Wujing
+```
+
+### XML
+
+```xml
+<checkpoint no="36" location="Flaming Mountain">
+  <trigger>fire barrier + alliance refusal</trigger>
+  <outcome>fan route secured</outcome>
+</checkpoint>
+```
+
+### Bash
 
 ```bash
-#!/bin/bash
-echo "Hello, World!"
-for i in {1..5}; do
-  echo "Count: $i"
+#!/usr/bin/env bash
+for n in $(seq 1 5); do
+  echo "checkpoint=${n} status=verified"
 done
 ```
 
-### Plain Code Block (no language)
+### Plain Code Block
 
-```
-This is a plain code block
-without any syntax highlighting.
-Line 3 of the code block.
+```text
+branch=branch-river-detour
+risk=74.20
+decision=protective-formation
 ```
 
 ---
 
 ## Diagrams and Math
 
-### Mermaid Diagram (Preview Only)
+### Mermaid
 
 ```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
+flowchart LR
+  A[Mandate] --> B[Team Assembly]
+  B --> C[81 Tribulations]
+  C --> D[Canonical Verification]
+  D --> E[Return and Translation]
 ```
 
-### LaTeX Source (Code Block)
+### Math
 
-```latex
-\documentclass{article}
-\begin{document}
-Hello World!
-\end{document}
-```
+Inline math: $\mathcal{R} = \sum_{i=1}^{81} w_i\rho_i$.
 
-### Math Formula (Preview Only)
-
-```math
-E = mc^2
-```
-
-### Inline Math
-
-This is an inline math formula $$a^2 + b^2 = c^2$$ inside a paragraph.
-
-### Math Environment (LaTeX Block)
+$$
+\rho_i = \alpha h_i + \beta t_i + \gamma d_i - \delta a_i
+$$
 
 \begin{equation}
-f(x) = \int_{-\infty}^{\infty} \hat{f}(\xi)\,e^{2 \pi i \xi x} \,d\xi
+\text{Success} = f(\text{discipline}, \text{evidence}, \text{adaptation})
 \end{equation}
 
 ---
 
 ## Tables
 
-### Simple Table
+### Core Team Table
 
-| Name   | Age | Role       |
-|--------|-----|------------|
-| Alice  | 28  | Developer  |
-| Bob    | 32  | Designer   |
-| Carol  | 25  | Manager    |
+| Member | Role | Tactical Function | Doctrinal Constraint |
+| :-- | :-- | :-- | :-- |
+| Xuanzang | Master Monk | decision authority | compassion-first |
+| Sun Wukong | Defender | high-mobility combat | restraint under doctrine |
+| Zhu Bajie | Support | disruption and carrying | discipline variance |
+| Sha Wujing | Rear Guard | convoy integrity | conservative movement |
 
-### Aligned Table
+### Tribulation Sample Table
 
-| Left Aligned | Center Aligned | Right Aligned |
-|:-------------|:--------------:|--------------:|
-| Cell 1       | Cell 2         | Cell 3        |
-| Cell 4       | Cell 5         | Cell 6        |
-| Long content here | **Bold** | *Italic*  |
+| No | Location | Trigger | Demon | Outcome | Branch |
+| ---: | :-- | :-- | :-- | :-- | :-- |
+| 9 | Black Wind Cave | forged invitation | Black Wind Lord | controlled resolution | main-route |
+| 36 | Flaming Mountain | environmental blockade | Bull Demon King | fan route secured | branch-river-detour |
+| 81 | Thunder Monastery | canon verification | N/A | mission complete | main-route |
 
 ---
 
 ## Horizontal Rules
 
-Three different horizontal rule styles:
+---
+
+Literal alternatives (escaped):
+
+\*\*\*
+
+\_\_\_
 
 ---
 
-***
+## Escaping and Special Characters
 
-___
+\*not italic\*
 
----
+\#not-a-heading
 
-## Line Breaks
+Escaped backtick: \`literal\`
 
-This line has a line break  
-right here (two trailing spaces).
-
-This line also has a line break.
-And this is the next line (GFM line break).
+Entities: &amp; &lt; &gt; &copy; &trade;
 
 ---
 
-## Special Characters & Escaping
+## HTML Snippet Example
 
-\*This is not italic\*
-
-\# This is not a heading
-
-Symbols: &amp; &lt; &gt; &copy; &mdash;
-
----
-
-## Inline HTML
-
+```html
 <details>
-<summary>Click to expand</summary>
-
-This is hidden content inside a `<details>` element.
-
-- Item A
-- Item B
-- Item C
-
+  <summary>Open auxiliary debrief notes</summary>
+  <ul>
+    <li>Evidence chain quality determines escalation legitimacy</li>
+    <li>Route branching must preserve monk safety</li>
+    <li>Legacy conflicts from Havoc in Heaven still influence local reactions</li>
+  </ul>
 </details>
-
-<kbd>Ctrl</kbd> + <kbd>C</kbd> to copy.
-
-Text with <sup>superscript</sup> and <sub>subscript</sub>.
-
-<mark>Highlighted text</mark>
+<p><kbd>Cmd</kbd> + <kbd>F</kbd> to locate chapter references.</p>
+<p><mark>Priority: identity verification before engagement</mark></p>
+```
 
 ---
 
-## Long Content (Scroll Test)
+## Footnotes
+
+Sun Wukong's tactical range relies on both movement and deception management[^wukong-range].
+
+The 81-tribulation framing is often interpreted as both literal and symbolic[^81-symbolic].
+
+[^wukong-range]: Mobility without discipline can create collateral risk
+[^81-symbolic]: Auxiliary Chinese framing: 历劫亦是修心
+
+---
+
+## Long Scroll Sections
 
 ### Section A
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum. Cras vehicula, mi at tristique sagittis, risus ipsum laoreet ligula, eget venenatis nulla justo a diam. Proin nec turpis at dolor dictum lacinia. Nullam sit amet nisi condimentum erat iaculis viverra. Etiam ac tortor nec nunc pretium fermentum.
+The convoy enters mountain terrain where perception errors are common. Multiple villages report contradictory sightings, and local records conflict on the same event timestamps. This section intentionally increases paragraph length for preview scroll and locate stress.
 
 ### Section B
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+In river and marsh regions, logistics become a first-order variable. Water availability, crossing windows, and escort separation time create hard constraints that cannot be solved by combat power alone.
 
 ### Section C
 
-At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga.
+Court episodes introduce institutional complexity: legal protocol, ceremonial obligations, and reputation management. Each decision changes downstream trust budgets and alliance viability.
 
 ### Section D
 
-Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
+The final stage adds verification pressure. Obtaining scriptures is insufficient unless authenticity and transmission integrity are validated, archived, and translated with consistent doctrinal semantics.
 
 ---
 
 ## End
 
-This concludes the Markdown preview test file. All standard formats should render correctly in the sidebar preview. 🎉
+Fixture objective: exceed baseline complexity and coverage while keeping the narrative coherent under a single Journey to the West storyline

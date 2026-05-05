@@ -1,20 +1,29 @@
+%% Gantt timeline for the full pilgrimage mission
 gantt
-    title Project Plan
-    dateFormat YYYY-MM-DD
-    axisFormat %b %d
-    excludes weekends
+    title Journey to the West Mission Schedule (Expanded Fixture)
+    dateFormat  YYYY-MM-DD
+    axisFormat  %m/%d
 
-    section Design
-        Requirements     :done, a1, 2024-01-08, 5d
-        Prototype        :active, a2, after a1, 7d
-        Review           :a3, after a2, 3d
+    section Preparation
+    Imperial mandate and charter                 :done, p1, 0629-07-03, 4d
+    Route mapping and doctrine setup             :done, p2, after p1, 3d
+    Team assembly and oath                       :done, p3, after p2, 3d
 
-    section Development
-        Backend API      :b1, after a3, 10d
-        Frontend UI      :b2, after a3, 12d
-        Integration      :b3, after b1, 5d
+    section Early Route
+    Mountain and cave tribulations               :active, e1, 0709-08-25, 47d
+    White Bone trust-crisis sequence             :crit, e2, 0826-09-12, 17d
 
-    section Testing
-        Unit tests       :c1, after b3, 5d
-        E2E tests        :c2, after c1, 4d
-        Release          :milestone, c3, after c2, 0d
+    section Middle Route
+    River logistics and kingdom diplomacy        :m1, 0913-10-21, 38d
+    Fire barrier preparation                     :m2, after m1, 10d
+    Flaming Mountain fan operation               :crit, m3, after m2, 12d
+
+    section Late Route
+    Fortress and illusion heavy segments         :l1, 1120-12-22, 32d
+    Thunder Monastery approach                   :l2, after l1, 15d
+    Canon verification and correction loop       :l3, after l2, 8d
+
+    section Completion
+    Return route and scripture transport         :c1, 0109-02-11, 33d
+    Translation and archive                      :c2, after c1, 20d
+    Mission closure                              :c3, after c2, 4d

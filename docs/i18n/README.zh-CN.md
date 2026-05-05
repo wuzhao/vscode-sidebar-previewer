@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.10-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.11-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -36,6 +36,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | TSV | `.tsv` |
 
 ## 功能介绍
+
+### 0.3.11 更新亮点
+
+- 数据树高亮改为以编辑器选中行为基准，预览区始终收敛为一个连续高亮区域
+- 修复 JSON/YAML 在内联数组与嵌套数组场景下的数组元素定位，减少错跳与点击无响应
+- 优化 JSON/YAML/TOML/XML 的注释归属与文档尾部独立注释落位稳定性
 
 ### Markdown
 

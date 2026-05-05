@@ -210,7 +210,7 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.equal(result.fileType, 'xml');
     assert.equal(result.supportsLocate, false);
     assert.equal(result.html.includes('Failed to parse XML content.'), false);
-    assert.ok(result.html.includes('catalog'));
+    assert.ok(result.html.includes('pilgrimage'));
     assert.ok(result.html.includes('@generatedAt'));
   });
 
@@ -222,15 +222,15 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     const textLines = extractKeyLines(result.html, '#TEXT');
     const cdataLines = extractKeyLines(result.html, '#CDATA');
     const declarationLines = extractKeyLines(result.html, '?xml');
-    const previewPiLines = extractKeyLines(result.html, '?preview');
+    const missionPiLines = extractKeyLines(result.html, '?mission');
     const auditPiLines = extractKeyLines(result.html, '?audit');
 
     assert.ok(textLines.length > 0);
     assert.ok(cdataLines.length > 0);
     assert.ok(declarationLines.length > 0);
-    assert.ok(previewPiLines.length > 0);
+    assert.ok(missionPiLines.length > 0);
     assert.ok(auditPiLines.length > 0);
-    assert.deepEqual(textLines.slice(0, 2), [16, 17]);
+    assert.deepEqual(textLines.slice(0, 2), [23, 29]);
 
     textLines.forEach(line => {
       assert.equal(/^\s*<!/.test(lines[line]), false, `#TEXT line ${line} should not bind to DTD directives`);
@@ -244,7 +244,7 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
 
     cdataLines.forEach(line => assertLineContains(source, '<![CDATA[', line));
     declarationLines.forEach(line => assertLineContains(source, '<?xml', line));
-    previewPiLines.forEach(line => assertLineContains(source, '<?preview', line));
+    missionPiLines.forEach(line => assertLineContains(source, '<?mission', line));
     auditPiLines.forEach(line => assertLineContains(source, '<?audit', line));
   });
 
@@ -279,14 +279,14 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     const result = CodePreviewProvider.parse(source, 'xml');
 
     const xmlPos = result.html.indexOf('>?xml</span>');
-    const previewPos = result.html.indexOf('>?preview</span>');
+    const missionPos = result.html.indexOf('>?mission</span>');
     const doctypePos = result.html.indexOf('>!DOCTYPE</span>');
 
     assert.ok(xmlPos >= 0);
-    assert.ok(previewPos >= 0);
+    assert.ok(missionPos >= 0);
     assert.ok(doctypePos >= 0);
-    assert.ok(xmlPos < previewPos);
-    assert.ok(previewPos < doctypePos);
+    assert.ok(xmlPos < missionPos);
+    assert.ok(missionPos < doctypePos);
   });
 
   test('XML DTD directives are nested under !DOCTYPE block', () => {
@@ -368,8 +368,8 @@ test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
     assert.ok(tsvResult.html.includes('<div class="table-preview-scroll">'));
     assert.ok(csvResult.html.includes('<table class="tabular-table">'));
     assert.ok(tsvResult.html.includes('<table class="tabular-table">'));
-    assert.ok(csvResult.html.includes('Sample Item 1'));
-    assert.ok(tsvResult.html.includes('svc-001'));
+    assert.ok(csvResult.html.includes('Dragon Palace of the Eastern Sea'));
+    assert.ok(tsvResult.html.includes('T-01'));
     assert.ok(csvResult.html.includes('table-index-column'));
     assert.ok(tsvResult.html.includes('table-index-column'));
     assert.equal(csvResult.html.includes('Failed to parse CSV content.'), false);

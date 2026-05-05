@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.10-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.11-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -36,6 +36,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | TSV | `.tsv` |
 
 ## 機能概要
+
+### 0.3.11 の主な更新
+
+- データツリーのハイライトはエディタの選択行を基準にし、プレビュー側で単一の連続領域に収束するよう改善しました
+- JSON/YAML の配列要素ロケートを、インライン配列とネスト配列の両方で正しく動作するよう修正しました
+- JSON/YAML/TOML/XML におけるコメント帰属と、文書末尾の standalone コメント配置の安定性を改善しました
 
 ### Markdown
 

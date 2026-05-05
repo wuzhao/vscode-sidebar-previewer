@@ -1,61 +1,138 @@
-/**
- * START [A]
- */
-
 {
-  // JSONC fixture for mixed comment-style coverage [B]
-  /** Root-level doc comment [C] */
+  // [A] Root-level line comment before first property
   "meta": {
-    "name": "Complex JSONC Fixture", /// triple slash note [D]
-    "version": "1.0.0", //! bang-style line comment [E]
-    "url": "https://example.com/api//v1", // ensure // in string is preserved [F]
-    /* block before property [G] */ "maintainer": "Preview Team",
-    "flags": {
-      "experimental": true /* inline block [H] */ /* second inline block [I] */, // mixed inline comment chain [J]
-      "strict": false //// slash-heavy non-mainstream line comment [K]
-    }
+    "title": "Journey to the West - JSONC Deep Fixture", // [B] Inline trailing comment
+    "focus": "Nested object-array-object shapes + mixed comment positions",
+    "primaryLanguage": "English",
+    "auxiliaryLanguage": [
+      "Chinese"
+    ]
   },
-  /* multi-line
-     block comment before records [L] */
-  "records": [
-    /**
-     * id, name and score
-     * 98/100
-     * [M]
-     */
+
+  /* [C] Block comment before array property */
+  "routePlan": [
+    // [D] Comment before first route object
     {
-      "id": 1,
-      "name": "alpha",
-      /** inline doc block before score [N] */
-      "score": 98
-    },
-    // between-object line comment [O]
-    {
-      "id": 2,
-    // intentionally misaligned indentation [P]
-      "name": "beta",
-      "score": 87 /* inline block score [Q] */, 
-      "labels": [
-        "fast", /* inline block item [R] */
-        "stable" /// triple slash list item [S]
+      "leg": "east-start",
+      "checkpoints": [
+        {
+          "id": "CP-009",
+          "location": "Black Wind Cave",
+          "signals": [
+            "forged-invitation",
+            "hostage-rumor"
+          ],
+          "actors": [
+            { "name": "Sun Wukong", "role": "defender" }, // [E] Trailing comment after inline object
+            { "name": "Xuanzang", "role": "verification" }
+          ],
+          "fallback": {
+            // [F] Object containing array containing objects
+            "ifEvidenceLow": [
+              { "action": "recon", "timeoutSec": 300 },
+              { "action": "request-witness", "timeoutSec": 600 }
+            ]
+          }
+        },
+        /* [G] Block comment between array elements */
+        {
+          "id": "CP-012",
+          "location": "Flower-Fruit Mountain",
+          "signals": [
+            "forged-seal"
+          ],
+          "actors": [
+            { "name": "Zhu Bajie", "role": "support" },
+            { "name": "Sha Wujing", "role": "rear-guard" }
+          ],
+          "fallback": {
+            "ifHostage": [
+              {
+                "action": "protective-formation",
+                "requires": [
+                  "rear-lane-lock",
+                  "monk-visual-anchor"
+                ]
+              }
+            ]
+          }
+        }
       ]
-      // trailing comment inside object [T]
+    },
+    {
+      "leg": "final-approach",
+      "checkpoints": [
+        {
+          "id": "CP-080",
+          "location": "Small Thunderclap Monastery",
+          "signals": [
+            "illusion-spike"
+          ],
+          "actors": [
+            { "name": "Sun Wukong", "role": "counter-illusion" },
+            { "name": "Sha Wujing", "role": "escort-stability" }
+          ]
+        },
+        {
+          "id": "CP-081",
+          "location": "Thunder Monastery",
+          "signals": [
+            "canon-verification"
+          ],
+          "actors": [
+            { "name": "Xuanzang", "role": "canon-check" },
+            { "name": "Sun Wukong", "role": "security" }
+          ]
+        }
+      ]
     }
-    // trailing comment inside records array [U]
   ],
-  /*! exclamation block style often seen in tooling output [V] */
+
   "commentStyles": [
-    "// line",
-    "/// triple slash",
-    // array element [W]
-    "//! bang line",
-    "/* block */",
-    "/** doc block */",
-    "/*! exclamation block */"
+    "line-comment-above",
+    /* [H] block comment inside array */
+    "block-comment-between-items",
+    /// [I] triple slash style line comment
+    "triple-slash-line-comment",
+    "bang-like textual marker !not-a-syntax-comment"
   ],
-  "note": "All comment styles should be tolerated" // trailing end comment [X]
 
-  /* trailing comment inside root object [Y] */
+  "mixedPayload": {
+    "objectContainsArray": [
+      {
+        "key": "route",
+        "values": [
+          "main-route",
+          "branch-river-detour",
+          "branch-west-ridge"
+        ]
+      },
+      {
+        "key": "priority",
+        "values": [
+          "civilian-safety",
+          "evidence",
+          "escort-integrity"
+        ]
+      }
+    ],
+    "arrayContainsObject": [
+      {
+        "cluster": "high-risk",
+        "items": [
+          { "cp": "CP-036", "score": 88.9 },
+          { "cp": "CP-080", "score": 141.8 }
+        ]
+      },
+      {
+        "cluster": "verification",
+        "items": [
+          { "cp": "CP-081", "score": 52.1 }
+        ]
+      }
+    ]
+  },
+
+  // [Z] Tail comment near the end of document
+  "tailNote": "Aux CN: 注释样式与结构复杂度用于预览测试"
 }
-
-/* END [Z] */

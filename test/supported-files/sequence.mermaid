@@ -1,55 +1,37 @@
+%% Sequence flow for a complex tribulation episode
 sequenceDiagram
-    actor User
-    participant Browser
-    participant CDN
-    participant Gateway as API Gateway
-    participant Auth as Auth Service
-    participant API as REST API
-    participant Cache as Redis Cache
-    participant DB as PostgreSQL
+    autonumber
+    participant XM as Xuanzang
+    participant SWK as Sun Wukong
+    participant ZBJ as Zhu Bajie
+    participant SWJ as Sha Wujing
+    participant DEM as Demon Envoy
+    participant GY as Guanyin Envoy
+    participant ALL as Full Convoy
 
-    User->>Browser: Click Login
-    Browser->>Gateway: POST /api/auth/login
-    Gateway->>Auth: Validate credentials
-    Auth->>DB: SELECT user WHERE email = ?
-    DB-->>Auth: User record
-    alt Invalid credentials
-        Auth-->>Gateway: 401 Unauthorized
-        Gateway-->>Browser: Error response
-        Browser-->>User: Show error message
-    else Valid credentials
-        Auth->>Auth: Generate JWT + Refresh Token
-        Auth->>Cache: Store refresh token (TTL: 7d)
-        Auth-->>Gateway: 200 OK {token, refreshToken}
-        Gateway-->>Browser: Set-Cookie + JSON
-        Browser-->>User: Redirect to Dashboard
+    Note over XM,DEM: English-major narrative; Chinese hints used only as auxiliary notes
+
+    DEM->>XM: Present forged treaty and invite convoy to neutral zone
+    XM->>SWK: Request identity and seal verification before entry
+    SWK->>DEM: Request witness token and domain signature
+    DEM-->>SWK: Returns inconsistent credentials
+
+    SWK->>ZBJ: Prepare flank disruption protocol
+    ZBJ->>SWJ: Protect scripture chest and rear lane
+
+    DEM->>XM: Trigger illusion and isolate monk
+    SWJ->>XM: Maintain mantra anchor and visual continuity
+    SWK->>DEM: Break illusion layer with staff sweep
+    DEM-->>SWK: Deploy clone phantoms and false hostages
+
+    alt Risk is extreme
+        XM->>GY: Petition mediation with civilian-safety priority
+        GY-->>DEM: Enforce surrender under celestial witness
+    else Risk manageable
+        SWK->>ZBJ: Execute pincer extraction path
+        ZBJ->>DEM: Break formation command node
     end
 
-    Note over User,DB: User is now authenticated
-
-    User->>Browser: View Profile
-    Browser->>CDN: GET /static/profile.js
-    CDN-->>Browser: JavaScript bundle
-    Browser->>Gateway: GET /api/user/profile
-    Gateway->>Gateway: Verify JWT
-    Gateway->>Cache: Check cached profile
-    alt Cache Hit
-        Cache-->>Gateway: Cached profile data
-    else Cache Miss
-        Gateway->>API: Forward request
-        API->>DB: SELECT * FROM profiles
-        DB-->>API: Profile data
-        API->>Cache: SET profile (TTL: 5min)
-        API-->>Gateway: Profile JSON
-    end
-    Gateway-->>Browser: Profile response
-    Browser-->>User: Render profile page
-
-    loop Every 30 minutes
-        Browser->>Gateway: POST /api/auth/refresh
-        Gateway->>Auth: Validate refresh token
-        Auth->>Cache: Check token exists
-        Cache-->>Auth: Token valid
-        Auth-->>Gateway: New JWT
-        Gateway-->>Browser: Updated token
-    end
+    SWK->>XM: Report route reopened and threat contained
+    XM->>ALL: Continue pilgrimage with updated branch choice
+    Note over XM,SWK: 辅助注释：先证据后开战

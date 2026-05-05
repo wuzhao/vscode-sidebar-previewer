@@ -1,92 +1,117 @@
-# Cargo.toml - Rust Web Application [A]
-# A realistic Cargo configuration example [B]
+# Journey to the West mission configuration (TOML deep fixture)
+# This file intentionally contains dense comments for parser and renderer tests
 
-[package]
-name = "web-service" # package crate name [C]
-version = "0.5.2"
-edition = "2021"
-authors = ["Public Test Maintainers"]
-description = "A high-performance async web service"
-license = "CC0-1.0"
-repository = "https://example.com/public-test-fixtures"
-readme = "README.md"
-keywords = ["web", "async", "http", "api"]
-categories = ["web-programming::http-server"]
-rust-version = "1.75"
+# [META] Root identity and language behavior
+[meta]
+fixture_name = "journey-to-the-west-copilot" # unique fixture id
+version = "1.1.1" # bumped for today's task A
+primary_language = "English" # UI-facing language
+aux_languages = ["Chinese"] # auxiliary hints for CN notes
+focus = "81 tribulations and branch-aware execution" # semantic scope
+features = ["nested-route-model", "fallback-policy", "risk-matrix"] # inline list comment
 
-[features]
-default = ["tls", "compression"]
-tls = ["rustls", "tokio-rustls"]
-compression = ["tower-http/compression-full"] # enable response compression [D]
-tracing = ["tracing-subscriber", "tracing-opentelemetry"]
-full = ["tls", "compression", "tracing"]
+# [MISSION] Mission envelope and final objective
+[mission]
+code = "JTW-81"
+origin = "Chang'an"
+destination = "Thunder Monastery"
+objective = "Retrieve true sutras and return with canonical integrity"
+status = "completed"
 
-# dependencies section header [E]
-[dependencies]
-tokio = { version = "1.36", features = ["full"] }
-axum = { version = "0.7", features = ["macros", "multipart"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0" # JSON serialization [F]
-sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "uuid", "chrono"] }
-uuid = { version = "1.7", features = ["v4", "serde"] }
-chrono = { version = "0.4", features = ["serde"] }
-tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "trace", "timeout"] }
-tracing = "0.1"
-anyhow = "1.0"
-thiserror = "1.0"
-dotenvy = "0.15"
-jsonwebtoken = "9.2"
-argon2 = "0.5"
-validator = { version = "0.17", features = ["derive"] }
+# Threshold comments live near values for easier locate behavior
+[mission.control.thresholds]
+evidence_min = 0.65 # below this value force should not escalate
+witness_min = 2 # minimum witness count for escalation
+escalation_timeout_sec = 180 # single-stage timeout
 
-# Optional dependencies (feature-gated) [G]
-rustls = { version = "0.22", optional = true }
-tokio-rustls = { version = "0.25", optional = true }
-tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter", "json"] }
-tracing-opentelemetry = { version = "0.22", optional = true }
-# boundary comment between dependency groups [H]
+# [MISSION.CONTROL] Behavior policy from low to high escalation
+[mission.control]
+priority = ["civilian-safety", "evidence", "escort-integrity", "scripture-authenticity"]
+allow_non_lethal_only = true # global force limiter
 
-# dev-dependencies section header [I]
-[dev-dependencies]
-reqwest = { version = "0.12", features = ["json"] }
-mockall = "0.12"
-fake = { version = "2.9", features = ["derive"] }
-criterion = { version = "0.5", features = ["async_tokio"] }
-testcontainers = "0.15"
+# Escalation stage 1 comment before AoT section
+[[mission.control.escalation]]
+level = 1
+name = "observe"
+actions = ["recon", "witness-collection"] # action list keeps order
+requires = { evidence_min = 0.2, witness_min = 1 } # inline table comment
 
-[profile.dev]
-opt-level = 0
-debug = true
-overflow-checks = true
+# Escalation stage 2 contains containment strategy
+[[mission.control.escalation]]
+level = 2
+name = "contain"
+actions = ["protective-formation", "lock-rear-lane"]
+requires = { evidence_min = 0.5, witness_min = 2 }
 
-[profile.release]
-opt-level = 3
-lto = "thin" # faster link time than full LTO [J]
-strip = "symbols"
-codegen-units = 1
-panic = "abort"
+# Escalation stage 3 is mediation route
+[[mission.control.escalation]]
+level = 3
+name = "mediate"
+actions = ["petition-guanyin", "witness-tribunal"]
+requires = { evidence_min = 0.7, witness_min = 3 }
 
-[profile.bench]
-inherits = "release"
-debug = true
+# Route phase comments test long/short/inline placement styles
+[[route.phases]]
+name = "early-route"
+chapters = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16] # chapter span comment
+checkpoints = [
+  { code = "ER-09", location = "Black Wind Cave", branch = "main-route", risk = 73.4 }, # first checkpoint
+  { code = "ER-12", location = "Flower-Fruit Mountain", branch = "branch-river-detour", risk = 79.6 } # second checkpoint
+]
+fallbacks = [
+  { condition = "ifHostage", actions = ["protective-formation", "rear-lane-lock"] },
+  { condition = "ifEvidenceLow", actions = ["recon", "request-witness"] }
+]
 
-[[bin]]
-name = "server"
-path = "src/main.rs"
+# Decision map comment block
+[route.decisions]
+branch_priority = { main_route = 1, branch_river_detour = 2, branch_west_ridge = 3 } # stable sort order
 
-# API benchmarks [K]
-[[bench]]
-name = "api_benchmarks"
-harness = false
+# Risk model formula comment and coefficient notes
+[risk_model]
+formula = "risk = alpha*hostility + beta*terrain + gamma*deception - delta*allied_support"
 
-[workspace.metadata.release]
-pre-release-commit-message = "chore: release v{{version}}"
-tag-prefix = "v"
-tag-message = "Release {{tag_name}}"
 
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
+# Route phase 2 comments separated as standalone paragraphs
+[[route.phases]]
+name = "final-approach"
+chapters = [79, 80, 81, 82, 83, 84, 85, 86, 87, 88]
+checkpoints = [
+  { code = "FA-80", location = "Small Thunderclap Monastery", branch = "branch-river-detour", risk = 141.8 },
+  { code = "FA-81", location = "Thunder Monastery", branch = "main-route", risk = 52.1 }
+]
+fallbacks = [
+  { condition = "ifIllusionSpike", actions = ["counter-illusion", "monk-visual-anchor"] },
+  { condition = "ifCanonMismatch", actions = ["correction-loop", "archive-recheck"] }
+]
 
-# trailing root-level comment [L]
+[risk_model.coefficients]
+alpha = 1.35 # hostility weight
+beta = 0.92 # terrain weight
+gamma = 1.11 # deception weight
+delta = 0.74 # allied support offset
+
+# Matrix comment: nested arrays in TOML
+[risk_model.matrix]
+hostility_vs_terrain = [
+  [1.00, 0.82, 0.70], # mountain heavy
+  [1.18, 0.95, 0.79], # river heavy
+  [1.36, 1.08, 0.91] # fortress heavy
+]
+
+# Array-of-inline-tables comment test
+audit_samples = [
+  { cp = "CP-009", evidence = 0.72, witness = 3, branch = "main-route" },
+  { cp = "CP-036", evidence = 0.81, witness = 4, branch = "branch-river-detour" },
+  { cp = "CP-081", evidence = 0.93, witness = 5, branch = "main-route" }
+]
+
+# Final threshold comments
+[thresholds]
+low = 55.0
+medium = 70.0
+high = 82.5
+extreme = 90.0
+
+# Tail standalone comment for end-of-file behavior
+# Auxiliary CN: 注释密度用于覆盖注释定位与渲染路径
