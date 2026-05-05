@@ -36,6 +36,31 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
                             continue;
                         }
 
+                        if (trimmed.startsWith('#')) {
+                            const commentIndent = this.getIndentation(lines[row]);
+                            if (commentIndent > startIndent) {
+                                continue;
+                            }
+
+                            let nextSignificant = -1;
+                            for (let next = row + 1; next < lines.length; next++) {
+                                const nextTrimmed = lines[next].trim();
+                                if (nextTrimmed.length === 0 || nextTrimmed.startsWith('#')) {
+                                    continue;
+                                }
+
+                                nextSignificant = next;
+                                break;
+                            }
+
+                            if (nextSignificant < 0 || this.getIndentation(lines[nextSignificant]) <= startIndent) {
+                                cache.set(line, row);
+                                return row;
+                            }
+
+                            continue;
+                        }
+
                         const indent = this.getIndentation(lines[row]);
                         if (indent <= startIndent) {
                             cache.set(line, row);
