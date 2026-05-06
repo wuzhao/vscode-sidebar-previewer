@@ -444,11 +444,56 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
          * @returns 返回 JSON 行中提取到的键名列表
          */
         protected static extractJsonKeys(line: string): string[] {
-            const match = line.match(/^\s*(?:\/\*.*?\*\/\s*)*"((?:\\.|[^"\\])*)"\s*(?:(?:\/\*.*?\*\/)\s*)*:/);
-            if (!match) {
-                return [];
+            const sanitizedLine = this.stripJsoncComments(line);
+            const keys: string[] = [];
+
+            let inString = false;
+            let escape = false;
+            let currentRaw = '';
+
+            for (let i = 0; i < sanitizedLine.length; i++) {
+                const ch = sanitizedLine[i];
+
+                if (inString) {
+                    if (escape) {
+                        currentRaw += ch;
+                        escape = false;
+                        continue;
+                    }
+
+                    if (ch === '\\') {
+                        currentRaw += ch;
+                        escape = true;
+                        continue;
+                    }
+
+                    if (ch === '"') {
+                        inString = false;
+
+                        let cursor = i + 1;
+                        while (cursor < sanitizedLine.length && /\s/.test(sanitizedLine[cursor])) {
+                            cursor += 1;
+                        }
+
+                        if (cursor < sanitizedLine.length && sanitizedLine[cursor] === ':') {
+                            keys.push(this.decodeJsonString(currentRaw));
+                        }
+
+                        currentRaw = '';
+                        continue;
+                    }
+
+                    currentRaw += ch;
+                    continue;
+                }
+
+                if (ch === '"') {
+                    inString = true;
+                    currentRaw = '';
+                }
             }
-            return [this.decodeJsonString(match[1])];
+
+            return keys;
         }
 
     /**

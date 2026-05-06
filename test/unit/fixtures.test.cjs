@@ -143,6 +143,56 @@ test('Task L JSON array comments stay in the expected scopes', () => {
   assert.equal(hEvent.path, 'commentStyles');
 });
 
+test('Task F JSON fixture inline object keys map to correct nested array lines', () => {
+  const source = readSupportedFixture('json.jsonc');
+  const result = CodePreviewProvider.parse(source, 'json');
+
+  const nameLines = extractKeyLines(result.html, 'name');
+  assert.equal(nameLines.length, 8);
+  assertLineContains(source, '{ "name": "Sun Wukong", "role": "defender" },', nameLines[0]);
+  assertLineContains(source, '{ "name": "Xuanzang", "role": "verification" }', nameLines[1]);
+  assertLineContains(source, '{ "name": "Zhu Bajie", "role": "support" },', nameLines[2]);
+  assertLineContains(source, '{ "name": "Sha Wujing", "role": "rear-guard" }', nameLines[3]);
+  assertLineContains(source, '{ "name": "Sun Wukong", "role": "counter-illusion" },', nameLines[4]);
+  assertLineContains(source, '{ "name": "Sha Wujing", "role": "escort-stability" }', nameLines[5]);
+  assertLineContains(source, '{ "name": "Xuanzang", "role": "canon-check" },', nameLines[6]);
+  assertLineContains(source, '{ "name": "Sun Wukong", "role": "security" }', nameLines[7]);
+
+  const roleLines = extractKeyLines(result.html, 'role');
+  assert.equal(roleLines.length, 8);
+  assertLineContains(source, '{ "name": "Sun Wukong", "role": "defender" },', roleLines[0]);
+  assertLineContains(source, '{ "name": "Xuanzang", "role": "verification" }', roleLines[1]);
+  assertLineContains(source, '{ "name": "Zhu Bajie", "role": "support" },', roleLines[2]);
+  assertLineContains(source, '{ "name": "Sha Wujing", "role": "rear-guard" }', roleLines[3]);
+  assertLineContains(source, '{ "name": "Sun Wukong", "role": "counter-illusion" },', roleLines[4]);
+  assertLineContains(source, '{ "name": "Sha Wujing", "role": "escort-stability" }', roleLines[5]);
+  assertLineContains(source, '{ "name": "Xuanzang", "role": "canon-check" },', roleLines[6]);
+  assertLineContains(source, '{ "name": "Sun Wukong", "role": "security" }', roleLines[7]);
+
+  const actionLines = extractKeyLines(result.html, 'action');
+  assert.equal(actionLines.length, 3);
+  assertLineContains(source, '{ "action": "recon", "timeoutSec": 300 },', actionLines[0]);
+  assertLineContains(source, '{ "action": "request-witness", "timeoutSec": 600 }', actionLines[1]);
+  assertLineContains(source, '"action": "protective-formation",', actionLines[2]);
+
+  const timeoutSecLines = extractKeyLines(result.html, 'timeoutSec');
+  assert.equal(timeoutSecLines.length, 2);
+  assertLineContains(source, '{ "action": "recon", "timeoutSec": 300 },', timeoutSecLines[0]);
+  assertLineContains(source, '{ "action": "request-witness", "timeoutSec": 600 }', timeoutSecLines[1]);
+
+  const cpLines = extractKeyLines(result.html, 'cp');
+  assert.equal(cpLines.length, 3);
+  assertLineContains(source, '{ "cp": "CP-036", "score": 88.9 },', cpLines[0]);
+  assertLineContains(source, '{ "cp": "CP-080", "score": 141.8 }', cpLines[1]);
+  assertLineContains(source, '{ "cp": "CP-081", "score": 52.1 }', cpLines[2]);
+
+  const scoreLines = extractKeyLines(result.html, 'score');
+  assert.equal(scoreLines.length, 3);
+  assertLineContains(source, '{ "cp": "CP-036", "score": 88.9 },', scoreLines[0]);
+  assertLineContains(source, '{ "cp": "CP-080", "score": 141.8 }', scoreLines[1]);
+  assertLineContains(source, '{ "cp": "CP-081", "score": 52.1 }', scoreLines[2]);
+});
+
 test('Task J XML final standalone comment [C] keeps root-object scope', () => {
   const source = readSupportedFixture('xml.xml');
   const result = CodePreviewProvider.parse(source, 'xml');

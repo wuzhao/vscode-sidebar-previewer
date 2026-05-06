@@ -66,6 +66,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
             const sourceLine = line < sourceLines.length ? sourceLines[line] : '';
             const isTomlTableArrayLine = fileType === 'toml' && this.isTomlTableArrayLine(sourceLine);
             const shouldBindTomlTableArrayToIndex = isTomlTableArrayLine && this.shouldRenderTomlTableArrayOnIndex(line, sourceLines);
+            const isJsonInlineObjectLine = fileType === 'json' && /^\s*\{/.test(sourceLine);
 
             if (
                 entryKey === null &&
@@ -78,6 +79,10 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
             }
 
             if (fileType === 'toml' && entryKey !== null && isTomlTableArrayLine && shouldBindTomlTableArrayToIndex) {
+                return '';
+            }
+
+            if (fileType === 'json' && entryKey !== null && isJsonInlineObjectLine) {
                 return '';
             }
 
