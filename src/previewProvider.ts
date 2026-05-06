@@ -40,6 +40,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     private _suppressNextAutoScroll: boolean = false;
     private _visibleRangesListener?: vscode.Disposable;
     private _zoomLevel: number = 100;
+    private _lastPreviewDocumentUri: string | null = null;
     private readonly ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
     private _loadingTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -448,6 +449,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this._clearLoadingTimeout();
         this._currentHeadings = [];
         this._currentFileType = null;
+        this._lastPreviewDocumentUri = null;
         this._supportsLocate = false;
         this._updateVisibleRangesListener();
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
@@ -522,6 +524,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 this._showEmptyState();
                 return;
             }
+
+            this._resetZoomForDocumentSwitch(document);
 
             this._currentFileType = fileType;
             const content = document.getText();
@@ -701,6 +705,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      */
     private _showError(message: string): void {
         this._clearLoadingTimeout();
+        this._lastPreviewDocumentUri = null;
         this._supportsLocate = false;
         this._updateVisibleRangesListener();
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
@@ -1036,6 +1041,33 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomOut', this._zoomLevel > this.ZOOM_STEPS[0]);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomIn', this._zoomLevel < this.ZOOM_STEPS[this.ZOOM_STEPS.length - 1]);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomReset', this._zoomLevel !== 100);
+    }
+
+    /**
+     * 切换文档时重置缩放倍率到默认值
+     * @param document - 当前预览绑定的文档对象
+     */
+    private _resetZoomForDocumentSwitch(document: vscode.TextDocument): void {
+        const nextDocumentUri = document.uri.toString();
+        if (this._lastPreviewDocumentUri === nextDocumentUri) {
+            return;
+        }
+
+        this._lastPreviewDocumentUri = nextDocumentUri;
+        if (this._zoomLevel === 100) {
+            this._updateZoomContext();
+            return;
+        }
+
+        this._zoomLevel = 100;
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'zoom',
+                level: this._zoomLevel,
+            });
+        }
+
+        this._updateZoomContext();
     }
 
     /**

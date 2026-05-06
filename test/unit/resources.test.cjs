@@ -66,6 +66,17 @@ const {
     assert.ok(/function refreshMermaidZoomAfterRender\(\)\s*\{[\s\S]*?applyZoom\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?applyZoom\(\);/s.test(mermaidJs));
   });
 
+  test('Task D preview zoom resets to 100 when switching files', () => {
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+
+    assert.ok(previewProvider.includes('private _lastPreviewDocumentUri: string | null = null;'));
+    assert.ok(previewProvider.includes('this._resetZoomForDocumentSwitch(document);'));
+    assert.ok(previewProvider.includes('private _resetZoomForDocumentSwitch(document: vscode.TextDocument): void'));
+    assert.ok(/private _resetZoomForDocumentSwitch\(document: vscode\.TextDocument\): void \{[\s\S]*?const nextDocumentUri = document\.uri\.toString\(\);[\s\S]*?if \(this\._lastPreviewDocumentUri === nextDocumentUri\) \{[\s\S]*?return;[\s\S]*?\}[\s\S]*?this\._lastPreviewDocumentUri = nextDocumentUri;[\s\S]*?this\._zoomLevel = 100;[\s\S]*?type: 'zoom',[\s\S]*?level: this\._zoomLevel,/s.test(previewProvider));
+    assert.ok(/private _showEmptyState\(\): void \{[\s\S]*?this\._lastPreviewDocumentUri = null;/s.test(previewProvider));
+    assert.ok(/private _showError\(message: string\): void \{[\s\S]*?this\._lastPreviewDocumentUri = null;/s.test(previewProvider));
+  });
+
   test('Task G table locate/scroll logic compensates sticky header and index column', () => {
     const tableJsPath = path.join(RESOURCES_JS_DIR, 'table.js');
     const tableJs = fs.readFileSync(tableJsPath, 'utf8');
