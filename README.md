@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.11-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.12-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.ja-JP.md)
 
@@ -37,11 +37,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Feature Overview
 
-### What's New in 0.3.11
+### What's New in 0.3.12
 
-- Data-tree highlight now follows editor selection lines and resolves to one continuous range.
-- Array-item locate for JSON/YAML is now corrected for inline and nested-array scenarios.
-- Comment ownership and document-tail standalone comment placement are more stable across JSON/YAML/TOML/XML.
+- Mermaid preview now starts at 200% zoom with doubled step size, and text scales consistently with the diagram after file switches.
+- Switching files always resets preview zoom to 100%.
+- Switching files now fully reinitializes preview state even for the same file type.
+- Fixed deep nested JSON/JSONC array-object key locate mapping so inline keys respond and jump to correct source lines.
 
 ### Markdown
 

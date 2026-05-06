@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.11-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.12-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -37,11 +37,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 功能介紹
 
-### 0.3.11 更新重點
+### 0.3.12 更新重點
 
-- 數據樹高亮改為以編輯器選中行為基準，預覽區會收斂成單一連續高亮區域
-- 修復 JSON/YAML 喺內聯陣列同巢狀陣列場景下嘅陣列元素定位，減少錯跳同點擊無反應
-- 優化 JSON/YAML/TOML/XML 嘅註釋歸屬同文件尾部獨立註釋落位穩定性
+- Mermaid 預覽預設改為 200% 縮放，縮放步進加倍；切換文件後圖中文字會跟隨縮放同步
+- 每次切換文件都會將預覽縮放重設為 100%
+- 即使係同類型文件，切換時都會重新初始化預覽狀態，不沿用上一次設定
+- 修復 JSON/JSONC 深層巢狀陣列物件入面內聯鍵嘅定位映射，恢復點擊反應並提升跳轉準確性
 
 ### Markdown
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.12 - 2026-05-06
+
+- Updated Mermaid default zoom to 200% with doubled zoom step for Mermaid previews, and fixed file-switch initialization so text scales with diagram.
+- Preview zoom now resets to 100% whenever switching files.
+- Preview state is now fully reinitialized on every file switch, including same-type files.
+- Fixed JSON/JSONC deep nested array-object locate mapping for inline object keys to resolve no-response clicks and wrong target lines.
+
+～～～
+
+- 将 Mermaid 预览默认缩放调整为 200%，并将 Mermaid 缩放步进翻倍；修复切换文件初始化阶段图文缩放不同步问题。
+- 切换任意文件时预览缩放会重置为 100%。
+- 每次切换文件都会重新初始化预览状态，即使文件类型相同也不复用上次设定。
+- 修复 JSON/JSONC 深层嵌套数组对象内联键的定位映射，解决点击无响应与跳转行错位问题。
+
 ## 0.3.11 - 2026-05-05
 
 - Reworked JSON/YAML/TOML/XML tree highlight behavior to follow editor selection lines and consistently resolve to a single continuous highlight range.
