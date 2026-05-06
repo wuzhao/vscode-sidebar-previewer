@@ -9,8 +9,11 @@ const MERMAID_DRAG_STATE = {
     dragging: false,
     startX: 0,
     startY: 0,
-    startScrollLeft: 0,
-    startScrollTop: 0,
+    startPanX: 0,
+    startPanY: 0,
+    panX: 0,
+    panY: 0,
+    effectiveScale: 1,
 };
 
 /**
@@ -86,7 +89,7 @@ function renderMermaid() {
 }
 
 /**
- * 根据当前缩放级别调整 Mermaid 图表尺寸与滚动位置
+ * 根据当前缩放级别调整 Mermaid 图表，使用 CSS transform 实现缩放与居中
  */
 function applyMermaidZoom() {
     const content = document.getElementById('content');
@@ -99,31 +102,43 @@ function applyMermaidZoom() {
     bindMermaidPan(container);
     content.classList.add('is-mermaid-preview');
 
-    const prevMaxScrollLeft = Math.max(container.scrollWidth - container.clientWidth, 0);
-    const prevMaxScrollTop = Math.max(container.scrollHeight - container.clientHeight, 0);
-    const prevRatioX = prevMaxScrollLeft > 0 ? container.scrollLeft / prevMaxScrollLeft : 0;
-    const prevRatioY = prevMaxScrollTop > 0 ? container.scrollTop / prevMaxScrollTop : 0;
+    const svg = container.querySelector('.mermaid svg');
+    if (!svg) return;
 
-    const mermaidScale = (zoomLevel / 100) * MERMAID_ZOOM_MULTIPLIER;
-    const svgs = container.querySelectorAll('.mermaid svg');
-    svgs.forEach(svg => {
-        const baseSize = getMermaidSvgBaseSize(svg);
-        if (!baseSize) {
-            return;
-        }
-        svg.style.display = 'block';
-        svg.style.maxWidth = 'none';
-        svg.style.width = `${baseSize.width * mermaidScale}px`;
-        svg.style.height = `${baseSize.height * mermaidScale}px`;
-    });
+    const baseSize = getMermaidSvgBaseSize(svg);
+    if (!baseSize) return;
 
-    requestAnimationFrame(() => {
-        const nextMaxScrollLeft = Math.max(container.scrollWidth - container.clientWidth, 0);
-        const nextMaxScrollTop = Math.max(container.scrollHeight - container.clientHeight, 0);
-        container.scrollLeft = nextMaxScrollLeft > 0 ? prevRatioX * nextMaxScrollLeft : 0;
-        container.scrollTop = nextMaxScrollTop > 0 ? prevRatioY * nextMaxScrollTop : 0;
-        updateMermaidPannableState(container);
-    });
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    if (containerWidth <= 0 || containerHeight <= 0) return;
+
+    // 计算让 SVG 适配容器的缩放比例，留 15% 边距
+    const fitScale = Math.min(containerWidth / baseSize.width, containerHeight / baseSize.height) * 0.85;
+    const effectiveScale = (zoomLevel / 100) * fitScale;
+
+    svg.style.display = 'block';
+    svg.style.maxWidth = 'none';
+    svg.style.width = `${baseSize.width}px`;
+    svg.style.height = `${baseSize.height}px`;
+
+    // 重置平移偏移，让图表在每次缩放或内容更新后居中
+    MERMAID_DRAG_STATE.panX = 0;
+    MERMAID_DRAG_STATE.panY = 0;
+    MERMAID_DRAG_STATE.effectiveScale = effectiveScale;
+
+    applyMermaidTransform(container);
+}
+
+/**
+ * 将当前的平移与缩放状态应用到 Mermaid 包裹层 transform
+ * @param container - Mermaid 图表容器
+ */
+function applyMermaidTransform(container) {
+    const mermaidEl = container.querySelector('.mermaid');
+    if (!mermaidEl) return;
+
+    const { panX, panY, effectiveScale } = MERMAID_DRAG_STATE;
+    mermaidEl.style.transform = `translate(${panX}px, ${panY}px) scale(${effectiveScale})`;
 }
 
 /**
@@ -187,11 +202,11 @@ function getMermaidSvgBaseSize(svg) {
 
 /**
  * 绑定 Mermaid 画布的拖拽平移能力
- * @param container - Mermaid 图表滚动容器
+ * @param container - Mermaid 图表容器
  */
 function bindMermaidPan(container) {
     if (MERMAID_DRAG_STATE.container === container) {
-        updateMermaidPannableState(container);
+        container.classList.add('is-pannable');
         return;
     }
 
@@ -202,7 +217,7 @@ function bindMermaidPan(container) {
 
     MERMAID_DRAG_STATE.container = container;
     container.addEventListener('mousedown', onMermaidMouseDown);
-    updateMermaidPannableState(container);
+    container.classList.add('is-pannable');
 }
 
 /**
@@ -215,14 +230,6 @@ function teardownMermaidPan() {
         MERMAID_DRAG_STATE.container.classList.remove('is-dragging', 'is-pannable');
         MERMAID_DRAG_STATE.container = null;
     }
-}
-
-/**
- * 更新 Mermaid 画布是否可拖拽的视觉状态
- * @param container - Mermaid 图表滚动容器
- */
-function updateMermaidPannableState(container) {
-    container.classList.add('is-pannable');
 }
 
 /**
@@ -243,15 +250,15 @@ function onMermaidMouseDown(e) {
     MERMAID_DRAG_STATE.dragging = true;
     MERMAID_DRAG_STATE.startX = e.clientX;
     MERMAID_DRAG_STATE.startY = e.clientY;
-    MERMAID_DRAG_STATE.startScrollLeft = MERMAID_DRAG_STATE.container.scrollLeft;
-    MERMAID_DRAG_STATE.startScrollTop = MERMAID_DRAG_STATE.container.scrollTop;
+    MERMAID_DRAG_STATE.startPanX = MERMAID_DRAG_STATE.panX;
+    MERMAID_DRAG_STATE.startPanY = MERMAID_DRAG_STATE.panY;
     MERMAID_DRAG_STATE.container.classList.add('is-dragging');
     document.body.classList.add('mermaid-dragging');
     e.preventDefault();
 }
 
 /**
- * 根据鼠标位移更新 Mermaid 画布滚动位置
+ * 根据鼠标位移更新 Mermaid 画布的平移偏移并刷新 transform
  * @param e - 浏览器事件对象
  */
 function onMermaidMouseMove(e) {
@@ -262,8 +269,10 @@ function onMermaidMouseMove(e) {
     const deltaX = e.clientX - MERMAID_DRAG_STATE.startX;
     const deltaY = e.clientY - MERMAID_DRAG_STATE.startY;
 
-    MERMAID_DRAG_STATE.container.scrollLeft = MERMAID_DRAG_STATE.startScrollLeft - deltaX;
-    MERMAID_DRAG_STATE.container.scrollTop = MERMAID_DRAG_STATE.startScrollTop - deltaY;
+    MERMAID_DRAG_STATE.panX = MERMAID_DRAG_STATE.startPanX + deltaX;
+    MERMAID_DRAG_STATE.panY = MERMAID_DRAG_STATE.startPanY + deltaY;
+
+    applyMermaidTransform(MERMAID_DRAG_STATE.container);
 }
 
 /**

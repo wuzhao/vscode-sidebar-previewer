@@ -1,11 +1,13 @@
 /* MERMAID START */
-/* Mermaid container */
+/* Mermaid 图表预览容器，采用 flex 居中布局并通过 transform 实现平移与缩放 */
 .mermaid-container {
     width: 100%;
     min-height: 100%;
     height: 100%;
-    overflow: auto;
-    padding: 16px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .content.is-mermaid-preview {
@@ -31,6 +33,7 @@ body.mermaid-dragging {
     user-select: none;
 }
 
+/* Mermaid 图表包裹层，作为 transform 的应用目标实现平移与缩放 */
 .mermaid-container .mermaid {
     display: inline-block;
     background: transparent;
@@ -40,6 +43,12 @@ body.mermaid-dragging {
     overflow: visible;
     text-align: left;
     white-space: normal;
+    transform-origin: center center;
+}
+
+/* 拖拽过程中启用 GPU 加速，提升平移流畅度 */
+.mermaid-container.is-dragging .mermaid {
+    will-change: transform;
 }
 
 .mermaid-container .mermaid svg {
