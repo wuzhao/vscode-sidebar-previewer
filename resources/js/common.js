@@ -32,8 +32,6 @@ const DATA_TREE_FILE_TYPES = new Set(['json', 'yaml', 'toml', 'xml']);
 const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'yaml', 'toml', 'xml']);
 // 预览缩放可选档位配置
 const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
-// Mermaid 额外放大倍数，用于提升图表可读性
-const MERMAID_ZOOM_MULTIPLIER = 1;
 // Mermaid 渲染超时时间（毫秒）
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
 // 注释提示框离开后延迟隐藏时间（毫秒）

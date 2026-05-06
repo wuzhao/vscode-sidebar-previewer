@@ -137,7 +137,7 @@ function applyMermaidZoom() {
  * @returns 返回 Mermaid 实际缩放倍率
  */
 function getMermaidZoomScale() {
-    return (zoomLevel / 100) * MERMAID_ZOOM_MULTIPLIER;
+    return (zoomLevel / 100);
 }
 
 /**

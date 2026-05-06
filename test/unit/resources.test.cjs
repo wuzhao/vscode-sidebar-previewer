@@ -56,9 +56,8 @@ const {
     const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
     const mermaidJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'mermaid.js'), 'utf8');
 
-    assert.ok(commonJs.includes('const MERMAID_ZOOM_MULTIPLIER = 2;'));
     assert.ok(mermaidJs.includes('function getMermaidZoomScale()'));
-    assert.ok(mermaidJs.includes('return (zoomLevel / 100) * MERMAID_ZOOM_MULTIPLIER;'));
+    assert.ok(mermaidJs.includes('return (zoomLevel / 100);'));
     assert.ok(mermaidJs.includes('const mermaidZoomScale = getMermaidZoomScale();'));
     assert.ok(mermaidJs.includes('const effectiveScale = mermaidZoomScale * fitScale;'));
     assert.ok(mermaidJs.includes('function clearMermaidSvgBaseSizeCache(svg)'));
