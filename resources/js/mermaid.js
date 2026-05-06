@@ -70,6 +70,7 @@ function renderMermaid() {
             if (svg) {
                 svg.style.display = 'block';
                 svg.style.maxWidth = 'none';
+                clearMermaidSvgBaseSizeCache(svg);
                 getMermaidSvgBaseSize(svg);
             }
         });
@@ -84,7 +85,7 @@ function renderMermaid() {
             }
         });
     }).finally(() => {
-        applyZoom();
+        refreshMermaidZoomAfterRender();
     });
 }
 
@@ -114,7 +115,8 @@ function applyMermaidZoom() {
 
     // 计算让 SVG 适配容器的缩放比例，留 15% 边距
     const fitScale = Math.min(containerWidth / baseSize.width, containerHeight / baseSize.height) * 0.85;
-    const effectiveScale = (zoomLevel / 100) * fitScale;
+    const mermaidZoomScale = getMermaidZoomScale();
+    const effectiveScale = mermaidZoomScale * fitScale;
 
     svg.style.display = 'block';
     svg.style.maxWidth = 'none';
@@ -130,6 +132,15 @@ function applyMermaidZoom() {
 }
 
 /**
+ * 获取 Mermaid 当前缩放倍率
+ * 统一叠加预览缩放与 Mermaid 专属倍率
+ * @returns 返回 Mermaid 实际缩放倍率
+ */
+function getMermaidZoomScale() {
+    return (zoomLevel / 100) * MERMAID_ZOOM_MULTIPLIER;
+}
+
+/**
  * 将当前的平移与缩放状态应用到 Mermaid 包裹层 transform
  * @param container - Mermaid 图表容器
  */
@@ -139,6 +150,27 @@ function applyMermaidTransform(container) {
 
     const { panX, panY, effectiveScale } = MERMAID_DRAG_STATE;
     mermaidEl.style.transform = `translate(${panX}px, ${panY}px) scale(${effectiveScale})`;
+}
+
+/**
+ * 清理 Mermaid SVG 基础尺寸缓存
+ * 避免切换图表后复用旧尺寸导致缩放与字体比例异常
+ * @param svg - Mermaid SVG 节点
+ */
+function clearMermaidSvgBaseSizeCache(svg) {
+    delete svg.dataset.baseWidth;
+    delete svg.dataset.baseHeight;
+}
+
+/**
+ * 渲染结束后刷新 Mermaid 缩放
+ * 通过双阶段刷新等待布局稳定后再应用缩放
+ */
+function refreshMermaidZoomAfterRender() {
+    applyZoom();
+    requestAnimationFrame(() => {
+        applyZoom();
+    });
 }
 
 /**

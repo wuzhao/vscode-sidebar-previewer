@@ -52,6 +52,21 @@ const {
     assert.ok(/function showCommentTooltip\(target\)\s*\{[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?tooltip\.classList\.add\('is-visible'\);/s.test(commentTooltipJs));
   });
 
+  test('Task A mermaid zoom uses x2 multiplier and keeps rerender zoom sync', () => {
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const mermaidJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'mermaid.js'), 'utf8');
+
+    assert.ok(commonJs.includes('const MERMAID_ZOOM_MULTIPLIER = 2;'));
+    assert.ok(mermaidJs.includes('function getMermaidZoomScale()'));
+    assert.ok(mermaidJs.includes('return (zoomLevel / 100) * MERMAID_ZOOM_MULTIPLIER;'));
+    assert.ok(mermaidJs.includes('const mermaidZoomScale = getMermaidZoomScale();'));
+    assert.ok(mermaidJs.includes('const effectiveScale = mermaidZoomScale * fitScale;'));
+    assert.ok(mermaidJs.includes('function clearMermaidSvgBaseSizeCache(svg)'));
+    assert.ok(mermaidJs.includes('clearMermaidSvgBaseSizeCache(svg);'));
+    assert.ok(mermaidJs.includes('function refreshMermaidZoomAfterRender()'));
+    assert.ok(/function refreshMermaidZoomAfterRender\(\)\s*\{[\s\S]*?applyZoom\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?applyZoom\(\);/s.test(mermaidJs));
+  });
+
   test('Task G table locate/scroll logic compensates sticky header and index column', () => {
     const tableJsPath = path.join(RESOURCES_JS_DIR, 'table.js');
     const tableJs = fs.readFileSync(tableJsPath, 'utf8');
