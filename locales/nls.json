@@ -25,6 +25,6 @@
   "runtime.tableSelectionMore": "Actions",
   "runtime.tableSelectionAsciiTable": "Copy As ASCII",
   "runtime.tableSelectionTsv": "Copy As TSV",
-  "runtime.locatorCopied": "Copied locator: {0}",
+  "runtime.locatorCopied": "Copied Locator: {0}",
   "runtime.locatorUnavailable": "No highlighted data tree region available"
 }

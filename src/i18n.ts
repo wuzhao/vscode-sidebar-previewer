@@ -69,7 +69,7 @@ const FALLBACK_STRINGS: I18nStrings = {
     tableSelectionMore: 'Actions',
     tableSelectionAsciiTable: 'Copy As ASCII',
     tableSelectionTsv: 'Copy As TSV',
-    locatorCopied: 'Copied locator: {0}',
+    locatorCopied: 'Copied Locator: {0}',
     locatorUnavailable: 'No highlighted data tree region available'
 };
 
