@@ -37,12 +37,6 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Feature Overview
 
-### What's New in 0.3.13
-
-- `Copy Data Tree Locator` now enables only when JSON/YAML/TOML/XML has a real highlighted node.
-- Locator text is normalized before copy: no line breaks and no leading double dot for JSON/YAML/TOML/XML paths.
-- LaTeX file detection now supports `.katex` and `.latex` in addition to `.tex`.
-
 ### Markdown
 
 - Front matter table

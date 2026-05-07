@@ -101,6 +101,23 @@ test('TOML fixture nested duplicate keys map to correct section lines', () => {
   assertLineContains(source, 'chapters = [79, 80, 81, 82, 83, 84, 85, 86, 87, 88]', chaptersLines[1]);
 });
 
+test('TOML inline table child keys map to branch_priority assignment line', () => {
+  const source = readSupportedFixture('toml.toml');
+  const result = CodePreviewProvider.parse(source, 'toml');
+
+  const mainRouteLines = extractKeyLines(result.html, 'main_route');
+  const riverDetourLines = extractKeyLines(result.html, 'branch_river_detour');
+  const westRidgeLines = extractKeyLines(result.html, 'branch_west_ridge');
+
+  assert.equal(mainRouteLines.length, 1);
+  assert.equal(riverDetourLines.length, 1);
+  assert.equal(westRidgeLines.length, 1);
+
+  assertLineContains(source, 'branch_priority = { main_route = 1', mainRouteLines[0]);
+  assertLineContains(source, 'branch_priority = { main_route = 1', riverDetourLines[0]);
+  assertLineContains(source, 'branch_priority = { main_route = 1', westRidgeLines[0]);
+});
+
 test('Task G XML fixture label ownership mapping is correct', () => {
   const source = readSupportedFixture('xml.xml');
   const result = CodePreviewProvider.parse(source, 'xml');

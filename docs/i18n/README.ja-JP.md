@@ -37,12 +37,6 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 機能概要
 
-### 0.3.13 の主な更新
-
-- JSON/YAML/TOML/XML で実際のハイライト対象がない場合、`Copy Data Tree Locator` は無効のままになります
-- ロケータ文字列をコピー前に正規化し、改行を除去して JSON/YAML/TOML/XML パスの先頭二重ドットを防止します
-- LaTeX のファイル判定に `.katex` と `.latex` を追加し、`.tex` とあわせてサポートします
-
 ### Markdown
 
 - フロントマター（Front matter）のテーブル表示

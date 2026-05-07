@@ -71,6 +71,22 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 }
 
                 pushPath([...currentTablePath, ...relativePath], i, true);
+
+                const equalIndex = this.findTomlAssignmentEqualIndex(codeLine);
+                if (equalIndex < 0) {
+                    continue;
+                }
+
+                const valueExpr = codeLine.slice(equalIndex + 1);
+                const inlineTableKeys = this.extractTomlInlineTableTopLevelKeys(valueExpr);
+                if (inlineTableKeys.length === 0) {
+                    continue;
+                }
+
+                const basePath = [...currentTablePath, ...relativePath];
+                inlineTableKeys.forEach(inlineKey => {
+                    pushPath([...basePath, inlineKey], i, true);
+                });
             }
 
             const index = new Map<string, number[]>();
@@ -86,6 +102,190 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
 
             return index;
+        }
+
+    /**
+         * 提取TOML 内联表顶层键集合供路径定位复用
+         * @param valueExpr - 赋值右侧原始表达式
+         * @returns 返回内联表顶层键集合
+         */
+        protected static extractTomlInlineTableTopLevelKeys(valueExpr: string): string[] {
+            const source = valueExpr.trim();
+            if (!source.startsWith('{')) {
+                return [];
+            }
+
+            const keys: string[] = [];
+            let cursor = 1;
+
+            const skipWhitespace = (): void => {
+                while (cursor < source.length && /\s/.test(source[cursor])) {
+                    cursor += 1;
+                }
+            };
+
+            const readQuotedKey = (quote: '"' | "'"): string => {
+                cursor += 1;
+                let key = '';
+                let escaped = false;
+                while (cursor < source.length) {
+                    const ch = source[cursor];
+                    cursor += 1;
+
+                    if (quote === '"' && escaped) {
+                        key += ch;
+                        escaped = false;
+                        continue;
+                    }
+
+                    if (quote === '"' && ch === '\\') {
+                        escaped = true;
+                        continue;
+                    }
+
+                    if (ch === quote) {
+                        break;
+                    }
+
+                    key += ch;
+                }
+
+                return key.trim();
+            };
+
+            const readBareKey = (): string => {
+                const start = cursor;
+                while (cursor < source.length) {
+                    const ch = source[cursor];
+                    if (ch === '=' || ch === ',' || ch === '}' || /\s/.test(ch)) {
+                        break;
+                    }
+                    cursor += 1;
+                }
+
+                return source.slice(start, cursor).trim();
+            };
+
+            const skipValue = (): void => {
+                let inSingle = false;
+                let inDouble = false;
+                let escaped = false;
+                let squareDepth = 0;
+                let curlyDepth = 0;
+
+                while (cursor < source.length) {
+                    const ch = source[cursor];
+
+                    if (inDouble) {
+                        cursor += 1;
+                        if (escaped) {
+                            escaped = false;
+                            continue;
+                        }
+                        if (ch === '\\') {
+                            escaped = true;
+                            continue;
+                        }
+                        if (ch === '"') {
+                            inDouble = false;
+                        }
+                        continue;
+                    }
+
+                    if (inSingle) {
+                        cursor += 1;
+                        if (ch === "'") {
+                            inSingle = false;
+                        }
+                        continue;
+                    }
+
+                    if (ch === '"') {
+                        inDouble = true;
+                        cursor += 1;
+                        continue;
+                    }
+
+                    if (ch === "'") {
+                        inSingle = true;
+                        cursor += 1;
+                        continue;
+                    }
+
+                    if (ch === '[') {
+                        squareDepth += 1;
+                        cursor += 1;
+                        continue;
+                    }
+
+                    if (ch === ']') {
+                        if (squareDepth > 0) {
+                            squareDepth -= 1;
+                        }
+                        cursor += 1;
+                        continue;
+                    }
+
+                    if (ch === '{') {
+                        curlyDepth += 1;
+                        cursor += 1;
+                        continue;
+                    }
+
+                    if (ch === '}') {
+                        if (curlyDepth > 0) {
+                            curlyDepth -= 1;
+                            cursor += 1;
+                            continue;
+                        }
+                        return;
+                    }
+
+                    if (ch === ',' && squareDepth === 0 && curlyDepth === 0) {
+                        return;
+                    }
+
+                    cursor += 1;
+                }
+            };
+
+            while (cursor < source.length) {
+                skipWhitespace();
+                if (cursor >= source.length || source[cursor] === '}') {
+                    break;
+                }
+
+                let key = '';
+                if (source[cursor] === '"' || source[cursor] === "'") {
+                    key = readQuotedKey(source[cursor] as '"' | "'");
+                } else {
+                    key = readBareKey();
+                }
+
+                skipWhitespace();
+                if (cursor >= source.length || source[cursor] !== '=') {
+                    while (cursor < source.length && source[cursor] !== ',' && source[cursor] !== '}') {
+                        cursor += 1;
+                    }
+                } else {
+                    if (key.length > 0) {
+                        keys.push(key);
+                    }
+                    cursor += 1;
+                    skipValue();
+                }
+
+                if (cursor < source.length && source[cursor] === ',') {
+                    cursor += 1;
+                    continue;
+                }
+
+                if (cursor < source.length && source[cursor] === '}') {
+                    break;
+                }
+            }
+
+            return keys;
         }
 
     /**

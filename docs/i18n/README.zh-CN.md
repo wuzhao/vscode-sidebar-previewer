@@ -37,12 +37,6 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 功能介绍
 
-### 0.3.13 更新亮点
-
-- 当 JSON / YAML / TOML / XML 没有真实高亮节点时，`复制数据树定位` 按钮会保持禁用
-- 复制定位文本前会统一归一化，去除换行并避免 JSON / YAML / TOML / XML 路径出现前导双点
-- LaTeX 文件识别新增 `.katex` 与 `.latex` 扩展名，和 `.tex` 一并支持
-
 ### Markdown
 
 - Front Matter 属性表格
