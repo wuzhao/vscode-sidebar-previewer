@@ -68,6 +68,10 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
             const shouldBindTomlTableArrayToIndex = isTomlTableArrayLine && this.shouldRenderTomlTableArrayOnIndex(line, sourceLines);
             const isJsonInlineObjectLine = fileType === 'json' && /^\s*\{/.test(sourceLine);
 
+            if (fileType === 'toml' && entryKey !== null && this.shouldSkipTomlInlineTableChildComment(sourceLine, entryKey)) {
+                return '';
+            }
+
             if (
                 entryKey === null &&
                 (fileType === 'yaml' || fileType === 'toml') &&
@@ -118,6 +122,33 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
 
             xmlConsumedLines.add(line);
             return this.renderCommentIcon(commentLines.get(line) as CommentEntry[]);
+        }
+
+    /**
+         * 判断 TOML 内联表子键是否应跳过注释图标渲染
+         * @param line - 当前处理的行内容或行号
+         * @param entryKey - 当前节点键名
+         * @returns 返回布尔判断结果
+         */
+        protected static shouldSkipTomlInlineTableChildComment(line: string, entryKey: string): boolean {
+            const codeLine = this.stripHashCommentText(line);
+            const equalIndex = codeLine.indexOf('=');
+            if (equalIndex < 0) {
+                return false;
+            }
+
+            const valueExpr = codeLine.slice(equalIndex + 1).trim();
+            if (!valueExpr.startsWith('{')) {
+                return false;
+            }
+
+            const pathSegments = this.extractTomlKeys(codeLine);
+            if (pathSegments.length === 0) {
+                return false;
+            }
+
+            const ownerKey = pathSegments[pathSegments.length - 1];
+            return ownerKey.length > 0 && ownerKey !== entryKey;
         }
 
     /**

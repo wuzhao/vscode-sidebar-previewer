@@ -118,6 +118,19 @@ test('TOML inline table child keys map to branch_priority assignment line', () =
   assertLineContains(source, 'branch_priority = { main_route = 1', westRidgeLines[0]);
 });
 
+test('TOML inline table comment binds to parent key only', () => {
+  const source = readSupportedFixture('toml.toml');
+  const result = CodePreviewProvider.parse(source, 'toml');
+  const owners = extractCommentOwners(result.html);
+
+  assertCommentOwner(owners, 'stable sort order', 'key', 'branch_priority');
+
+  ['main_route', 'branch_river_detour', 'branch_west_ridge'].forEach(target => {
+    const hasCommentOwner = owners.some(owner => owner.kind === 'key' && owner.target === target && owner.comments.length > 0);
+    assert.equal(hasCommentOwner, false, `${target} should not have comment ownership`);
+  });
+});
+
 test('Task G XML fixture label ownership mapping is correct', () => {
   const source = readSupportedFixture('xml.xml');
   const result = CodePreviewProvider.parse(source, 'xml');
