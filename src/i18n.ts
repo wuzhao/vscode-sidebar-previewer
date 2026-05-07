@@ -18,6 +18,8 @@ interface I18nStrings {
     tableSelectionMore: string;
     tableSelectionAsciiTable: string;
     tableSelectionTsv: string;
+    locatorCopied: string;
+    locatorUnavailable: string;
 }
 
 // 定义空状态提示中展示的受支持文件格式列表
@@ -49,7 +51,9 @@ const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {
     previewError: 'runtime.previewError',
     tableSelectionMore: 'runtime.tableSelectionMore',
     tableSelectionAsciiTable: 'runtime.tableSelectionAsciiTable',
-    tableSelectionTsv: 'runtime.tableSelectionTsv'
+    tableSelectionTsv: 'runtime.tableSelectionTsv',
+    locatorCopied: 'runtime.locatorCopied',
+    locatorUnavailable: 'runtime.locatorUnavailable'
 };
 
 const FALLBACK_STRINGS: I18nStrings = {
@@ -64,7 +68,9 @@ const FALLBACK_STRINGS: I18nStrings = {
     previewError: 'Preview Failed',
     tableSelectionMore: 'Actions',
     tableSelectionAsciiTable: 'Copy As ASCII',
-    tableSelectionTsv: 'Copy As TSV'
+    tableSelectionTsv: 'Copy As TSV',
+    locatorCopied: 'Copied locator: {0}',
+    locatorUnavailable: 'No highlighted data tree region available'
 };
 
 // 保留基础默认字典，兼容现有注释与常量规范检查
@@ -183,6 +189,12 @@ export const i18n = {
     },
     get tableSelectionTsv(): string {
         return getString('tableSelectionTsv');
+    },
+    get locatorCopied(): string {
+        return getString('locatorCopied');
+    },
+    get locatorUnavailable(): string {
+        return getString('locatorUnavailable');
     },
 
     // 处理当前场景相关逻辑并返回结果

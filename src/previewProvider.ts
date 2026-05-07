@@ -41,6 +41,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     private _visibleRangesListener?: vscode.Disposable;
     private _zoomLevel: number = 100;
     private _lastPreviewDocumentUri: string | null = null;
+    private _hasDataTreeHighlight: boolean = false;
     private readonly ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
     private _loadingTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -182,6 +183,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                             endChar: message.endChar
                         }]);
                     }
+                } else if (message.type === 'dataTreeHighlightState') {
+                    this._updateDataTreeHighlightContext(message.hasHighlight === true);
+                } else if (message.type === 'dataTreeLocator') {
+                    this._handleDataTreeLocatorResult(message.locator);
                 }
             })
         );
@@ -451,10 +456,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this._currentFileType = null;
         this._lastPreviewDocumentUri = null;
         this._supportsLocate = false;
+        this._updateDataTreeHighlightContext(false);
         this._updateVisibleRangesListener();
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', false);
+        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasDataTreeHighlight', false);
         try {
             if (!this._view) {
                 return;
@@ -576,6 +583,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', true);
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', locateSupported);
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', dataTree);
+            this._updateDataTreeHighlightContext(false);
+            vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasDataTreeHighlight', false);
 
             const isTableType = fileType === 'csv' || fileType === 'tsv';
             const scrollTargetHeadingId = options?.suppressAutoScroll ? undefined
@@ -707,10 +716,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this._clearLoadingTimeout();
         this._lastPreviewDocumentUri = null;
         this._supportsLocate = false;
+        this._updateDataTreeHighlightContext(false);
         this._updateVisibleRangesListener();
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', false);
+        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasDataTreeHighlight', false);
         try {
             if (!this._view) {
                 return;
@@ -854,6 +865,17 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         if (this._view) {
             this._view.webview.postMessage({ type: 'collapseAll' });
         }
+    }
+
+    /**
+     * 复制当前数据树高亮区域对应的定位表达式
+     */
+    public copyDataTreeLocator(): void {
+        if (!this._view || !this._currentFileType || !isDataTreeType(this._currentFileType) || !this._hasDataTreeHighlight) {
+            vscode.window.setStatusBarMessage(i18n.locatorUnavailable, 2000);
+            return;
+        }
+        this._view.webview.postMessage({ type: 'getHighlightedDataTreeLocator' });
     }
 
     /**
@@ -1083,6 +1105,29 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             vscode.window.setStatusBarMessage(i18n.format(i18n.zoomStatus, String(this._zoomLevel)), 2000);
             this._updateZoomContext();
         }
+    }
+
+    /**
+     * 同步数据树高亮上下文状态
+     * @param hasHighlight - 当前是否存在高亮区域
+     */
+    private _updateDataTreeHighlightContext(hasHighlight: boolean): void {
+        this._hasDataTreeHighlight = hasHighlight;
+        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasDataTreeHighlight', hasHighlight);
+    }
+
+    /**
+     * 处理数据树定位表达式回传
+     * @param locator - 高亮区域对应的定位表达式
+     */
+    private async _handleDataTreeLocatorResult(locator: unknown): Promise<void> {
+        if (typeof locator !== 'string' || locator.length === 0) {
+            this._updateDataTreeHighlightContext(false);
+            vscode.window.setStatusBarMessage(i18n.locatorUnavailable, 2000);
+            return;
+        }
+        await vscode.env.clipboard.writeText(locator);
+        vscode.window.setStatusBarMessage(i18n.format(i18n.locatorCopied, locator), 2000);
     }
 
     /**

@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
         ['sidebarPreviewer.disableFollowScroll', () => previewProvider.disableFollowScroll()],
         ['sidebarPreviewer.expandAll', () => previewProvider.expandAll()],
         ['sidebarPreviewer.collapseAll', () => previewProvider.collapseAll()],
+        ['sidebarPreviewer.copyDataTreeLocator', () => previewProvider.copyDataTreeLocator()],
         ['sidebarPreviewer.feedback', () => vscode.env.openExternal(feedbackIssuesUrl)]
     ];
 

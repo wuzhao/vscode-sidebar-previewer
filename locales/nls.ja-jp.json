@@ -10,6 +10,7 @@
   "command.enableFollowScroll.title": "スクロール追従を有効化",
   "command.expandAll.title": "すべて展開",
   "command.collapseAll.title": "すべて折りたたむ",
+  "command.copyDataTreeLocator.title": "ロケーターをコピー",
   "command.feedback.title": "フィードバック",
   "viewsContainer.activitybar.title": "プレビュー",
   "runtime.emptyStateTitle": "ファイルプレビュー",
@@ -23,5 +24,7 @@
   "runtime.previewError": "プレビュー失敗",
   "runtime.tableSelectionMore": "アクション",
   "runtime.tableSelectionAsciiTable": "ASCII としてコピー",
-  "runtime.tableSelectionTsv": "TSV としてコピー"
+  "runtime.tableSelectionTsv": "TSV としてコピー",
+  "runtime.locatorCopied": "ロケーターをコピーしました: {0}",
+  "runtime.locatorUnavailable": "ハイライトされたデータツリー領域がありません"
 }

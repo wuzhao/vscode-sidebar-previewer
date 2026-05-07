@@ -97,6 +97,7 @@ test('Provider locate capabilities stay consistent with file type capabilities',
   assert.equal(getFileType('report.xml'), 'xml');
   assert.equal(getFileType('dataset.csv'), 'csv');
   assert.equal(getFileType('dataset.tsv'), 'tsv');
+  assert.equal(getFileType('formula.katex'), 'latex');
 });
 
 test('MermaidPreviewProvider supports leading comments before diagram declaration', () => {

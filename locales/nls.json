@@ -10,6 +10,7 @@
   "command.enableFollowScroll.title": "Enable Follow Scroll",
   "command.expandAll.title": "Expand All",
   "command.collapseAll.title": "Collapse All",
+  "command.copyDataTreeLocator.title": "Copy Data Locator",
   "command.feedback.title": "Feedback",
   "viewsContainer.activitybar.title": "Preview",
   "runtime.emptyStateTitle": "Sidebar Previewer",
@@ -23,5 +24,7 @@
   "runtime.previewError": "Preview Failed",
   "runtime.tableSelectionMore": "Actions",
   "runtime.tableSelectionAsciiTable": "Copy As ASCII",
-  "runtime.tableSelectionTsv": "Copy As TSV"
+  "runtime.tableSelectionTsv": "Copy As TSV",
+  "runtime.locatorCopied": "Copied locator: {0}",
+  "runtime.locatorUnavailable": "No highlighted data tree region available"
 }

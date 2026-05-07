@@ -576,6 +576,113 @@ function resolveFallbackHighlightTarget(anchor) {
 }
 
 /**
+ * 同步数据树高亮状态到扩展端
+ * @param hasHighlight - 当前是否存在高亮节点
+ */
+function notifyDataTreeHighlightState(hasHighlight) {
+    VSCODE_API.postMessage({
+        type: 'dataTreeHighlightState',
+        hasHighlight: !!hasHighlight
+    });
+}
+
+/**
+ * 提取树节点路径片段
+ * @param treeItem - 当前树节点
+ * @returns 返回路径片段集合
+ */
+function extractTreePathSegments(treeItem) {
+    const chain = [];
+    let current = treeItem;
+    while (current) {
+        chain.push(current);
+        current = getParentTreeItem(current);
+    }
+    chain.reverse();
+
+    const segments = [];
+    chain.forEach(item => {
+        const anchor = getTreeItemAnchorElement(item);
+        if (!anchor) {
+            return;
+        }
+        const label = (anchor.textContent || '').trim();
+        if (label.length === 0) {
+            return;
+        }
+        if (anchor.classList && anchor.classList.contains('tree-index')) {
+            const index = Number.parseInt(label, 10);
+            if (!Number.isNaN(index) && index >= 0) {
+                segments.push({ type: 'index', value: String(index) });
+            }
+            return;
+        }
+        segments.push({ type: 'key', value: label });
+    });
+
+    return segments;
+}
+
+/**
+ * 将路径片段序列化为 jq/yq 表达式
+ * @param segments - 路径片段集合
+ * @returns 返回 jq/yq 兼容定位表达式
+ */
+function toJqYqPathExpression(segments) {
+    if (!Array.isArray(segments) || segments.length === 0) {
+        return '.';
+    }
+
+    let expression = '.';
+    segments.forEach(segment => {
+        if (!segment || typeof segment !== 'object') {
+            return;
+        }
+        if (segment.type === 'index') {
+            expression += `[${segment.value}]`;
+            return;
+        }
+
+        const key = String(segment.value || '');
+        if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+            expression += `.${key}`;
+            return;
+        }
+
+        const escaped = key
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
+        expression += `["${escaped}"]`;
+    });
+
+    return expression;
+}
+
+/**
+ * 回传当前高亮节点对应的定位表达式
+ */
+function reportHighlightedLocator() {
+    const highlightedItem = document.querySelector('.data-tree .tree-item.is-highlight');
+    if (!highlightedItem) {
+        VSCODE_API.postMessage({
+            type: 'dataTreeLocator',
+            locator: null
+        });
+        return;
+    }
+
+    const segments = extractTreePathSegments(highlightedItem);
+    const locator = toJqYqPathExpression(segments);
+    VSCODE_API.postMessage({
+        type: 'dataTreeLocator',
+        locator: locator
+    });
+}
+
+/**
  * 归一化行范围以统一后续处理
  * @param startLine - 起始行号
  * @param endLine - 结束行号
@@ -608,11 +715,13 @@ function highlightTreeRange(startLine, endLine) {
 
     const range = normalizeLineRange(startLine, endLine);
     if (!range) {
+        notifyDataTreeHighlightState(false);
         return;
     }
 
     const anchors = Array.from(document.querySelectorAll('.data-tree .tree-key[data-line], .data-tree .tree-index[data-line]'));
     if (anchors.length === 0) {
+        notifyDataTreeHighlightState(false);
         return;
     }
 
@@ -627,22 +736,29 @@ function highlightTreeRange(startLine, endLine) {
     if (inRange.length > 0) {
         const matchedItems = filterDuplicateLineTreeItems(collectNearestTreeItems(inRange));
         const highlightTarget = resolveSingleRangeHighlightTarget(matchedItems);
-        if (!highlightTarget) {
-            const fallbackTarget = resolveFallbackHighlightTarget(inRange[0]);
-            if (fallbackTarget) {
-                fallbackTarget.classList.add('is-highlight');
+            if (!highlightTarget) {
+                const fallbackTarget = resolveFallbackHighlightTarget(inRange[0]);
+                if (fallbackTarget) {
+                    fallbackTarget.classList.add('is-highlight');
+                    notifyDataTreeHighlightState(true);
+                    return;
+                }
+                notifyDataTreeHighlightState(false);
+                return;
             }
+            highlightTarget.classList.add('is-highlight');
+            notifyDataTreeHighlightState(true);
             return;
-        }
-        highlightTarget.classList.add('is-highlight');
-        return;
     }
 
     const fallbackAnchor = resolveFallbackAnchorByRange(anchors, range);
     const fallbackTarget = resolveFallbackHighlightTarget(fallbackAnchor);
     if (fallbackTarget) {
         fallbackTarget.classList.add('is-highlight');
+        notifyDataTreeHighlightState(true);
+        return;
     }
+    notifyDataTreeHighlightState(false);
 }
 
 /**
@@ -733,6 +849,7 @@ window.PreviewDatatree = {
     highlightTreeRange: highlightTreeRange,
     bindTreeKeyClicks: bindTreeKeyClicks,
     expandAllNodes: expandAllNodes,
-    collapseAllNodes: collapseAllNodes
+    collapseAllNodes: collapseAllNodes,
+    reportHighlightedLocator: reportHighlightedLocator
 };
 })();

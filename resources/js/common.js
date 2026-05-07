@@ -24,7 +24,8 @@ const VALID_MESSAGE_TYPES = new Set([
     'expandAll',
     'collapseAll',
     'highlightDataTreeRange',
-    'highlightTableRange'
+    'highlightTableRange',
+    'getHighlightedDataTreeLocator'
 ]);
 // 需要启用数据树交互能力的文件类型枚举
 const DATA_TREE_FILE_TYPES = new Set(['json', 'yaml', 'toml', 'xml']);
@@ -390,14 +391,13 @@ window.addEventListener('message', event => {
             }
             break;
         case 'highlightDataTreeRange':
-            {
-                const range = normalizeMessageLineRange(message.startLine, message.endLine);
-                if (!range) {
-                    break;
-                }
-                if (typeof PreviewDatatree !== 'undefined') {
-                    PreviewDatatree.highlightTreeRange(range.start, range.end);
-                }
+            if (typeof PreviewDatatree !== 'undefined') {
+                PreviewDatatree.highlightTreeRange(message.startLine, message.endLine);
+            }
+            break;
+        case 'getHighlightedDataTreeLocator':
+            if (typeof PreviewDatatree !== 'undefined' && PreviewDatatree.reportHighlightedLocator) {
+                PreviewDatatree.reportHighlightedLocator();
             }
             break;
         case 'highlightTableRange':

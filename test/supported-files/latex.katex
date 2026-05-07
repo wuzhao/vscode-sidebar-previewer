@@ -1,0 +1,7 @@
+\section{KaTeX Sample}
+
+This is a `.katex` fixture to verify Sidebar Previewer file type support.
+
+\[
+E = mc^2
+\]

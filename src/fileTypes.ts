@@ -44,7 +44,7 @@ const FILE_TYPE_CAPABILITIES: Record<FileType, FileTypeCapabilities> = {
         isDataTree: false,
     },
     latex: {
-        extensions: ['.tex'],
+        extensions: ['.tex', '.katex'],
         supportsLocate: true,
         isDataTree: false,
     },

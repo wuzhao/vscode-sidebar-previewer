@@ -18,6 +18,7 @@
     "preview",
     "markdown",
     "latex",
+    "katex",
     "mermaid",
     "json",
     "yaml",
@@ -84,6 +85,12 @@
         "icon": "$(collapse-all)"
       },
       {
+        "command": "sidebarPreviewer.copyDataTreeLocator",
+        "title": "%command.copyDataTreeLocator.title%",
+        "icon": "$(symbol-key)",
+        "enablement": "sidebarPreviewer.hasDataTreeHighlight"
+      },
+      {
         "command": "sidebarPreviewer.feedback",
         "title": "%command.feedback.title%",
         "icon": "$(feedback)"
@@ -127,14 +134,19 @@
           "group": "navigation@5"
         },
         {
+          "command": "sidebarPreviewer.copyDataTreeLocator",
+          "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.isDataTree",
+          "group": "navigation@6"
+        },
+        {
           "command": "sidebarPreviewer.disableFollowScroll",
           "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate && sidebarPreviewer.followScrollEnabled",
-          "group": "navigation@6"
+          "group": "navigation@7"
         },
         {
           "command": "sidebarPreviewer.enableFollowScroll",
           "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate && !sidebarPreviewer.followScrollEnabled",
-          "group": "navigation@6"
+          "group": "navigation@7"
         },
         {
           "command": "sidebarPreviewer.feedback",

@@ -10,6 +10,7 @@
   "command.enableFollowScroll.title": "開啟跟隨捲動",
   "command.expandAll.title": "全部展開",
   "command.collapseAll.title": "全部摺疊",
+  "command.copyDataTreeLocator.title": "複製定位表達式",
   "command.feedback.title": "回饋",
   "viewsContainer.activitybar.title": "預覽",
   "runtime.emptyStateTitle": "檔案預覽",
@@ -23,5 +24,7 @@
   "runtime.previewError": "預覽失敗",
   "runtime.tableSelectionMore": "操作",
   "runtime.tableSelectionAsciiTable": "複製為 ASCII",
-  "runtime.tableSelectionTsv": "複製為 TSV"
+  "runtime.tableSelectionTsv": "複製為 TSV",
+  "runtime.locatorCopied": "已複製定位表達式: {0}",
+  "runtime.locatorUnavailable": "目前沒有可用的高亮資料樹區域"
 }
