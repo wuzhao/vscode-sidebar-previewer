@@ -98,6 +98,26 @@ test('Provider locate capabilities stay consistent with file type capabilities',
   assert.equal(getFileType('dataset.csv'), 'csv');
   assert.equal(getFileType('dataset.tsv'), 'tsv');
   assert.equal(getFileType('formula.katex'), 'latex');
+  assert.equal(getFileType('formula.latex'), 'latex');
+});
+
+test('Supported LaTeX fixtures parse successfully', () => {
+  const texSource = readSupportedFixture('latex.tex');
+  const katexSource = readSupportedFixture('latex.katex');
+  const latexSource = readSupportedFixture('latex.latex');
+
+  const texResult = LatexPreviewProvider.parse(texSource);
+  const katexResult = LatexPreviewProvider.parse(katexSource);
+  const latexResult = LatexPreviewProvider.parse(latexSource);
+
+  assert.equal(texResult.fileType, 'latex');
+  assert.equal(katexResult.fileType, 'latex');
+  assert.equal(latexResult.fileType, 'latex');
+  assert.equal(texResult.clientRender, 'katex');
+  assert.equal(katexResult.clientRender, 'katex');
+  assert.equal(latexResult.clientRender, 'katex');
+  assert.ok(katexResult.headings.length > 0);
+  assert.ok(latexResult.headings.length > 0);
 });
 
 test('MermaidPreviewProvider supports leading comments before diagram declaration', () => {

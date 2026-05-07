@@ -1,7 +1,136 @@
-\section{KaTeX Sample}
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
 
-This is a `.katex` fixture to verify Sidebar Previewer file type support.
+\title{Ultra Complex KaTeX Fixture}
+\author{Sidebar Previewer Fixture Suite}
 
-\[
-E = mc^2
-\]
+\begin{document}
+\maketitle
+
+\section{Nonlinear Dynamics and Control}
+
+We model a coupled stochastic control system with state
+$\mathbf{x}_t \in \mathbb{R}^n$, control $\mathbf{u}_t \in \mathbb{R}^m$,
+and innovation noise $\boldsymbol{\epsilon}_t \sim \mathcal{N}(0, \Sigma_t)$.
+
+\begin{align}
+\mathbf{x}_{t+1} &= A_t\mathbf{x}_t + B_t\mathbf{u}_t + \mathbf{g}(\mathbf{x}_t, t) + \boldsymbol{\epsilon}_t \\
+\mathbf{y}_t &= C_t\mathbf{x}_t + \mathbf{v}_t, \qquad \mathbf{v}_t \sim \mathcal{N}(0, R_t)
+\end{align}
+
+The objective functional mixes path tracking, control regularization,
+and terminal trust-region penalties:
+
+\begin{equation}
+\mathcal{J}(\mathbf{u}) = \sum_{t=0}^{T-1}
+\left(\|\mathbf{x}_t - \mathbf{x}^{\star}_t\|_{Q_t}^2 + \|\mathbf{u}_t\|_{M_t}^2\right)
++ \lambda \sum_{t=0}^{T-2} \|\mathbf{u}_{t+1} - \mathbf{u}_t\|_2^2
++ \|\mathbf{x}_T - \mathbf{x}^{\star}_T\|_{Q_T}^2
+\end{equation}
+
+\subsection{Piecewise Barrier and Saturation}
+
+\begin{equation}
+\phi_{\varepsilon}(z) =
+\begin{cases}
+\dfrac{1}{2\varepsilon} z^2, & |z| \le \varepsilon \\
+|z| - \dfrac{\varepsilon}{2}, & |z| > \varepsilon
+\end{cases}
+\end{equation}
+
+\begin{equation}
+\operatorname{sat}_{[a,b]}(u) = \min\{\max\{u, a\}, b\}
+\end{equation}
+
+\section{Tensor Calculus and Geometry}
+
+For metric $g_{ij}$ and inverse $g^{ij}$,
+the Christoffel symbols and Ricci tensor are
+
+\begin{align}
+\Gamma^{k}_{ij}
+&= \frac{1}{2} g^{k\ell}\left(\partial_i g_{j\ell} + \partial_j g_{i\ell} - \partial_{\ell} g_{ij}\right) \\
+R_{ij}
+&= \partial_k \Gamma^{k}_{ij} - \partial_j \Gamma^{k}_{ik}
++ \Gamma^{k}_{k\ell}\Gamma^{\ell}_{ij} - \Gamma^{k}_{j\ell}\Gamma^{\ell}_{ik}
+\end{align}
+
+Einstein field equation with cosmological constant:
+
+\begin{equation}
+R_{\mu\nu} - \frac{1}{2}R g_{\mu\nu} + \Lambda g_{\mu\nu}
+= \frac{8\pi G}{c^4} T_{\mu\nu}
+\end{equation}
+
+\subsection{Matrix Identities}
+
+\begin{align}
+\det\!\begin{pmatrix}
+a_{11} & a_{12} & a_{13} \\
+a_{21} & a_{22} & a_{23} \\
+a_{31} & a_{32} & a_{33}
+\end{pmatrix}
+&= a_{11}(a_{22}a_{33}-a_{23}a_{32})
+- a_{12}(a_{21}a_{33}-a_{23}a_{31}) \\
+&\quad + a_{13}(a_{21}a_{32}-a_{22}a_{31})
+\end{align}
+
+\section{Spectral Graph and Probabilistic Models}
+
+Given weighted adjacency $W \in \mathbb{R}^{N \times N}$,
+let $D = \operatorname{diag}(W\mathbf{1})$ and normalized Laplacian
+$\mathcal{L}_{\text{sym}} = I - D^{-1/2} W D^{-1/2}$.
+
+\begin{equation}
+\min_{F \in \mathbb{R}^{N \times k}} \operatorname{tr}(F^\top \mathcal{L}_{\text{sym}} F)
+\quad \text{s.t.} \quad F^\top F = I_k
+\end{equation}
+
+Variational ELBO with latent variables $\mathbf{z}$:
+
+\begin{align}
+\log p_\theta(\mathbf{x})
+&\ge \mathbb{E}_{q_\phi(\mathbf{z}|\mathbf{x})}
+\left[\log p_\theta(\mathbf{x}|\mathbf{z})\right]
+- D_{\mathrm{KL}}\!\left(q_\phi(\mathbf{z}|\mathbf{x})\,\|\,p(\mathbf{z})\right) \\
+D_{\mathrm{KL}}(q\|p)
+&= \int q(\mathbf{z}) \log \frac{q(\mathbf{z})}{p(\mathbf{z})} \, d\mathbf{z}
+\end{align}
+
+\section{Optimization and Numerical Stability}
+
+Second-order update with trust region:
+
+\begin{align}
+\Delta\mathbf{w}
+&= \arg\min_{\mathbf{d}}\; \nabla f(\mathbf{w})^\top \mathbf{d}
++ \frac{1}{2}\mathbf{d}^\top H(\mathbf{w})\mathbf{d} \\
+&\text{s.t.}\; \|\mathbf{d}\|_2 \le \Delta
+\end{align}
+
+\begin{multline}
+\log\det\!\left(\Sigma + U U^\top\right)
+= \log\det(\Sigma)
++ \log\det\!\left(I + U^\top\Sigma^{-1}U\right) \\
+\text{and} \quad
+\left(\Sigma + U U^\top\right)^{-1}
+= \Sigma^{-1} - \Sigma^{-1}U\left(I + U^\top\Sigma^{-1}U\right)^{-1}U^\top\Sigma^{-1}
+\end{multline}
+
+\subsection{Inline Stress Cases}
+
+Inline formulas should remain stable: $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$,
+$\binom{n}{k} = \frac{n!}{k!(n-k)!}$,
+$\int_{0}^{\infty} e^{-\alpha t}\cos(\omega t)\,dt = \frac{\alpha}{\alpha^2+\omega^2}$.
+
+\section{Appendix}
+
+\begin{gather}
+\nabla \times (\nabla \times \mathbf{A}) = \nabla(\nabla \cdot \mathbf{A}) - \nabla^2\mathbf{A} \\
+\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6} \\
+\prod_{k=1}^{m} (1 + r_k) - 1 = r_{\mathrm{eff}}
+\end{gather}
+
+\end{document}

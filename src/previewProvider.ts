@@ -1126,8 +1126,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             vscode.window.setStatusBarMessage(i18n.locatorUnavailable, 2000);
             return;
         }
-        await vscode.env.clipboard.writeText(locator);
-        vscode.window.setStatusBarMessage(i18n.format(i18n.locatorCopied, locator), 2000);
+        const normalizedLocator = locator.replace(/[\r\n]+/g, '').trim();
+        if (normalizedLocator.length === 0) {
+            this._updateDataTreeHighlightContext(false);
+            vscode.window.setStatusBarMessage(i18n.locatorUnavailable, 2000);
+            return;
+        }
+        await vscode.env.clipboard.writeText(normalizedLocator);
+        vscode.window.setStatusBarMessage(i18n.format(i18n.locatorCopied, normalizedLocator), 2000);
     }
 
     /**

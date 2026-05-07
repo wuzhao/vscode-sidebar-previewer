@@ -662,6 +662,28 @@ function toJqYqPathExpression(segments) {
 }
 
 /**
+ * 归一化定位表达式以避免折行和重复前导点
+ * @param locator - 原始定位表达式
+ * @returns 返回可复制的定位表达式
+ */
+function normalizeLocatorExpression(locator) {
+    if (typeof locator !== 'string') {
+        return '';
+    }
+
+    let normalized = locator.replace(/[\r\n]+/g, '').trim();
+    if (!normalized) {
+        return '';
+    }
+
+    if ((currentDataTreeFileType === 'json' || currentDataTreeFileType === 'yaml') && normalized.startsWith('..')) {
+        normalized = normalized.replace(/^\.+/, '.');
+    }
+
+    return normalized;
+}
+
+/**
  * 回传当前高亮节点对应的定位表达式
  */
 function reportHighlightedLocator() {
@@ -675,7 +697,14 @@ function reportHighlightedLocator() {
     }
 
     const segments = extractTreePathSegments(highlightedItem);
-    const locator = toJqYqPathExpression(segments);
+    const locator = normalizeLocatorExpression(toJqYqPathExpression(segments));
+    if (!locator) {
+        VSCODE_API.postMessage({
+            type: 'dataTreeLocator',
+            locator: null
+        });
+        return;
+    }
     VSCODE_API.postMessage({
         type: 'dataTreeLocator',
         locator: locator
@@ -736,28 +765,15 @@ function highlightTreeRange(startLine, endLine) {
     if (inRange.length > 0) {
         const matchedItems = filterDuplicateLineTreeItems(collectNearestTreeItems(inRange));
         const highlightTarget = resolveSingleRangeHighlightTarget(matchedItems);
-            if (!highlightTarget) {
-                const fallbackTarget = resolveFallbackHighlightTarget(inRange[0]);
-                if (fallbackTarget) {
-                    fallbackTarget.classList.add('is-highlight');
-                    notifyDataTreeHighlightState(true);
-                    return;
-                }
-                notifyDataTreeHighlightState(false);
-                return;
-            }
-            highlightTarget.classList.add('is-highlight');
-            notifyDataTreeHighlightState(true);
+        if (!highlightTarget) {
+            notifyDataTreeHighlightState(false);
             return;
-    }
-
-    const fallbackAnchor = resolveFallbackAnchorByRange(anchors, range);
-    const fallbackTarget = resolveFallbackHighlightTarget(fallbackAnchor);
-    if (fallbackTarget) {
-        fallbackTarget.classList.add('is-highlight');
+        }
+        highlightTarget.classList.add('is-highlight');
         notifyDataTreeHighlightState(true);
         return;
     }
+
     notifyDataTreeHighlightState(false);
 }
 

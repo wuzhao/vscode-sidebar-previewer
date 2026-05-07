@@ -345,6 +345,21 @@ const {
     assert.equal(xmlProductsKey.item.classList.contains('is-highlight'), true);
   });
 
+  test('Task A datatree locator is normalized and disabled when no direct highlight exists', () => {
+    const datatreeJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'datatree.js'), 'utf8');
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+
+    assert.ok(datatreeJs.includes('function normalizeLocatorExpression(locator)'));
+    assert.ok(datatreeJs.includes("locator.replace(/[\\r\\n]+/g, '').trim()"));
+    assert.ok(datatreeJs.includes("currentDataTreeFileType === 'json' || currentDataTreeFileType === 'yaml'"));
+    assert.ok(datatreeJs.includes("normalized.startsWith('..')"));
+    assert.equal(datatreeJs.includes('const fallbackAnchor = resolveFallbackAnchorByRange(anchors, range);'), false);
+    assert.equal(datatreeJs.includes('const fallbackTarget = resolveFallbackHighlightTarget(fallbackAnchor);'), false);
+
+    assert.ok(previewProvider.includes("const normalizedLocator = locator.replace(/[\\r\\n]+/g, '').trim();"));
+    assert.ok(previewProvider.includes('await vscode.env.clipboard.writeText(normalizedLocator);'));
+  });
+
   test('Task C copy success resets immediately without fade animations', () => {
     const css = readResourceCssBundle();
     const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'codeblock.js'), 'utf8');

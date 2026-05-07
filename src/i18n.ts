@@ -25,10 +25,10 @@ interface I18nStrings {
 // 定义空状态提示中展示的受支持文件格式列表
 const SUPPORTED_EXTENSIONS = [
     'Markdown (.md)',
-    'LaTeX (.tex)',
+    'LaTeX (.tex / .latex / .katex)',
     'Mermaid (.mmd / .mermaid)',
     'JSON (.json / .jsonc)',
-    'YAML (.yaml / .yml)',
+    'YAML (.yml / .yaml)',
     'TOML (.toml)',
     'XML (.xml)',
     'CSV (.csv)',
