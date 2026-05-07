@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.12-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.13-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.ja-JP.md)
 
@@ -26,10 +26,10 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Type | Extensions |
 | ---- | ---------- |
 | Markdown | `.md`, `.markdown` |
-| LaTeX | `.tex` |
+| LaTeX | `.tex`, `.katex`, `.latex` |
 | Mermaid | `.mmd`, `.mermaid` |
 | JSON | `.json`, `.jsonc` |
-| YAML | `.yaml`, `.yml` |
+| YAML | `.yml`, `.yaml` |
 | TOML | `.toml` |
 | XML | `.xml` |
 | CSV | `.csv` |
@@ -37,12 +37,11 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Feature Overview
 
-### What's New in 0.3.12
+### What's New in 0.3.13
 
-- Mermaid preview now starts at 200% zoom with doubled step size, and text scales consistently with the diagram after file switches.
-- Switching files always resets preview zoom to 100%.
-- Switching files now fully reinitializes preview state even for the same file type.
-- Fixed deep nested JSON/JSONC array-object key locate mapping so inline keys respond and jump to correct source lines.
+- `Copy Data Tree Locator` now enables only when JSON/YAML/TOML/XML has a real highlighted node.
+- Locator text is normalized before copy: no line breaks and no leading double dot for JSON/YAML/TOML/XML paths.
+- LaTeX file detection now supports `.katex` and `.latex` in addition to `.tex`.
 
 ### Markdown
 
@@ -103,7 +102,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Usage
 
-1. Open any supported file (`.md`, `.markdown`, `.tex`, `.mmd`, `.mermaid`, `.json`, `.jsonc`, `.yaml`, `.yml`, `.toml`, `.xml`, `.csv`, `.tsv`)
+1. Open any supported file (`.md`, `.markdown`, `.tex`, `.katex`, `.latex`, `.mmd`, `.mermaid`, `.json`, `.jsonc`, `.yml`, `.yaml`, `.toml`, `.xml`, `.csv`, `.tsv`)
 2. Click the Sidebar Previewer icon in the Activity Bar
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom

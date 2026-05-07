@@ -351,8 +351,9 @@ const {
 
     assert.ok(datatreeJs.includes('function normalizeLocatorExpression(locator)'));
     assert.ok(datatreeJs.includes("locator.replace(/[\\r\\n]+/g, '').trim()"));
-    assert.ok(datatreeJs.includes("currentDataTreeFileType === 'json' || currentDataTreeFileType === 'yaml'"));
+    assert.equal(datatreeJs.includes("currentDataTreeFileType === 'json' || currentDataTreeFileType === 'yaml'"), false);
     assert.ok(datatreeJs.includes("normalized.startsWith('..')"));
+    assert.ok(datatreeJs.includes("normalized = normalized.replace(/^\\.+/, '.');"));
     assert.equal(datatreeJs.includes('const fallbackAnchor = resolveFallbackAnchorByRange(anchors, range);'), false);
     assert.equal(datatreeJs.includes('const fallbackTarget = resolveFallbackHighlightTarget(fallbackAnchor);'), false);
 

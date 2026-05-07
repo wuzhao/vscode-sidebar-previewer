@@ -676,7 +676,7 @@ function normalizeLocatorExpression(locator) {
         return '';
     }
 
-    if ((currentDataTreeFileType === 'json' || currentDataTreeFileType === 'yaml') && normalized.startsWith('..')) {
+    if (normalized.startsWith('..')) {
         normalized = normalized.replace(/^\.+/, '.');
     }
 

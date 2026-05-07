@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.13 - 2026-05-08
+
+- Data-tree locator replication is supported now for JSON/YAML/TOML/XML.
+- Added LaTeX file extension support for `.katex` and `.latex` in file type detection.
+
+～～～
+
+- JSON/YAML/TOML/XML 支持复制定位路径。
+- 文件类型识别新增 LaTeX 扩展名支持：`.katex` 与 `.latex`。
+
 ## 0.3.12 - 2026-05-06
 
 - Updated Mermaid default zoom to 200% with doubled zoom step for Mermaid previews, and fixed file-switch initialization so text scales with diagram.

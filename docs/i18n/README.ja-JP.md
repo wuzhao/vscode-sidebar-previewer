@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.12-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.13-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -26,10 +26,10 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | Type | Extensions |
 | ---- | ---------- |
 | Markdown | `.md`, `.markdown` |
-| LaTeX | `.tex` |
+| LaTeX | `.tex`, `.katex`, `.latex` |
 | Mermaid | `.mmd`, `.mermaid` |
 | JSON | `.json`, `.jsonc` |
-| YAML | `.yaml`, `.yml` |
+| YAML | `.yml`, `.yaml` |
 | TOML | `.toml` |
 | XML | `.xml` |
 | CSV | `.csv` |
@@ -37,12 +37,11 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 機能概要
 
-### 0.3.12 の主な更新
+### 0.3.13 の主な更新
 
-- Mermaid プレビューの初期ズームを 200% に変更し、ズームステップも倍化しました。ファイル切り替え後も図内テキストが倍率に追従します
-- ファイルを切り替えるたびにプレビューのズーム倍率を 100% にリセットします
-- 同一ファイル種別でも切り替え時はプレビュー状態を毎回再初期化し、前回設定を引き継がないようにしました
-- JSON/JSONC の深いネスト配列オブジェクトで、インラインキーのロケートマッピングを修正し、クリック応答とジャンプ精度を改善しました
+- JSON/YAML/TOML/XML で実際のハイライト対象がない場合、`Copy Data Tree Locator` は無効のままになります
+- ロケータ文字列をコピー前に正規化し、改行を除去して JSON/YAML/TOML/XML パスの先頭二重ドットを防止します
+- LaTeX のファイル判定に `.katex` と `.latex` を追加し、`.tex` とあわせてサポートします
 
 ### Markdown
 
@@ -103,7 +102,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 使い方
 
-1. サポートされているファイルを開く（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yaml`、`.yml`、`.toml`、`.xml`、`.csv`、`.tsv`）
+1. サポートされているファイルを開く（`.md`、`.markdown`、`.tex`、`.katex`、`.latex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yml`、`.yaml`、`.toml`、`.xml`、`.csv`、`.tsv`）
 2. アクティビティバーにある Sidebar Previewer アイコンをクリックする
 3. プレビューパネルに現在のファイルが自動的に表示（レンダリング）される
 4. ツールバーのボタン、または `Cmd/Ctrl` + マウスホイールでズーム操作を行う

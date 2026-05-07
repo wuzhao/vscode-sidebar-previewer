@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.12-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.13-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -26,10 +26,10 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | 文件類型 | 擴展名 |
 | ------- | ------ |
 | Markdown | `.md`、`.markdown` |
-| LaTeX | `.tex` |
+| LaTeX | `.tex`、`.katex`、`.latex` |
 | Mermaid | `.mmd`、`.mermaid` |
 | JSON | `.json`、`.jsonc` |
-| YAML | `.yaml`、`.yml` |
+| YAML | `.yml`、`.yaml` |
 | TOML | `.toml` |
 | XML | `.xml` |
 | CSV | `.csv` |
@@ -37,12 +37,11 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 功能介紹
 
-### 0.3.12 更新重點
+### 0.3.13 更新重點
 
-- Mermaid 預覽預設改為 200% 縮放，縮放步進加倍；切換文件後圖中文字會跟隨縮放同步
-- 每次切換文件都會將預覽縮放重設為 100%
-- 即使係同類型文件，切換時都會重新初始化預覽狀態，不沿用上一次設定
-- 修復 JSON/JSONC 深層巢狀陣列物件入面內聯鍵嘅定位映射，恢復點擊反應並提升跳轉準確性
+- 當 JSON / YAML / TOML / XML 冇實際高亮節點時，`複製資料樹定位` 按鈕會保持停用
+- 複製定位文字前會統一正規化，移除換行並避免 JSON / YAML / TOML / XML 路徑出現前導雙點
+- LaTeX 文件識別新增 `.katex` 同 `.latex` 擴展名，並與 `.tex` 一齊支援
 
 ### Markdown
 
@@ -103,7 +102,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 使用方法
 
-1. 打開任何支持嘅文件（`.md`、`.markdown`、`.tex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yaml`、`.yml`、`.toml`、`.xml`、`.csv`、`.tsv`）
+1. 打開任何支持嘅文件（`.md`、`.markdown`、`.tex`、`.katex`、`.latex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yml`、`.yaml`、`.toml`、`.xml`、`.csv`、`.tsv`）
 2. 點擊左邊 Activity Bar 入面個 Sidebar Previewer 圖標
 3. 預覽面板會自動顯示當前文件嘅渲染結果
 4. 使用工具欄或者 `Cmd/Ctrl` + 鼠標滾輪嚟縮放
