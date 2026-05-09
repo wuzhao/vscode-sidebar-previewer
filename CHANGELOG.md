@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.14 - 2026-05-09
+
+- Added multi-cell quick action `Copy as Markdown Table` for CSV/TSV preview, while keeping `Copy as ASCII Table` and `Cmd/Ctrl+C` TSV copy behavior.
+
+～～～
+
+- CSV/TSV 预览新增多单元格快捷操作 `Copy as Markdown Table`，并保留 `Copy as ASCII Table` 与 `Cmd/Ctrl+C` 的 TSV 复制行为。
+
 ## 0.3.13 - 2026-05-08
 
 - Data-tree locator replication is supported now for JSON/YAML/TOML/XML.

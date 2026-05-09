@@ -109,6 +109,7 @@ Webview → Host : webviewReady | zoomChange | visibleHeading | visibleLine |
 | 交互能力 | 主要文件 |
 | --- | --- |
 | 点击 data-tree key 本地高亮并跳转编辑器（`highlightTreeRange` + `navigateToLine`） | `resources/js/datatree.js` |
+| CSV/TSV 多单元格复制快捷操作（Markdown/ASCII） | `resources/js/table.js` |
 | comment popup 展示与交互锁 | `resources/js/comment-tooltip.js` |
 | datatree 展开与折叠（`expandAllNodes` / `collapseAllNodes`） | `resources/js/datatree.js` |
 | datatree 展开/折叠命令分发（Host -> Webview） | `src/previewProvider.ts` |

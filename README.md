@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.13-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.14-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.ja-JP.md)
 
@@ -71,7 +71,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Follow-scroll and locate between editor and preview
 - Bidirectional selection with click-and-drag support
 - Focus-aware selected-cell highlight (blue when focused, gray when unfocused)
-- Multi-cell quick actions: `Copy as ASCII` or `Copy as TSV`
+- Multi-cell quick actions: `Copy as Markdown Table` or `Copy as ASCII Table`
 - `Cmd/Ctrl+C`: copy single selected cell text, or copy multi-cell selection as TSV
 
 ## Installation
@@ -101,7 +101,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
-6. In JSON/YAML/TOML/XML preview, selected entries use focus-aware highlight (focused blue / unfocused gray); CSV/TSV preview keeps sticky headers, supports cell locate, focus-aware highlight, multi-cell copy menu, and `Cmd/Ctrl+C` copy behavior
+6. In JSON/YAML/TOML/XML preview, selected entries use focus-aware highlight (focused blue / unfocused gray); CSV/TSV preview keeps sticky headers, supports cell locate, focus-aware highlight, multi-cell copy actions (`Copy as Markdown Table` / `Copy as ASCII Table`), and `Cmd/Ctrl+C` copy behavior
 
 ## How to show the VS Code Secondary Side Bar?
 

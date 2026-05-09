@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.13-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.14-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文-臺灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -71,7 +71,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 編輯器與預覽之間捲動同步、互相定位
 - 支援雙向選區功能，支援滑鼠拖曳框選
 - 選取儲存格高亮支援焦點狀態（取得焦點為藍色，失焦為灰色）
-- 多儲存格選取時提供操作選單，可執行「複製為 ASCII」或「複製為 TSV」
+- 多儲存格選取時提供快捷操作，可執行「複製為 Markdown」或「複製為 ASCII」
 - `Cmd/Ctrl+C`：單儲存格複製文字，多儲存格以 TSV 複製
 
 ## 安裝方法
@@ -101,7 +101,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. 預覽面板會自動顯示當前檔案的渲染結果
 4. 使用工具欄或 `Cmd/Ctrl` + 滑鼠滾輪進行縮放
 5. Mermaid 預覽支援拖拽檢視放大區域
-6. JSON / YAML / TOML / XML 可點選鍵名跳轉到原始碼對應行並提供焦點狀態高亮；CSV / TSV 預覽為表格檢視，支援首行首列固定、點選儲存格定位、焦點狀態高亮、多選複製選單與 `Cmd/Ctrl+C` 複製
+6. JSON / YAML / TOML / XML 可點選鍵名跳轉到原始碼對應行並提供焦點狀態高亮；CSV / TSV 預覽為表格檢視，支援首行首列固定、點選儲存格定位、焦點狀態高亮、多選複製快捷操作（「複製為 Markdown」/「複製為 ASCII」）與 `Cmd/Ctrl+C` 複製
 
 ## 如何顯示 VS Code 第二側邊欄？
 
