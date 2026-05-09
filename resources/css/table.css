@@ -118,14 +118,21 @@ table tr:nth-child(2n) {
     background-color: var(--vscode-sideBar-background);
 }
 
-.table-preview td.selected,
-.table-preview th.selected {
+.table-preview td.selected {
     background-color: var(--vscode-list-inactiveSelectionBackground, color-mix(in srgb, var(--vscode-editor-selectionBackground) 35%, transparent 65%));
 }
 
-#content.preview-focused .table-preview td.selected,
-#content.preview-focused .table-preview th.selected {
+#content.preview-focused .table-preview td.selected {
     background-color: color-mix(in srgb, var(--vscode-button-background) 35%, transparent 65%);
+}
+
+.table-preview th.selected {
+    background-color: var(--vscode-list-inactiveSelectionBackground, var(--vscode-button-secondaryBackground, var(--vscode-sideBarSectionHeader-background)));
+}
+
+#content.preview-focused .table-preview th.selected {
+    background-color: var(--vscode-list-activeSelectionBackground, var(--vscode-button-background));
+    color: var(--vscode-list-activeSelectionForeground, var(--vscode-button-foreground));
 }
 
 .table-preview td:hover,
@@ -145,8 +152,9 @@ table tr:nth-child(2n) {
 .table-selection-actions {
     position: absolute;
     display: none;
-    align-items: center;
-    gap: 6px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
     pointer-events: auto;
     z-index: 1;
 }

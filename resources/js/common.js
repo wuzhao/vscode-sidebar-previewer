@@ -9,8 +9,9 @@ const L10N_TEXT = {
     viewCode: L10N_SOURCE.viewCode || 'Code',
     viewPreview: L10N_SOURCE.viewPreview || 'Preview',
     tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions',
-    tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy As ASCII',
-    tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy As TSV',
+    tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown Table',
+    tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy as ASCII Table',
+    tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy as TSV',
 };
 // 允许接收的消息类型枚举，避免无效消息触发渲染流程
 const VALID_MESSAGE_TYPES = new Set([

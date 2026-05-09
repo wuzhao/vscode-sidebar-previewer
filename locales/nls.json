@@ -23,8 +23,9 @@
   "runtime.viewPreview": "Preview",
   "runtime.previewError": "Preview Failed",
   "runtime.tableSelectionMore": "Actions",
-  "runtime.tableSelectionAsciiTable": "Copy As ASCII",
-  "runtime.tableSelectionTsv": "Copy As TSV",
+  "runtime.tableSelectionMarkdownTable": "Copy as Markdown Table",
+  "runtime.tableSelectionAsciiTable": "Copy as ASCII Table",
+  "runtime.tableSelectionTsv": "Copy as TSV",
   "runtime.locatorCopied": "Copied Locator: {0}",
   "runtime.locatorUnavailable": "No highlighted data tree region available"
 }

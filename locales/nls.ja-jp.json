@@ -23,6 +23,7 @@
   "runtime.viewPreview": "プレビュー",
   "runtime.previewError": "プレビュー失敗",
   "runtime.tableSelectionMore": "アクション",
+  "runtime.tableSelectionMarkdownTable": "Markdown としてコピー",
   "runtime.tableSelectionAsciiTable": "ASCII としてコピー",
   "runtime.tableSelectionTsv": "TSV としてコピー",
   "runtime.locatorCopied": "ロケーターをコピーしました: {0}",

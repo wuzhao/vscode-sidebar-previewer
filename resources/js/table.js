@@ -24,8 +24,8 @@ const TABLE_SELECTION_COPY_TIMER_MAP = new WeakMap();
 let tableSelectionUi = {
     container: null,
     wrapper: null,
+    markdownButton: null,
     asciiButton: null,
-    tsvButton: null
 };
 let tableSelectionFocusEventsBound = false;
 
@@ -103,6 +103,76 @@ function buildSelectionGrid(selectedCells) {
 }
 
 /**
+ * 构建带表头的复制数据快照
+ * @param selectedCells - 选中单元格集合
+ * @returns 返回带表头的复制快照
+ */
+function buildSelectionCopySnapshot(selectedCells) {
+    if (!selectedCells || selectedCells.length === 0) {
+        return {
+            headerRow: [],
+            bodyGrid: []
+        };
+    }
+
+    const bounds = getSelectionBounds(selectedCells);
+    const colCount = bounds.maxCol - bounds.minCol + 1;
+    const table = selectedCells[0] && selectedCells[0].closest('table');
+    const headerCells = table ? Array.from(table.querySelectorAll('thead th')) : [];
+    const headerRow = new Array(colCount).fill('').map((_, index) => {
+        const headerCell = headerCells[bounds.minCol + index];
+        return getCellPlainText(headerCell);
+    });
+
+    const bodyCells = selectedCells.filter(cell => cell.parentElement && cell.parentElement.rowIndex > 0);
+    if (bodyCells.length === 0) {
+        return {
+            headerRow,
+            bodyGrid: []
+        };
+    }
+
+    let minBodyRow = Infinity;
+    let maxBodyRow = -Infinity;
+    bodyCells.forEach(cell => {
+        const rowIndex = cell.parentElement.rowIndex;
+        if (rowIndex < minBodyRow) {
+            minBodyRow = rowIndex;
+        }
+        if (rowIndex > maxBodyRow) {
+            maxBodyRow = rowIndex;
+        }
+    });
+
+    const rowCount = maxBodyRow - minBodyRow + 1;
+    const bodyGrid = Array.from({ length: rowCount }, () => Array(colCount).fill(''));
+    bodyCells.forEach(cell => {
+        const row = cell.parentElement.rowIndex - minBodyRow;
+        const col = cell.cellIndex - bounds.minCol;
+        if (row >= 0 && row < rowCount && col >= 0 && col < colCount) {
+            bodyGrid[row][col] = getCellPlainText(cell);
+        }
+    });
+
+    return {
+        headerRow,
+        bodyGrid
+    };
+}
+
+/**
+ * 合并表头和正文为完整网格
+ * @param snapshot - 复制快照
+ * @returns 返回完整网格
+ */
+function buildGridWithHeader(snapshot) {
+    if (!snapshot || !Array.isArray(snapshot.headerRow) || snapshot.headerRow.length === 0) {
+        return [];
+    }
+    return [snapshot.headerRow, ...(Array.isArray(snapshot.bodyGrid) ? snapshot.bodyGrid : [])];
+}
+
+/**
  * 将选区网格转换为 TSV 文本
  * @param grid - 选区网格
  * @returns 返回 TSV 字符串
@@ -112,12 +182,125 @@ function buildTsvText(grid) {
 }
 
 /**
+ * 判断字符是否为零宽组合字符
+ * @param codePoint - 目标字符码点
+ * @returns 返回是否为零宽组合字符
+ */
+function isCombiningMarkCodePoint(codePoint) {
+    return (
+        (codePoint >= 0x0300 && codePoint <= 0x036F) ||
+        (codePoint >= 0x1AB0 && codePoint <= 0x1AFF) ||
+        (codePoint >= 0x1DC0 && codePoint <= 0x1DFF) ||
+        (codePoint >= 0x20D0 && codePoint <= 0x20FF) ||
+        (codePoint >= 0xFE20 && codePoint <= 0xFE2F)
+    );
+}
+
+/**
+ * 判断字符是否为全角宽字符
+ * @param codePoint - 目标字符码点
+ * @returns 返回是否为全角宽字符
+ */
+function isFullWidthCodePoint(codePoint) {
+    if (codePoint >= 0x1100 && (
+        codePoint <= 0x115F ||
+        codePoint === 0x2329 ||
+        codePoint === 0x232A ||
+        (codePoint >= 0x2E80 && codePoint <= 0xA4CF && codePoint !== 0x303F) ||
+        (codePoint >= 0xAC00 && codePoint <= 0xD7A3) ||
+        (codePoint >= 0xF900 && codePoint <= 0xFAFF) ||
+        (codePoint >= 0xFE10 && codePoint <= 0xFE19) ||
+        (codePoint >= 0xFE30 && codePoint <= 0xFE6F) ||
+        (codePoint >= 0xFF00 && codePoint <= 0xFF60) ||
+        (codePoint >= 0xFFE0 && codePoint <= 0xFFE6) ||
+        (codePoint >= 0x1F300 && codePoint <= 0x1F64F) ||
+        (codePoint >= 0x1F900 && codePoint <= 0x1F9FF) ||
+        (codePoint >= 0x20000 && codePoint <= 0x3FFFD)
+    )) {
+        return true;
+    }
+    return false;
+}
+
+/**
  * 计算字符串显示宽度
  * @param value - 目标字符串
  * @returns 返回显示宽度
  */
 function getDisplayWidth(value) {
-    return Array.from(String(value || '')).length;
+    let width = 0;
+    for (const char of String(value || '')) {
+        const codePoint = char.codePointAt(0);
+        if (codePoint === undefined) {
+            continue;
+        }
+        if (codePoint <= 0x1F || (codePoint >= 0x7F && codePoint <= 0x9F) || isCombiningMarkCodePoint(codePoint)) {
+            continue;
+        }
+        width += isFullWidthCodePoint(codePoint) ? 2 : 1;
+    }
+    return width;
+}
+
+/**
+ * 生成 Markdown 表格行
+ * @param row - 当前行
+ * @returns 返回 Markdown 行文本
+ */
+function formatMarkdownTableRow(row) {
+    return `| ${row.join(' | ')} |`;
+}
+
+/**
+ * 转义 Markdown 表格单元格内容
+ * @param value - 原始单元格值
+ * @returns 返回转义后的内容
+ */
+function escapeMarkdownTableCell(value) {
+    return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/\|/g, '\\|');
+}
+
+/**
+ * 将表头和正文转换为 Markdown Table 文本
+ * @param headerRow - 表头行
+ * @param bodyGrid - 正文网格
+ * @returns 返回 Markdown Table 字符串
+ */
+function buildMarkdownTableText(headerRow, bodyGrid) {
+    if (!Array.isArray(headerRow) || headerRow.length === 0) {
+        return '';
+    }
+    const colCount = headerRow.length;
+    const normalizeRow = (row) => {
+        const safeRow = Array.isArray(row) ? row : [];
+        return new Array(colCount).fill('').map((_, index) => escapeMarkdownTableCell(safeRow[index] ?? ''));
+    };
+
+    const normalizedHeader = normalizeRow(headerRow);
+    const lines = [
+        formatMarkdownTableRow(normalizedHeader),
+        formatMarkdownTableRow(new Array(colCount).fill('---'))
+    ];
+
+    (Array.isArray(bodyGrid) ? bodyGrid : []).forEach(row => {
+        lines.push(formatMarkdownTableRow(normalizeRow(row)));
+    });
+    return lines.join('\n');
+}
+
+/**
+ * 构建 ASCII 表格边框
+ * @param widths - 各列宽度
+ * @param left - 左边框字符
+ * @param middle - 中间分隔字符
+ * @param right - 右边框字符
+ * @returns 返回边框文本
+ */
+function buildAsciiBorder(widths, left, middle, right) {
+    const cells = widths.map(width => '─'.repeat(Math.max(1, width + 2)));
+    return `${left}${cells.join(middle)}${right}`;
 }
 
 /**
@@ -139,17 +322,20 @@ function buildAsciiTableText(grid) {
         }
     });
 
-    const separator = '+-' + widths.map(width => '-'.repeat(Math.max(1, width))).join('-+-') + '-+';
-    const lines = [separator];
+    const topBorder = buildAsciiBorder(widths, '┌', '┬', '┐');
+    const middleBorder = buildAsciiBorder(widths, '├', '┼', '┤');
+    const bottomBorder = buildAsciiBorder(widths, '└', '┴', '┘');
+    const lines = [topBorder];
     grid.forEach(row => {
         const line = row.concat(new Array(Math.max(0, colCount - row.length)).fill('')).map((value, index) => {
             const safeValue = String(value ?? '');
             const padding = Math.max(0, widths[index] - getDisplayWidth(safeValue));
             return safeValue + ' '.repeat(padding);
         });
-        lines.push('| ' + line.join(' | ') + ' |');
-        lines.push(separator);
+        lines.push('│ ' + line.join(' │ ') + ' │');
+        lines.push(middleBorder);
     });
+    lines[lines.length - 1] = bottomBorder;
     return lines.join('\n');
 }
 
@@ -184,13 +370,13 @@ function hideTableSelectionActions() {
     if (tableSelectionUi.wrapper) {
         tableSelectionUi.wrapper.classList.remove('is-visible');
     }
+    if (tableSelectionUi.markdownButton) {
+        clearTableCopyStateTimers(tableSelectionUi.markdownButton);
+        resetTableSelectionCopyButton(tableSelectionUi.markdownButton, L10N_TEXT.tableSelectionMarkdown);
+    }
     if (tableSelectionUi.asciiButton) {
         clearTableCopyStateTimers(tableSelectionUi.asciiButton);
         resetTableSelectionCopyButton(tableSelectionUi.asciiButton, L10N_TEXT.tableSelectionAscii);
-    }
-    if (tableSelectionUi.tsvButton) {
-        clearTableCopyStateTimers(tableSelectionUi.tsvButton);
-        resetTableSelectionCopyButton(tableSelectionUi.tsvButton, L10N_TEXT.tableSelectionTsv);
     }
 }
 
@@ -335,12 +521,18 @@ function ensureTableSelectionActionElements(table) {
         return;
     }
 
-    if (tableSelectionUi.container === container && tableSelectionUi.wrapper && tableSelectionUi.asciiButton && tableSelectionUi.tsvButton) {
+    if (tableSelectionUi.container === container && tableSelectionUi.wrapper && tableSelectionUi.markdownButton && tableSelectionUi.asciiButton) {
         return;
     }
 
     const wrapper = document.createElement('div');
     wrapper.className = 'table-selection-actions';
+
+    const markdownButton = document.createElement('button');
+    markdownButton.type = 'button';
+    markdownButton.className = 'table-selection-copy-btn';
+    markdownButton.title = L10N_TEXT.tableSelectionMarkdown;
+    markdownButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionMarkdown}</span>`;
 
     const asciiButton = document.createElement('button');
     asciiButton.type = 'button';
@@ -348,24 +540,42 @@ function ensureTableSelectionActionElements(table) {
     asciiButton.title = L10N_TEXT.tableSelectionAscii;
     asciiButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionAscii}</span>`;
 
-    const tsvButton = document.createElement('button');
-    tsvButton.type = 'button';
-    tsvButton.className = 'table-selection-copy-btn';
-    tsvButton.title = L10N_TEXT.tableSelectionTsv;
-    tsvButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionTsv}</span>`;
-
+    wrapper.appendChild(markdownButton);
     wrapper.appendChild(asciiButton);
-    wrapper.appendChild(tsvButton);
     container.appendChild(wrapper);
+
+    markdownButton.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
 
     asciiButton.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
     });
 
-    tsvButton.addEventListener('mousedown', (e) => {
+    markdownButton.addEventListener('mouseenter', () => {
+        updateTableCopyButtonHoverState(markdownButton, true, L10N_TEXT.tableSelectionMarkdown);
+    });
+
+    markdownButton.addEventListener('mouseleave', () => {
+        updateTableCopyButtonHoverState(markdownButton, false, L10N_TEXT.tableSelectionMarkdown);
+    });
+
+    markdownButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (markdownButton.classList.contains('copied')) {
+            return;
+        }
+        const selectedCells = getSelectedCells();
+        if (selectedCells.length < 2) {
+            hideTableSelectionActions();
+            return;
+        }
+        const snapshot = buildSelectionCopySnapshot(selectedCells);
+        await writeTextToClipboard(buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid));
+        showTableCopySuccess(markdownButton, L10N_TEXT.tableSelectionMarkdown);
     });
 
     asciiButton.addEventListener('mouseenter', () => {
@@ -374,14 +584,6 @@ function ensureTableSelectionActionElements(table) {
 
     asciiButton.addEventListener('mouseleave', () => {
         updateTableCopyButtonHoverState(asciiButton, false, L10N_TEXT.tableSelectionAscii);
-    });
-
-    tsvButton.addEventListener('mouseenter', () => {
-        updateTableCopyButtonHoverState(tsvButton, true, L10N_TEXT.tableSelectionTsv);
-    });
-
-    tsvButton.addEventListener('mouseleave', () => {
-        updateTableCopyButtonHoverState(tsvButton, false, L10N_TEXT.tableSelectionTsv);
     });
 
     asciiButton.addEventListener('click', async (e) => {
@@ -395,32 +597,17 @@ function ensureTableSelectionActionElements(table) {
             hideTableSelectionActions();
             return;
         }
-        const grid = buildSelectionGrid(selectedCells);
+        const snapshot = buildSelectionCopySnapshot(selectedCells);
+        const grid = buildGridWithHeader(snapshot);
         await writeTextToClipboard(buildAsciiTableText(grid));
         showTableCopySuccess(asciiButton, L10N_TEXT.tableSelectionAscii);
-    });
-
-    tsvButton.addEventListener('click', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (tsvButton.classList.contains('copied')) {
-            return;
-        }
-        const selectedCells = getSelectedCells();
-        if (selectedCells.length < 2) {
-            hideTableSelectionActions();
-            return;
-        }
-        const grid = buildSelectionGrid(selectedCells);
-        await writeTextToClipboard(buildTsvText(grid));
-        showTableCopySuccess(tsvButton, L10N_TEXT.tableSelectionTsv);
     });
 
     tableSelectionUi = {
         container,
         wrapper,
+        markdownButton,
         asciiButton,
-        tsvButton
     };
 }
 

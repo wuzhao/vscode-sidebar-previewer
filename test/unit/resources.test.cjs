@@ -94,12 +94,15 @@ const {
     const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
     const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
 
-    assert.ok(/\.table-preview td\.selected,[\s\S]*?\.table-preview th\.selected[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
-    assert.ok(/#content\.preview-focused \.table-preview td\.selected,[\s\S]*?#content\.preview-focused \.table-preview th\.selected/s.test(css));
+    assert.ok(/\.table-preview td\.selected\s*\{[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
+    assert.ok(/#content\.preview-focused \.table-preview td\.selected\s*\{[\s\S]*?color-mix\(in srgb, var\(--vscode-button-background\) 35%, transparent 65%\)/s.test(css));
+    assert.ok(/\.table-preview th\.selected\s*\{[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
+    assert.ok(/#content\.preview-focused \.table-preview th\.selected\s*\{[\s\S]*?--vscode-list-activeSelectionBackground/s.test(css));
     assert.ok(/\.data-tree \.tree-item\.is-highlight[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
     assert.ok(/#content\.preview-focused \.data-tree \.tree-item\.is-highlight/s.test(css));
     assert.ok(css.includes('.table-selection-copy-btn'));
     assert.ok(/\.table-selection-actions\s*\{[^}]*z-index:\s*1;/s.test(css));
+    assert.ok(/\.table-selection-actions\s*\{[^}]*flex-direction:\s*column;/s.test(css));
     assert.ok(/\.table-selection-copy-btn\s*\{[^}]*transition:\s*transform 80ms ease, box-shadow 120ms ease;/s.test(css));
     assert.ok(/\.table-selection-copy-btn:active\s*\{[^}]*transform:\s*translateY\(1px\);/s.test(css));
     assert.ok(/\.table-selection-copy-btn\.copied\s*\{[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
@@ -107,11 +110,16 @@ const {
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*z-index:\s*2;/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*user-select:\s*none;[^}]*-webkit-user-select:\s*none;/s.test(css));
 
+    assert.ok(tableJs.includes('L10N_TEXT.tableSelectionMarkdown'));
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionAscii'));
-    assert.ok(tableJs.includes('L10N_TEXT.tableSelectionTsv'));
     assert.ok(tableJs.includes('table-selection-copy-btn'));
     assert.ok(tableJs.includes('codicon-copy'));
+    assert.ok(tableJs.includes('function buildMarkdownTableText(headerRow, bodyGrid)'));
     assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
+    assert.ok(tableJs.includes('function buildSelectionCopySnapshot(selectedCells)'));
+    assert.ok(tableJs.includes('function buildGridWithHeader(snapshot)'));
+    assert.ok(tableJs.includes('function isFullWidthCodePoint(codePoint)'));
+    assert.ok(tableJs.includes("const topBorder = buildAsciiBorder(widths, '┌', '┬', '┐');"));
     assert.ok(tableJs.includes('const TABLE_SELECTION_COPY_SUCCESS_MS = 800;'));
     assert.ok(tableJs.includes('function showTableCopySuccess(copyBtn, defaultText)'));
     assert.ok(tableJs.includes('function lockTableSelectionCopyButtonSize(copyBtn)'));
@@ -123,10 +131,13 @@ const {
     assert.ok(tableJs.includes('L10N_TEXT.copySuccess'));
     assert.equal(tableJs.includes('TABLE_SELECTION_COPY_FADE_MS'), false);
     assert.equal(tableJs.includes('fade-out'), false);
+    assert.ok(tableJs.includes("markdownButton.addEventListener('mouseenter', () => {"));
+    assert.ok(tableJs.includes("markdownButton.addEventListener('mouseleave', () => {"));
     assert.ok(tableJs.includes("asciiButton.addEventListener('mouseenter', () => {"));
     assert.ok(tableJs.includes("asciiButton.addEventListener('mouseleave', () => {"));
-    assert.ok(tableJs.includes("tsvButton.addEventListener('mouseenter', () => {"));
-    assert.ok(tableJs.includes("tsvButton.addEventListener('mouseleave', () => {"));
+    assert.equal(tableJs.includes("tsvButton.addEventListener('mouseenter', () => {"), false);
+    assert.equal(tableJs.includes("tsvButton.addEventListener('mouseleave', () => {"), false);
+    assert.equal(tableJs.includes("tsvButton.addEventListener('click', async (e) => {"), false);
     assert.ok(tableJs.includes("updateTableCopyButtonHoverState(copyBtn, copyBtn.matches(':hover'), defaultText);"));
     assert.ok(tableJs.includes('if (!isPreviewContentFocused()) {'));
     assert.ok(tableJs.includes("document.addEventListener('focusin', handleTableSelectionFocusChange);"));
@@ -144,19 +155,23 @@ const {
     assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'yaml', 'toml', 'xml']);"));
     assert.ok(/document\.addEventListener\('keydown', \(e\) => \{[\s\S]*?e\.key\.toLowerCase\(\) !== 'a'[\s\S]*?NO_SELECT_ALL_FILE_TYPES\.has\(currentFileType\)[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?\}, true\);/s.test(commonJs));
     assert.ok(commonJs.includes("tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions'"));
-    assert.ok(commonJs.includes("tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy As ASCII'"));
-    assert.ok(commonJs.includes("tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy As TSV'"));
+    assert.ok(commonJs.includes("tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown Table'"));
+    assert.ok(commonJs.includes("tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy as ASCII Table'"));
+    assert.ok(commonJs.includes("tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy as TSV'"));
 
     assert.ok(previewProvider.includes('data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}"'));
+    assert.ok(previewProvider.includes('data-table-selection-markdown="${escapeHtml(i18n.tableSelectionMarkdownTable)}"'));
     assert.ok(previewProvider.includes('data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}"'));
     assert.ok(previewProvider.includes('data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}"'));
 
     assert.ok(i18n.includes('tableSelectionMore'));
+    assert.ok(i18n.includes('tableSelectionMarkdownTable'));
     assert.ok(i18n.includes('tableSelectionAsciiTable'));
     assert.ok(i18n.includes('tableSelectionTsv'));
     assert.ok(i18n.includes("tableSelectionMore: 'Actions'"));
-    assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy As ASCII'"));
-    assert.ok(i18n.includes("tableSelectionTsv: 'Copy As TSV'"));
+    assert.ok(i18n.includes("tableSelectionMarkdownTable: 'Copy as Markdown Table'"));
+    assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy as ASCII Table'"));
+    assert.ok(i18n.includes("tableSelectionTsv: 'Copy as TSV'"));
   });
 
   test('Task H datatree highlight prefers XML array index and avoids root over-highlight', () => {

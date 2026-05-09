@@ -23,6 +23,7 @@
   "runtime.viewPreview": "预览",
   "runtime.previewError": "预览失败",
   "runtime.tableSelectionMore": "操作",
+  "runtime.tableSelectionMarkdownTable": "复制为 Markdown",
   "runtime.tableSelectionAsciiTable": "复制为 ASCII",
   "runtime.tableSelectionTsv": "复制为 TSV",
   "runtime.locatorCopied": "已复制定位表达式: {0}",

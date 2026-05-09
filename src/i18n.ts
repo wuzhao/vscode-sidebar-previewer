@@ -16,6 +16,7 @@ interface I18nStrings {
     viewPreview: string;
     previewError: string;
     tableSelectionMore: string;
+    tableSelectionMarkdownTable: string;
     tableSelectionAsciiTable: string;
     tableSelectionTsv: string;
     locatorCopied: string;
@@ -50,6 +51,7 @@ const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {
     viewPreview: 'runtime.viewPreview',
     previewError: 'runtime.previewError',
     tableSelectionMore: 'runtime.tableSelectionMore',
+    tableSelectionMarkdownTable: 'runtime.tableSelectionMarkdownTable',
     tableSelectionAsciiTable: 'runtime.tableSelectionAsciiTable',
     tableSelectionTsv: 'runtime.tableSelectionTsv',
     locatorCopied: 'runtime.locatorCopied',
@@ -67,8 +69,9 @@ const FALLBACK_STRINGS: I18nStrings = {
     viewPreview: 'Preview',
     previewError: 'Preview Failed',
     tableSelectionMore: 'Actions',
-    tableSelectionAsciiTable: 'Copy As ASCII',
-    tableSelectionTsv: 'Copy As TSV',
+    tableSelectionMarkdownTable: 'Copy as Markdown Table',
+    tableSelectionAsciiTable: 'Copy as ASCII Table',
+    tableSelectionTsv: 'Copy as TSV',
     locatorCopied: 'Copied Locator: {0}',
     locatorUnavailable: 'No highlighted data tree region available'
 };
@@ -183,6 +186,9 @@ export const i18n = {
     },
     get tableSelectionMore(): string {
         return getString('tableSelectionMore');
+    },
+    get tableSelectionMarkdownTable(): string {
+        return getString('tableSelectionMarkdownTable');
     },
     get tableSelectionAsciiTable(): string {
         return getString('tableSelectionAsciiTable');

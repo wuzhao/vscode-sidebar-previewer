@@ -79,7 +79,7 @@
 ## 0.3.8 - 2026-04-28
 
 - Added focus-aware selection colors for CSV/TSV cells and JSON/YAML/TOML/XML tree items (focused: blue, unfocused: gray).
-- CSV/TSV multi-cell selection now shows actions with `Copy As ASCII` and `Copy As TSV`.
+- CSV/TSV multi-cell selection now shows actions with `Copy as ASCII` and `Copy as TSV`.
 - CSV/TSV supports `Cmd/Ctrl+C` to copy the selected area.
 
 ～～～
