@@ -1,10 +1,10 @@
 /* CODEBLOCK START */
 /* Code block copy button */
-pre {
+.code-block-wrapper {
     position: relative;
 }
 
-pre:hover .copy-btn {
+.code-block-wrapper:hover .copy-btn {
     opacity: 1;
 }
 

@@ -12,19 +12,41 @@ const CODE_BLOCK_COPY_RESET_MS = 800;
 function addCodeBlockButtons() {
     const preBlocks = document.querySelectorAll('pre');
     preBlocks.forEach(pre => {
+        const wrapper = ensureCodeBlockWrapper(pre);
         // 避免重复添加
-        if (pre.querySelector('.copy-btn')) {
+        if (wrapper.querySelector('.copy-btn')) {
             return;
         }
-        addCopyButton(pre);
+        addCopyButton(pre, wrapper);
     });
+}
+
+/**
+ * 确保代码块拥有用于固定按钮的容器
+ * @param pre - 目标代码块容器
+ * @returns 返回承载复制按钮的固定定位容器
+ */
+function ensureCodeBlockWrapper(pre) {
+    const parent = pre.parentElement;
+    if (parent && parent.classList.contains('code-block-wrapper')) {
+        return parent;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block-wrapper';
+    if (parent) {
+        parent.insertBefore(wrapper, pre);
+    }
+    wrapper.appendChild(pre);
+    return wrapper;
 }
 
 /**
  * 处理复制按钮相关逻辑并返回结果
  * @param pre - 目标代码块容器
+ * @param wrapper - 承载复制按钮的固定定位容器
  */
-function addCopyButton(pre) {
+function addCopyButton(pre, wrapper) {
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy-btn';
     copyBtn.title = L10N_TEXT.copyCode;
@@ -116,7 +138,7 @@ function addCopyButton(pre) {
         updateCopyButtonHoverState(false);
     });
 
-    pre.appendChild(copyBtn);
+    wrapper.appendChild(copyBtn);
 }
 
     // 向公共注册中心登记：始终激活（适用于所有文件类型）
