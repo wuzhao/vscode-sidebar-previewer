@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.14-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.15-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.ja-JP.md)
 
@@ -62,6 +62,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Collapsible tree view
 - Expand all / collapse all
 - Click key to jump to source line
+- Copy highlighted data-tree locator as jq/yq-style path from toolbar
 - Comment icon on keys with hover tooltip
 - Focus-aware selection highlight (blue when focused, gray when unfocused)
 

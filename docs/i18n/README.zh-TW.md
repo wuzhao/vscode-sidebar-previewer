@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.14-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.15-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [簡體中文](./README.zh-CN.md) | [繁體中文-臺灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -62,6 +62,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 可摺疊樹形檢視
 - 全部展開 / 全部摺疊
 - 點選鍵名跳轉原始碼行
+- 支援從工具列複製目前高亮節點的定位路徑（jq/yq 風格）
 - 含註解的鍵會顯示註解圖示，滑鼠懸停可查看註解內容
 - 選取條目高亮支援焦點狀態（取得焦點為藍色，失焦為灰色）
 

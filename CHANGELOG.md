@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.15 - 2026-05-12
+
+- Fixed the copy button is displayed in the wrong position within Markdown code blocks.
+- Fixed TOML inline-table locate mapping so child keys under inline objects can be clicked reliably in the data tree.
+- Updated TOML inline-table comment ownership so comments on parent keys no longer appear on each inline child key.
+- Normalized copied data-tree locators for JSON/YAML/TOML/XML to avoid duplicated leading dots and improve jq/yq compatibility.
+
+～～～
+
+- 修复 Markdown 的代码框中，复制代码按钮显示位置的问题
+- 修复 TOML 内联表定位映射，数据树中可稳定点击内联对象子键并跳转到源码对应行。
+- 调整 TOML 内联表注释归属，父键行内注释不再重复显示在各子键上。
+- 优化 JSON/YAML/TOML/XML 复制定位路径的归一化，避免前导点重复，提升 jq/yq 等命令兼容性。
+
 ## 0.3.14 - 2026-05-09
 
 - Added multi-cell quick action `Copy as Markdown Table` for CSV/TSV preview, while keeping `Copy as ASCII Table` and `Cmd/Ctrl+C` TSV copy behavior.

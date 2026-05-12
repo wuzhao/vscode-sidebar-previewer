@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.14-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.15-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -62,6 +62,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 折りたたみ可能なツリー表示
 - すべて展開 / すべて折りたたむ
 - キー（項目）をクリックしてソース行へジャンプ
+- ツールバーから現在のハイライト項目のロケータを jq/yq 形式でコピー可能
 - コメント付きキーにはアイコンを表示し、ホバーで内容を確認可能
 - 選択項目のハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
 
