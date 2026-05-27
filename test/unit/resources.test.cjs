@@ -34,6 +34,8 @@ const {
 
     assert.ok(css.includes('.table-preview-scroll'));
     assert.ok(/\.table-preview-scroll\s*\{[^}]*max-height:\s*[^;]+;/s.test(css));
+    assert.ok(/\.table-preview-scroll\s*\{[^}]*--table-selection-actions-safe-space:\s*[^;]+;/s.test(css));
+    assert.ok(/\.table-preview-scroll\s*\{[^}]*padding-bottom:\s*var\(--table-selection-actions-safe-space\);/s.test(css));
     assert.ok(/\.table-preview thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
     assert.ok(/\.table-preview tbody tr:nth-child\(2n\) \.table-index-column\s*\{[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
