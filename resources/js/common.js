@@ -29,9 +29,9 @@ const VALID_MESSAGE_TYPES = new Set([
     'getHighlightedDataTreeLocator'
 ]);
 // 需要启用数据树交互能力的文件类型枚举
-const DATA_TREE_FILE_TYPES = new Set(['json', 'yaml', 'toml', 'xml']);
+const DATA_TREE_FILE_TYPES = new Set(['json', 'jsonl', 'yaml', 'toml', 'xml']);
 // 需要禁用全选快捷键的文件类型枚举
-const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'yaml', 'toml', 'xml']);
+const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'jsonl', 'yaml', 'toml', 'xml']);
 // 预览缩放可选档位配置
 const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
 // Mermaid 渲染超时时间（毫秒）
@@ -273,7 +273,7 @@ function resolveCssScopes(fileType) {
         scopes.add('table');
         return scopes;
     }
-    if (fileType === 'json' || fileType === 'yaml' || fileType === 'toml' || fileType === 'xml') {
+    if (fileType === 'json' || fileType === 'jsonl' || fileType === 'yaml' || fileType === 'toml' || fileType === 'xml') {
         scopes.add('datatree');
         return scopes;
     }

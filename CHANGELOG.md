@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.16 - 2026-05-27
+
+- Added JSONL (`.jsonl`) sidebar preview with data-tree rendering and interaction behavior aligned with JSON.
+- Fixed CSV/TSV multi-cell copy action buttons being clipped near the bottom edge for short tables.
+
+～～～
+
+- 新增 JSONL（`.jsonl`）侧边栏预览，数据树渲染与交互行为与 JSON 保持一致。
+- 修复 CSV/TSV 在短表格场景下多单元格复制按钮可能被底部边界裁剪的问题。
+
 ## 0.3.15 - 2026-05-12
 
 - Fixed the copy button is displayed in the wrong position within Markdown code blocks.

@@ -1,6 +1,6 @@
 # 项目架构概览
 
-**Sidebar Previewer** 是一个 VS Code 侧边栏扩展，能在侧边栏 Webview 面板中实时预览当前活动编辑器的文件内容。支持九种文件格式：Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV、TSV。
+**Sidebar Previewer** 是一个 VS Code 侧边栏扩展，能在侧边栏 Webview 面板中实时预览当前活动编辑器的文件内容。支持十种文件格式：Markdown、LaTeX、Mermaid、JSON、JSONL、YAML、TOML、XML、CSV、TSV。
 
 核心设计思路是：**TypeScript 宿主进程（Extension Host）负责解析和状态管理，Webview 负责渲染和交互**，两者通过 `postMessage` 协议通信。文件格式通过独立的 Provider 类分别处理，统一由 `PreviewProvider` 协调调度。
 
@@ -37,7 +37,7 @@
 │   │                                                               │   │
 │   │  markdownPreviewProvider.ts → Markdown + front matter         │   │
 │   │  latexPreviewProvider.ts    → LaTeX → HTML + KaTeX 占位       │   │
-│   │  datatreePreviewProvider.ts → JSON/YAML/TOML/XML → 树形 HTML  │   │
+│   │  datatreePreviewProvider.ts → JSON/JSONL/YAML/TOML/XML → 树形 HTML  │   │
 │   │  mermaidPreviewProvider.ts  → Mermaid → 原始代码块            │   │
 │   │  tablePreviewProvider.ts    → CSV/TSV → HTML 表格             │   │
 │   │                                                               │   │

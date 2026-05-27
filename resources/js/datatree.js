@@ -823,9 +823,9 @@ function collapseAllNodes() {
     details.forEach(d => d.removeAttribute('open'));
 }
 
-// 向公共注册中心登记：仅在数据树类型（JSON/YAML/TOML/XML）文件时激活
+// 向公共注册中心登记：仅在数据树类型（JSON/JSONL/YAML/TOML/XML）文件时激活
 PreviewCommon.registerDomainInit(
-    ['json', 'yaml', 'toml', 'xml'],
+    ['json', 'jsonl', 'yaml', 'toml', 'xml'],
     'datatree',
     function(fileType, messageData) {
         currentDataTreeFileType = fileType;

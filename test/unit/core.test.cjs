@@ -78,22 +78,26 @@ test('Provider locate capabilities stay consistent with file type capabilities',
     const latexResult = LatexPreviewProvider.parse('\\section{Intro}');
     const mermaidResult = MermaidPreviewProvider.parse('graph TD\nA-->B');
     const jsonResult = CodePreviewProvider.parse('{"k": 1}', 'json');
+  const jsonlResult = CodePreviewProvider.parse('{"k": 1}\n{"k": 2}', 'jsonl');
   const xmlResult = CodePreviewProvider.parse('<root><k>1</k></root>', 'xml');
   const csvResult = TablePreviewProvider.parse('name,age\nAlice,20', 'csv');
 
     assert.equal(latexResult.supportsLocate, supportsLocate('latex'));
     assert.equal(mermaidResult.supportsLocate, supportsLocate('mermaid'));
     assert.equal(jsonResult.supportsLocate, supportsLocate('json'));
+  assert.equal(jsonlResult.supportsLocate, supportsLocate('jsonl'));
   assert.equal(xmlResult.supportsLocate, supportsLocate('xml'));
   assert.equal(csvResult.supportsLocate, supportsLocate('csv'));
 
     assert.equal(isDataTreeType('json'), true);
+    assert.equal(isDataTreeType('jsonl'), true);
     assert.equal(isDataTreeType('yaml'), true);
     assert.equal(isDataTreeType('toml'), true);
   assert.equal(isDataTreeType('xml'), true);
   assert.equal(isDataTreeType('csv'), false);
     assert.equal(isDataTreeType('markdown'), false);
     assert.equal(getFileType('settings.jsonc'), 'json');
+  assert.equal(getFileType('events.jsonl'), 'jsonl');
   assert.equal(getFileType('report.xml'), 'xml');
   assert.equal(getFileType('dataset.csv'), 'csv');
   assert.equal(getFileType('dataset.tsv'), 'tsv');
@@ -198,22 +202,29 @@ test('CodePreviewProvider parses JSON comment-tolerant mode (comments and traili
     assert.equal(result.html.includes('Failed to parse JSON content.'), false);
 });
 
-test('Supported JSON/YAML/TOML fixtures parse successfully', () => {
+test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
     const jsonSource = readSupportedFixture('json.json');
+  const jsonlSource = readSupportedFixture('jsonl.jsonl');
     const yamlSource = readSupportedFixture('yaml.yaml');
     const tomlSource = readSupportedFixture('toml.toml');
 
     const jsonResult = CodePreviewProvider.parse(jsonSource, 'json');
+  const jsonlResult = CodePreviewProvider.parse(jsonlSource, 'jsonl');
     const yamlResult = CodePreviewProvider.parse(yamlSource, 'yaml');
     const tomlResult = CodePreviewProvider.parse(tomlSource, 'toml');
 
     assert.equal(jsonResult.fileType, 'json');
+  assert.equal(jsonlResult.fileType, 'jsonl');
     assert.equal(yamlResult.fileType, 'yaml');
     assert.equal(tomlResult.fileType, 'toml');
 
     assert.equal(jsonResult.html.includes('Failed to parse JSON content.'), false);
+  assert.equal(jsonlResult.html.includes('Failed to parse JSONL content.'), false);
     assert.equal(yamlResult.html.includes('Failed to parse YAML content.'), false);
     assert.equal(tomlResult.html.includes('Failed to parse TOML content.'), false);
+
+  assert.ok(jsonlResult.html.includes('<span class="tree-index" data-line="0">0</span>'));
+  assert.ok(jsonlResult.html.includes('<span class="tree-index" data-line="1">1</span>'));
 
     const jsonPayloads = extractCommentPayloads(jsonResult.html);
     const yamlPayloads = extractCommentPayloads(yamlResult.html);

@@ -1,5 +1,5 @@
 // 文件预览类型
-export type FileType = 'markdown' | 'latex' | 'mermaid' | 'json' | 'yaml' | 'toml' | 'xml' | 'csv' | 'tsv';
+export type FileType = 'markdown' | 'latex' | 'mermaid' | 'json' | 'jsonl' | 'yaml' | 'toml' | 'xml' | 'csv' | 'tsv';
 
 /**
  * 标题/节点信息（用于定位）
@@ -55,6 +55,11 @@ const FILE_TYPE_CAPABILITIES: Record<FileType, FileTypeCapabilities> = {
     },
     json: {
         extensions: ['.json', '.jsonc'],
+        supportsLocate: false,
+        isDataTree: true,
+    },
+    jsonl: {
+        extensions: ['.jsonl'],
         supportsLocate: false,
         isDataTree: true,
     },

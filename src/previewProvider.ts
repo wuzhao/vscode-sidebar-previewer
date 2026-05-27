@@ -559,6 +559,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                     this._currentHeadings = [];
                     break;
                 case 'json':
+                case 'jsonl':
                 case 'yaml':
                 case 'toml':
                 case 'xml':

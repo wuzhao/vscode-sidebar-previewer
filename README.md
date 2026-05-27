@@ -1,10 +1,10 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.15-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.16-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.ja-JP.md)
 
-Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, TOML, XML, CSV, and TSV.
+Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, JSONL, YAML, TOML, XML, CSV, and TSV.
 
 ## Why do you need it?
 
@@ -19,7 +19,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | | | |
 | -- | -- | -- |
 | Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTeX ![LaTeX](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
-| CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / YAML / TOML / XML ![JSON / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
+| CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / JSONL / YAML / TOML / XML ![JSON / JSONL / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
 
 ## Supported Files
 
@@ -29,6 +29,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | LaTeX | `.tex`, `.katex`, `.latex` |
 | Mermaid | `.mmd`, `.mermaid` |
 | JSON | `.json`, `.jsonc` |
+| JSONL | `.jsonl` |
 | YAML | `.yml`, `.yaml` |
 | TOML | `.toml` |
 | XML | `.xml` |
@@ -57,7 +58,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Basic syntax precheck with clear error feedback
 - Drag-to-pan interaction when zoomed
 
-### JSON / YAML / TOML / XML
+### JSON / JSONL / YAML / TOML / XML
 
 - Collapsible tree view
 - Expand all / collapse all
@@ -97,12 +98,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## Usage
 
-1. Open any supported file (`.md`, `.markdown`, `.tex`, `.katex`, `.latex`, `.mmd`, `.mermaid`, `.json`, `.jsonc`, `.yml`, `.yaml`, `.toml`, `.xml`, `.csv`, `.tsv`)
+1. Open any supported file (`.md`, `.markdown`, `.tex`, `.katex`, `.latex`, `.mmd`, `.mermaid`, `.json`, `.jsonc`, `.jsonl`, `.yml`, `.yaml`, `.toml`, `.xml`, `.csv`, `.tsv`)
 2. Click the Sidebar Previewer icon in the Activity Bar
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
-6. In JSON/YAML/TOML/XML preview, selected entries use focus-aware highlight (focused blue / unfocused gray); CSV/TSV preview keeps sticky headers, supports cell locate, focus-aware highlight, multi-cell copy actions (`Copy as Markdown Table` / `Copy as ASCII Table`), and `Cmd/Ctrl+C` copy behavior
+6. In JSON/JSONL/YAML/TOML/XML preview, selected entries use focus-aware highlight (focused blue / unfocused gray); CSV/TSV preview keeps sticky headers, supports cell locate, focus-aware highlight, multi-cell copy actions (`Copy as Markdown Table` / `Copy as ASCII Table`), and `Cmd/Ctrl+C` copy behavior
 
 ## How to show the VS Code Secondary Side Bar?
 

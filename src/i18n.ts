@@ -29,6 +29,7 @@ const SUPPORTED_EXTENSIONS = [
     'LaTeX (.tex / .latex / .katex)',
     'Mermaid (.mmd / .mermaid)',
     'JSON (.json / .jsonc)',
+    'JSONL (.jsonl)',
     'YAML (.yml / .yaml)',
     'TOML (.toml)',
     'XML (.xml)',

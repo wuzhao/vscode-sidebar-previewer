@@ -296,6 +296,68 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return /[0-9]/.test(token);
         }
 
+        /**
+             * 构建JSONL数组元素行索引供后续流程复用
+             * @param lines - 按行拆分后的源文本
+             * @param parsedData - 已解析的结构化数据
+             * @returns 返回构建后的数据结构
+             */
+            protected static buildJsonlArrayItemLineIndex(lines: string[], parsedData: unknown): number[] {
+                const recordLines = lines.reduce((acc: number[], line, index) => {
+                    if (line.trim().length > 0) {
+                        acc.push(index);
+                    }
+                    return acc;
+                }, []);
+
+                const result: number[] = [];
+                const recordCursor = { index: 0 };
+                this.collectJsonlArrayItemLines(parsedData, recordLines, recordCursor, -1, true, result);
+                return result;
+            }
+
+        /**
+             * 收集JSONL数组项行号并写入结果
+             * @param value - 待处理的数据对象
+             * @param recordLines - JSONL记录行号集合
+             * @param recordCursor - JSONL根记录游标
+             * @param currentLine - 当前父级上下文行号
+             * @param isRootArray - 当前数组是否为根记录数组
+             * @param result - 数组元素行结果集合
+             */
+            protected static collectJsonlArrayItemLines(
+                value: unknown,
+                recordLines: number[],
+                recordCursor: { index: number },
+                currentLine: number,
+                isRootArray: boolean,
+                result: number[]
+            ): void {
+                if (Array.isArray(value)) {
+                    for (const item of value) {
+                        let itemLine = currentLine;
+                        if (isRootArray) {
+                            itemLine = recordCursor.index < recordLines.length
+                                ? recordLines[recordCursor.index]
+                                : -1;
+                            recordCursor.index += 1;
+                        }
+
+                        result.push(itemLine);
+                        this.collectJsonlArrayItemLines(item, recordLines, recordCursor, itemLine, false, result);
+                    }
+                    return;
+                }
+
+                if (!value || typeof value !== 'object') {
+                    return;
+                }
+
+                for (const child of Object.values(value as Record<string, unknown>)) {
+                    this.collectJsonlArrayItemLines(child, recordLines, recordCursor, currentLine, false, result);
+                }
+            }
+
     /**
          * 解析JSON 或 JSONC并返回结构化结果
          * @param content - 待解析的文件内容
@@ -308,6 +370,32 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
                 return JSON.parse(this.sanitizeJsonc(content));
             }
         }
+
+        /**
+             * 解析JSONL并返回结构化结果
+             * @param content - 待解析的文件内容
+             * @returns 返回结构化结果
+             */
+            protected static parseJsonl(content: string): unknown[] {
+                const lines = content.split(/\r?\n/);
+                const records: unknown[] = [];
+
+                for (let i = 0; i < lines.length; i++) {
+                    const rawLine = lines[i].trim();
+                    if (rawLine.length === 0) {
+                        continue;
+                    }
+
+                    try {
+                        records.push(this.parseJsonOrJsonc(rawLine));
+                    } catch (error) {
+                        const message = error instanceof Error ? error.message : String(error);
+                        throw new Error(`Invalid JSONL line ${i + 1}: ${message}`);
+                    }
+                }
+
+                return records;
+            }
 
     /**
          * 处理JSONC相关逻辑并返回结果

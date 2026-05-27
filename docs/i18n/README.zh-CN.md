@@ -1,10 +1,10 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.3.15-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.3.16-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
-VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支持包括 Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV 和 TSV。
+VS Code 的侧边栏预览器，支持实时渲染、滚动同步、树形视图、缩放控制等功能，多文件格式支持包括 Markdown、LaTeX、Mermaid、JSON、JSONL、YAML、TOML、XML、CSV 和 TSV。
 
 ## 为什么需要它？
 
@@ -19,7 +19,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | | | |
 | -- | -- | -- |
 | Markdown ![Markdown](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/md.png) | LaTeX ![LaTeX](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/tex.png) | Mermaid ![Mermaid](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/mmd.png) |
-| CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / YAML / TOML / XML ![JSON / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
+| CSV / TSV ![CSV / TSV](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/csv.png) | JSON / JSONL / YAML / TOML / XML ![JSON / JSONL / YAML / TOML / XML](https://raw.githubusercontent.com/wuzhao/assets/main/screenshots/vscode-sidebar-previewer/json.png) | |
 
 ## 支持的文件类型
 
@@ -29,6 +29,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 | LaTeX | `.tex`、`.katex`、`.latex` |
 | Mermaid | `.mmd`、`.mermaid` |
 | JSON | `.json`、`.jsonc` |
+| JSONL | `.jsonl` |
 | YAML | `.yml`、`.yaml` |
 | TOML | `.toml` |
 | XML | `.xml` |
@@ -57,7 +58,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 基础语法预检查与错误提示
 - 放大后支持拖拽平移
 
-### JSON / YAML / TOML / XML
+### JSON / JSONL / YAML / TOML / XML
 
 - 可折叠树形视图
 - 全部展开 / 全部折叠
@@ -97,12 +98,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ## 使用方法
 
-1. 打开任意支持的文件（`.md`、`.markdown`、`.tex`、`.katex`、`.latex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.yml`、`.yaml`、`.toml`、`.xml`、`.csv`、`.tsv`）
+1. 打开任意支持的文件（`.md`、`.markdown`、`.tex`、`.katex`、`.latex`、`.mmd`、`.mermaid`、`.json`、`.jsonc`、`.jsonl`、`.yml`、`.yaml`、`.toml`、`.xml`、`.csv`、`.tsv`）
 2. 点击左侧 Activity Bar 中的 Sidebar Previewer 图标
 3. 预览面板会自动显示当前文件的渲染结果
 4. 使用工具栏或 `Cmd/Ctrl` + 鼠标滚轮进行缩放
 5. Mermaid 预览支持拖拽查看放大区域
-6. JSON / YAML / TOML / XML 可点击键名跳转到源码对应行并提供焦点态高亮；CSV / TSV 预览为表格视图，支持首行首列固定、点击单元格定位、焦点态高亮、多选复制快捷操作（「复制为 Markdown」/「复制为 ASCII」）与 `Cmd/Ctrl+C` 复制
+6. JSON / JSONL / YAML / TOML / XML 可点击键名跳转到源码对应行并提供焦点态高亮；CSV / TSV 预览为表格视图，支持首行首列固定、点击单元格定位、焦点态高亮、多选复制快捷操作（「复制为 Markdown」/「复制为 ASCII」）与 `Cmd/Ctrl+C` 复制
 
 ## 如何显示 VS Code 第二侧边栏？
 

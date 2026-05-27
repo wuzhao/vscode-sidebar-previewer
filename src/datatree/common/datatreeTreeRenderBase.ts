@@ -66,7 +66,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
             const sourceLine = line < sourceLines.length ? sourceLines[line] : '';
             const isTomlTableArrayLine = fileType === 'toml' && this.isTomlTableArrayLine(sourceLine);
             const shouldBindTomlTableArrayToIndex = isTomlTableArrayLine && this.shouldRenderTomlTableArrayOnIndex(line, sourceLines);
-            const isJsonInlineObjectLine = fileType === 'json' && /^\s*\{/.test(sourceLine);
+            const isJsonInlineObjectLine = (fileType === 'json' || fileType === 'jsonl') && /^\s*\{/.test(sourceLine);
 
             if (fileType === 'toml' && entryKey !== null && this.shouldSkipTomlInlineTableChildComment(sourceLine, entryKey)) {
                 return '';
@@ -86,7 +86,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                 return '';
             }
 
-            if (fileType === 'json' && entryKey !== null && isJsonInlineObjectLine) {
+            if ((fileType === 'json' || fileType === 'jsonl') && entryKey !== null && isJsonInlineObjectLine) {
                 return '';
             }
 

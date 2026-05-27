@@ -34,8 +34,8 @@ const {
 
     assert.ok(css.includes('.table-preview-scroll'));
     assert.ok(/\.table-preview-scroll\s*\{[^}]*max-height:\s*[^;]+;/s.test(css));
-    assert.ok(/\.table-preview-scroll\s*\{[^}]*--table-selection-actions-safe-space:\s*[^;]+;/s.test(css));
-    assert.ok(/\.table-preview-scroll\s*\{[^}]*padding-bottom:\s*var\(--table-selection-actions-safe-space\);/s.test(css));
+    assert.ok(/\.table-preview-scroll\s*\{[^}]*--table-selection-[^:;]*safe-space:\s*[^;]+;/s.test(css));
+    assert.ok(/\.table-preview-scroll\s*\{[^}]*padding-bottom:\s*var\(--table-selection-(?:[a-z-]*?)safe-space\);/s.test(css));
     assert.ok(/\.table-preview thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*position:\s*sticky;[^}]*left:\s*0;[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
     assert.ok(/\.table-preview tbody tr:nth-child\(2n\) \.table-index-column\s*\{[^}]*background-color:\s*var\(--vscode-sideBar-background\);/s.test(css));
@@ -154,7 +154,8 @@ const {
 
     assert.ok(commonJs.includes('function focusPreviewContent()'));
     assert.ok(commonJs.includes("content.classList.toggle('preview-focused', !!focused);"));
-    assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'yaml', 'toml', 'xml']);"));
+    assert.ok(commonJs.includes("const DATA_TREE_FILE_TYPES = new Set(['json', 'jsonl', 'yaml', 'toml', 'xml']);"));
+    assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'jsonl', 'yaml', 'toml', 'xml']);"));
     assert.ok(/document\.addEventListener\('keydown', \(e\) => \{[\s\S]*?e\.key\.toLowerCase\(\) !== 'a'[\s\S]*?NO_SELECT_ALL_FILE_TYPES\.has\(currentFileType\)[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?\}, true\);/s.test(commonJs));
     assert.ok(commonJs.includes("tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions'"));
     assert.ok(commonJs.includes("tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown Table'"));
@@ -453,6 +454,7 @@ const {
 
     assert.ok(i18n.includes('const SUPPORTED_EXTENSIONS = ['));
     assert.ok(i18n.includes('const SUPPORTED_LIST_HTML = SUPPORTED_EXTENSIONS.map('));
+    assert.ok(i18n.includes("'JSONL (.jsonl)'"));
     assert.ok(i18n.includes('const I18N_STRINGS: Record<string, I18nStrings> = {'));
     assert.ok(i18n.includes('const AVAILABLE_LOCALES = Object.keys(I18N_STRINGS) as LocaleKey[];'));
     assert.ok(i18n.includes('const LOCALE_LOOKUP = new Map<string, LocaleKey>('));

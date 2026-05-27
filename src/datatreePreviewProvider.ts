@@ -21,7 +21,7 @@ export class CodePreviewProvider extends DatatreeXmlFileTypeBase {
             const commentMetadata = this.buildCommentMetadata(lines, fileType);
             const lineLocator = this.createKeyLineLocator(lines, fileType);
             const arrayItemLineLocator = this.createArrayItemLineLocator(lines, fileType, parsed);
-            const jsonCloseLineLocator = fileType === 'json' ? this.createJsonCloseLineLocator(lines) : null;
+            const jsonCloseLineLocator = (fileType === 'json' || fileType === 'jsonl') ? this.createJsonCloseLineLocator(lines) : null;
             const yamlCloseLineLocator = fileType === 'yaml' ? this.createYamlCloseLineLocator(lines) : null;
             const xmlCloseLineLocator = fileType === 'xml' ? this.createXmlCloseLineLocator(lines) : null;
             const html = this.renderTree(
@@ -72,6 +72,8 @@ export class CodePreviewProvider extends DatatreeXmlFileTypeBase {
         switch (fileType) {
             case 'json':
                 return this.parseJsonOrJsonc(content);
+            case 'jsonl':
+                return this.parseJsonl(content);
             case 'yaml': {
                 const docs = yaml.loadAll(content);
                 return docs.length === 1 ? docs[0] : docs;

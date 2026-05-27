@@ -2,7 +2,7 @@
   "name": "sidebar-previewer",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "publisher": "MG12",
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
     "katex",
     "mermaid",
     "json",
+    "jsonl",
     "yaml",
     "toml",
     "xml",

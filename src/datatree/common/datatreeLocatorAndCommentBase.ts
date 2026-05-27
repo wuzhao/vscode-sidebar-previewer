@@ -33,6 +33,13 @@ export class DatatreeLocatorAndCommentBase {
         }
 
         /**
+         * 预留 JSONL 数组元素行索引实现入口供文件类型基类覆盖
+         */
+        protected static buildJsonlArrayItemLineIndex(..._args: any[]): any {
+            throw new Error('buildJsonlArrayItemLineIndex must be implemented by file type base');
+        }
+
+        /**
          * 预留 YAML 数组元素行索引实现入口供文件类型基类覆盖
          */
         protected static buildYamlArrayItemLineIndex(..._args: any[]): any {
@@ -219,6 +226,8 @@ export class DatatreeLocatorAndCommentBase {
             switch (fileType) {
                 case 'json':
                     return this.buildJsonArrayItemLineIndex(lines);
+                case 'jsonl':
+                    return this.buildJsonlArrayItemLineIndex(lines, parsedData);
                 case 'yaml':
                     // Root YAML document entries are resolved by renderTree directly.
                     // Keep the global array-item locator focused on real "-" items only.
@@ -365,6 +374,7 @@ export class DatatreeLocatorAndCommentBase {
 
             switch (fileType) {
                 case 'json':
+                case 'jsonl':
                     patterns.push(new RegExp(`^\\s*"${escaped}"\\s*(?:(?:\\/\\*.*?\\*\\/)\\s*)*:`));
                     break;
                 case 'yaml':
@@ -412,6 +422,7 @@ export class DatatreeLocatorAndCommentBase {
         protected static extractKeysFromLine(line: string, fileType: FileType): string[] {
             switch (fileType) {
                 case 'json':
+                case 'jsonl':
                     return this.extractJsonKeys(line);
                 case 'yaml':
                     return this.extractYamlKeys(line);
@@ -456,6 +467,7 @@ export class DatatreeLocatorAndCommentBase {
 
             switch (fileType) {
                 case 'json':
+                case 'jsonl':
                     return this.buildJsonCommentMetadata(lines, arrayItemLines);
                 case 'yaml':
                     return this.buildHashCommentMetadata(lines, 'yaml', arrayItemLines);
