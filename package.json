@@ -2,7 +2,7 @@
   "name": "sidebar-previewer",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "publisher": "MG12",
   "repository": {
     "type": "git",

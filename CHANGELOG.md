@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.17 - 2026-06-13
+
+- Refined Markdown frontmatter preview with a dedicated wrapper container, key icon markers, and long-key truncation for better readability.
+- Improved CSV/TSV table visual consistency with updated border and stripe styling details.
+
+～～～
+
+- 优化 Markdown frontmatter 预览：新增独立包裹容器、键名图标标识，并改进长键名截断展示。
+- 调整 CSV/TSV 表格边框与斑马纹细节，提升整体视觉一致性。
+
 ## 0.3.16 - 2026-05-27
 
 - Added JSONL (`.jsonl`) sidebar preview with data-tree rendering and interaction behavior aligned with JSON.
