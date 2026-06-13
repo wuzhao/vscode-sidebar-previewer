@@ -339,7 +339,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                     this._handleEditorScroll(e.visibleRanges);
                 }
             });
-            this._extensionContext.subscriptions.push(this._visibleRangesListener);
         }
     }
 
@@ -461,7 +460,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', false);
-        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasDataTreeHighlight', false);
         try {
             if (!this._view) {
                 return;
@@ -585,7 +583,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', locateSupported);
             vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', dataTree);
             this._updateDataTreeHighlightContext(false);
-            vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasDataTreeHighlight', false);
 
             const isTableType = fileType === 'csv' || fileType === 'tsv';
             const scrollTargetHeadingId = options?.suppressAutoScroll ? undefined
@@ -722,7 +719,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', false);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', false);
-        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasDataTreeHighlight', false);
         try {
             if (!this._view) {
                 return;

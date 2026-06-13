@@ -5,11 +5,8 @@ import {
     CommentEntry,
     CommentMarker,
     CommentMetadata,
-    JsonCloseLineLocator,
     KeyLineLocator,
     StandaloneCommentGroup,
-    YamlCloseLineLocator,
-    XmlCloseLineLocator,
 } from '../core/datatreeProviderTypes';
 
 /**

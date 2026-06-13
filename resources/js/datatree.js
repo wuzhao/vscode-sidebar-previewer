@@ -245,77 +245,6 @@ function isAncestorTreeItem(ancestor, treeItem) {
 }
 
 /**
- * 查找命中集合中的共同父元素键
- * @param lineItems - 同一行命中的树节点集合
- * @returns 返回共同父元素键
- */
-function findCommonParentTreeItemInMatches(lineItems) {
-    let best = null;
-    let bestDepth = -1;
-
-    lineItems.forEach(candidate => {
-        if (isTreeIndexTreeItem(candidate)) {
-            return;
-        }
-
-        const coversAll = lineItems.every(item => isAncestorTreeItem(candidate, item));
-        if (!coversAll) {
-            return;
-        }
-
-        const depth = getTreeItemDepth(candidate);
-        if (depth > bestDepth) {
-            best = candidate;
-            bestDepth = depth;
-        }
-    });
-
-    return best;
-}
-
-/**
- * 查找命中集合中最优共同父元素
- * @param lineItems - 同一行命中的树节点集合
- * @param options - 筛选选项
- * @returns 返回最优共同父元素
- */
-function findBestCoveredTreeItem(lineItems, options = {}) {
-    const {
-        onlyIndex = false,
-        excludeIndex = false,
-    } = options;
-
-    let best = null;
-    let bestDepth = -1;
-    let bestCoverage = -1;
-
-    lineItems.forEach(candidate => {
-        const isIndex = isTreeIndexTreeItem(candidate);
-        if (onlyIndex && !isIndex) {
-            return;
-        }
-
-        if (excludeIndex && isIndex) {
-            return;
-        }
-
-        const coverage = lineItems.filter(item => isAncestorTreeItem(candidate, item)).length;
-        if (coverage < 2) {
-            return;
-        }
-
-        const depth = getTreeItemDepth(candidate);
-        if (depth > bestDepth || (depth === bestDepth && coverage > bestCoverage)) {
-            best = candidate;
-            bestDepth = depth;
-            bestCoverage = coverage;
-        }
-    });
-
-    return best;
-}
-
-/**
  * 查找命中集合的最近共同外层节点
  * @param lineItems - 同一行命中的树节点集合
  * @returns 返回共同外层树节点
@@ -342,33 +271,6 @@ function findNearestCommonAncestorTreeItem(lineItems) {
     }
 
     return null;
-}
-
-/**
- * 查找命中集合中的最优成对共同外层
- * @param lineItems - 同一行命中的树节点集合
- * @returns 返回最优共同外层
- */
-function findBestPairCommonAncestorTreeItem(lineItems) {
-    let best = null;
-    let bestDepth = -1;
-
-    for (let i = 0; i < lineItems.length; i++) {
-        for (let j = i + 1; j < lineItems.length; j++) {
-            const pairAncestor = findNearestCommonAncestorTreeItem([lineItems[i], lineItems[j]]);
-            if (!pairAncestor) {
-                continue;
-            }
-
-            const depth = getTreeItemDepth(pairAncestor);
-            if (depth > bestDepth) {
-                best = pairAncestor;
-                bestDepth = depth;
-            }
-        }
-    }
-
-    return best;
 }
 
 /**
@@ -519,60 +421,6 @@ function resolveSingleRangeHighlightTarget(matchedItems) {
     }
 
     return pickOutermostTreeItem(uniqueItems);
-}
-
-/**
- * 按范围优先返回上一行锚点，不存在时返回下一行锚点
- * @param anchors - 带行号的锚点集合
- * @param range - 当前选中行范围
- * @returns 返回匹配到的锚点
- */
-function resolveFallbackAnchorByRange(anchors, range) {
-    let previousAnchor = null;
-    let previousLine = Number.NEGATIVE_INFINITY;
-    let nextAnchor = null;
-    let nextLine = Number.POSITIVE_INFINITY;
-
-    for (const anchor of anchors) {
-        const line = parseInt(anchor.getAttribute('data-line'), 10);
-        if (isNaN(line)) {
-            continue;
-        }
-
-        if (line <= range.from && line > previousLine) {
-            previousLine = line;
-            previousAnchor = anchor;
-        }
-
-        if (line > range.to && line < nextLine) {
-            nextLine = line;
-            nextAnchor = anchor;
-        }
-    }
-
-    return previousAnchor || nextAnchor;
-}
-
-/**
- * 解析回退锚点的最终高亮目标
- * @param anchor - 回退锚点
- * @returns 返回最终高亮目标
- */
-function resolveFallbackHighlightTarget(anchor) {
-    if (!anchor || typeof anchor.closest !== 'function') {
-        return null;
-    }
-
-    const treeItem = anchor.closest('.tree-item');
-    if (!treeItem) {
-        return null;
-    }
-
-    const baseTarget = currentDataTreeFileType === 'xml'
-        ? resolveSingleXmlSpecialHighlightTarget(treeItem)
-        : treeItem;
-
-    return getParentTreeItem(baseTarget) || baseTarget;
 }
 
 /**

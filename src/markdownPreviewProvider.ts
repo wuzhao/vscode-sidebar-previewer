@@ -232,7 +232,7 @@ export class MarkdownProvider {
             const valueHtml = this.renderFrontMatterValue(value);
             rows += `<tr><td class="fm-key">${escapeHtml(key)}</td><td class="fm-value">${valueHtml}</td></tr>`;
         }
-        return `<table id="frontmatter-table" class="frontmatter-table"><tbody>${rows}</tbody></table>`;
+        return `<table id="frontmatter-table" class="frontmatter"><tbody>${rows}</tbody></table>`;
     }
 
     /**

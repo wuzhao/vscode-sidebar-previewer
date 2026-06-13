@@ -1,43 +1,4 @@
 /* TABLE START */
-/* Front matter table */
-.frontmatter-table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: collapse;
-    display: table;
-    margin: 0 0 24px;
-    font-size: 13px;
-    font-weight: 200;
-    line-height: 1.5;
-    color: var(--vscode-descriptionForeground);
-}
-
-.frontmatter-table td {
-    vertical-align: top;
-    text-align: left;
-}
-
-.frontmatter-table .fm-key,
-.frontmatter-table .fm-value strong {
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.frontmatter-table .fm-value ul {
-    margin: 0;
-    padding-left: 18px;
-    list-style: disc;
-}
-
-.frontmatter-table .fm-value li {
-    margin: 0;
-    padding: 0;
-}
-
-.frontmatter-table tr:first-of-type td {
-    border-top: 1px solid var(--vscode-panel-border);
-}
-
 table {
     border-spacing: 0;
     border-collapse: collapse;
@@ -73,7 +34,7 @@ table td:first-child {
 
 table th:last-child,
 table td:last-child {
-    border-left-width: 2px;
+    border-right-width: 2px;
 }
 
 table th {
@@ -88,7 +49,6 @@ table td {
 }
 
 table tr:nth-child(2n) {
-    background-color: rgba(127, 127, 127, 0.12);
     background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 35%, transparent 65%);
 }
 
@@ -233,3 +193,43 @@ table tr:nth-child(2n) {
     outline-offset: 1px;
 }
 /* TABLE END */
+
+/* Frontmatter START */
+table.frontmatter {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: collapse;
+    display: table;
+    margin: 0 0 24px;
+    font-size: 13px;
+    font-weight: 200;
+    line-height: 1.5;
+    background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 25%, transparent 75%);
+}
+
+table.frontmatter tr {
+    background-color: transparent !important;
+}
+
+table.frontmatter td {
+    vertical-align: top;
+    text-align: left;
+    border-width: 0 !important;
+}
+
+table.frontmatter .fm-key {
+    white-space: nowrap;
+    color: var(--vscode-descriptionForeground);
+}
+
+table.frontmatter .fm-value ul {
+    margin: 0;
+    padding-left: 18px;
+    list-style: disc;
+}
+
+table.frontmatter .fm-value li {
+    margin: 0;
+    padding: 0;
+}
+/* Frontmatter END */

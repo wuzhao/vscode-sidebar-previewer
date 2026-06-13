@@ -155,29 +155,6 @@ function normalizeLineValue(value) {
 }
 
 /**
- * 归一化消息行范围以统一后续处理
- * @param startLine - 起始行号
- * @param endLine - 结束行号
- * @returns 返回归一化后的行范围对象
- */
-function normalizeMessageLineRange(startLine, endLine) {
-    const start = normalizeLineValue(startLine);
-    if (start === null) {
-        return null;
-    }
-
-    const end = endLine === null || endLine === undefined
-        ? start
-        : normalizeLineValue(endLine);
-
-    if (end === null) {
-        return null;
-    }
-
-    return { start, end };
-}
-
-/**
  * 归一化缩放级别以统一后续处理
  * @param level - 目标缩放级别
  * @returns 返回最近的合法缩放档位

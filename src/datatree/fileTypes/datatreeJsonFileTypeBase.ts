@@ -1,5 +1,4 @@
 import {
-    ArrayItemLineLocator,
     CommentEntry,
     CommentMarker,
     CommentMetadata,

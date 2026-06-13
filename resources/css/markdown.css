@@ -51,7 +51,7 @@ code {
     padding: 0.2em 0.4em;
     margin: 0;
     font-size: 85%;
-    font-family: 'Maple Mono NF CN', monospace;
+    font-family: 'Maple Mono Normal NF CN', monospace;
     background-color: var(--vscode-textCodeBlock-background);
     border-radius: 4px;
 }

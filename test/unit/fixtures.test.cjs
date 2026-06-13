@@ -347,7 +347,7 @@ test('MarkdownProvider injects frontmatter-table locate anchor at document top',
 
   const result = MarkdownProvider.parse(source);
 
-  assert.ok(result.html.includes('<table id="frontmatter-table" class="frontmatter-table">'));
+  assert.ok(result.html.includes('<table id="frontmatter-table" class="frontmatter">'));
   assert.equal(result.headings[0]?.id, 'frontmatter-table');
   assert.equal(result.headings[0]?.line, 0);
 });
@@ -356,7 +356,7 @@ test('Supported markdown fixture keeps middle divider and heading locate metadat
   const source = readSupportedFixture('markdown.md');
   const result = MarkdownProvider.parse(source);
 
-  assert.ok(result.html.includes('<table id="frontmatter-table" class="frontmatter-table">'));
+  assert.ok(result.html.includes('<table id="frontmatter-table" class="frontmatter">'));
   const middleHeading = result.headings.find(item => item.id === 'middle-divider-locate-check');
 
   assert.ok(middleHeading);
