@@ -179,7 +179,7 @@ export class MarkdownProvider {
         }
 
         const locateHeadings = frontMatterHtml
-            ? [{ level: 1, text: 'frontmatter-table', line: 0, id: 'frontmatter-table' }, ...headings]
+            ? [{ level: 1, text: 'frontmatter', line: 0, id: 'frontmatter' }, ...headings]
             : headings;
 
         return { html, headings: locateHeadings };
@@ -232,7 +232,7 @@ export class MarkdownProvider {
             const valueHtml = this.renderFrontMatterValue(value);
             rows += `<tr><td class="fm-key">${escapeHtml(key)}</td><td class="fm-value">${valueHtml}</td></tr>`;
         }
-        return `<table id="frontmatter-table" class="frontmatter"><tbody>${rows}</tbody></table>`;
+        return `<div id="frontmatter" class="frontmatter-wrap"><table class="frontmatter"><tbody>${rows}</tbody></table></div>`;
     }
 
     /**

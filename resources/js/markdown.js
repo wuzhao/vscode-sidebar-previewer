@@ -35,13 +35,13 @@ function reportVisibleHeading() {
     const contentRect = content.getBoundingClientRect();
     let visibleHeadingId = null;
 
-    // 顶部优先回传 frontmatter-table，保证「定位到顶部」可稳定落点
-    const frontMatterTable = content.querySelector('#frontmatter-table');
+    // 顶部优先回传 frontmatter，保证「定位到顶部」可稳定落点
+    const frontMatterTable = content.querySelector('#frontmatter');
     if (frontMatterTable instanceof HTMLElement) {
         const fmRect = frontMatterTable.getBoundingClientRect();
         const fmVisibleNearTop = fmRect.bottom >= contentRect.top + 10 && fmRect.top <= contentRect.top + 50;
         if (content.scrollTop <= 2 || fmVisibleNearTop) {
-            visibleHeadingId = 'frontmatter-table';
+            visibleHeadingId = 'frontmatter';
         }
     }
 

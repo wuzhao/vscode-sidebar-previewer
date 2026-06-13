@@ -147,7 +147,7 @@
 - Unified project docs and metadata consistency (README badges, localized descriptions, architecture notes, naming normalization).
 - Hardened webview message handling with defensive normalization for zoom/line payloads and render payload shape checks.
 - Fixed Markdown fenced-code interference in task checkbox line mapping and heading extraction.
-- Fixed Markdown locate behavior at document top by anchoring frontmatter table as `frontmatter-table`.
+- Fixed Markdown locate behavior at document top by anchoring frontmatter table as `frontmatter`.
 - Improved Mermaid precheck to support leading comments before the first diagram declaration.
 - Added sticky first row and first column in CSV/TSV table preview.
 - Fixed zoom behavior for data-tree comment popups so tooltip scale and anchor position stay aligned with comment icons.
@@ -158,7 +158,7 @@
 - 统一项目文档与元数据一致性（README 版本徽章、多语言描述、架构说明、命名规范）。
 - 强化 Webview 消息处理，新增 zoom/line 入参归一化与渲染 payload 结构防御校验。
 - 修复 Markdown 在 fenced code block 场景下对 task 勾选行号映射与标题提取的干扰。
-- 修复 Markdown 顶部定位场景，frontmatter 表格新增 `frontmatter-table` 锚点以保证稳定落位。
+- 修复 Markdown 顶部定位场景，frontmatter 表格新增 `frontmatter` 锚点以保证稳定落位。
 - 优化 Mermaid 预检逻辑，支持「前置注释 + 图声明」的文件结构。
 - CSV/TSV 预览新增首行与首列固定，长表格浏览更稳定。
 - 修复数据树注释弹窗在缩放后的表现，使弹窗缩放与锚点位置始终跟随注释图标。

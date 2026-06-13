@@ -195,16 +195,21 @@ table tr:nth-child(2n) {
 /* TABLE END */
 
 /* Frontmatter START */
+.frontmatter-wrap {
+    background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 25%, transparent 75%);
+    padding: 10px;
+    margin: 0 0 24px;
+}
+
 table.frontmatter {
     width: 100%;
     border-spacing: 0;
     border-collapse: collapse;
+    margin: 0;
     display: table;
-    margin: 0 0 24px;
     font-size: 13px;
     font-weight: 200;
     line-height: 1.5;
-    background-color: color-mix(in srgb, var(--vscode-list-hoverBackground) 25%, transparent 75%);
 }
 
 table.frontmatter tr {
@@ -218,8 +223,20 @@ table.frontmatter td {
 }
 
 table.frontmatter .fm-key {
+    display: block;
+    max-width: 30vw;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: var(--vscode-descriptionForeground);
+}
+
+table.frontmatter .fm-key::before {
+    content: '\eb85';
+    font: normal normal normal 12px/1 codicon;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
 }
 
 table.frontmatter .fm-value ul {
