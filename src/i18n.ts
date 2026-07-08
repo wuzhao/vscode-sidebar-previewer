@@ -204,7 +204,7 @@ export const i18n = {
         return getString('locatorUnavailable');
     },
 
-    // 处理当前场景相关逻辑并返回结果
+    // 将运行时文案模板中的占位符替换为具体值
     format(template: string, ...args: string[]): string {
         return formatTemplate(template, ...args);
     }

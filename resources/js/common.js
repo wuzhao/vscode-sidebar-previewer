@@ -31,7 +31,7 @@ const VALID_MESSAGE_TYPES = new Set([
 // 需要启用数据树交互能力的文件类型枚举
 const DATA_TREE_FILE_TYPES = new Set(['json', 'jsonl', 'yaml', 'toml', 'xml']);
 // 需要禁用全选快捷键的文件类型枚举
-const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'jsonl', 'yaml', 'toml', 'xml']);
+const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', ...DATA_TREE_FILE_TYPES]);
 // 预览缩放可选档位配置
 const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
 // Mermaid 渲染超时时间（毫秒）
@@ -250,7 +250,7 @@ function resolveCssScopes(fileType) {
         scopes.add('table');
         return scopes;
     }
-    if (fileType === 'json' || fileType === 'jsonl' || fileType === 'yaml' || fileType === 'toml' || fileType === 'xml') {
+    if (DATA_TREE_FILE_TYPES.has(fileType)) {
         scopes.add('datatree');
         return scopes;
     }
@@ -649,8 +649,7 @@ function applyTablePreviewViewportHeight() {
 }
 
 /**
- * 缩放功能
- * 处理缩放相关逻辑并返回结果
+ * 将当前缩放倍率应用到预览内容和依赖缩放定位的浮层
  */
 function applyZoom() {
     const content = document.getElementById('content');

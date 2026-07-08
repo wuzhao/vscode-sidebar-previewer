@@ -4,7 +4,7 @@ const {
   fs,
   path,
   vm,
-  CodePreviewProvider,
+  DatatreePreviewProvider,
   TablePreviewProvider,
   MarkdownProvider,
   LatexPreviewProvider,
@@ -29,8 +29,8 @@ const {
   readSupportedFixture,
 } = require('./testUtils.cjs');
 
-test('CodePreviewProvider returns an error state for invalid JSON', () => {
-    const result = CodePreviewProvider.parse('{"k":', 'json');
+test('DatatreePreviewProvider returns an error state for invalid JSON', () => {
+    const result = DatatreePreviewProvider.parse('{"k":', 'json');
 
     assert.equal(result.fileType, 'json');
     assert.equal(result.supportsLocate, false);
@@ -38,10 +38,10 @@ test('CodePreviewProvider returns an error state for invalid JSON', () => {
 });
 
 test('Comment icon metadata is rendered for JSON/YAML/TOML/XML keys', () => {
-    const json = CodePreviewProvider.parse('{\n  "name": "Alice", // profile name\n}', 'json');
-    const yaml = CodePreviewProvider.parse('name: Alice # full name', 'yaml');
-    const toml = CodePreviewProvider.parse('name = "Alice" # display name', 'toml');
-  const xml = CodePreviewProvider.parse('<root>\n  <!-- profile name -->\n  <name>Alice</name>\n</root>', 'xml');
+    const json = DatatreePreviewProvider.parse('{\n  "name": "Alice", // profile name\n}', 'json');
+    const yaml = DatatreePreviewProvider.parse('name: Alice # full name', 'yaml');
+    const toml = DatatreePreviewProvider.parse('name = "Alice" # display name', 'toml');
+  const xml = DatatreePreviewProvider.parse('<root>\n  <!-- profile name -->\n  <name>Alice</name>\n</root>', 'xml');
 
     assert.ok(json.html.includes('tree-comment-icon codicon codicon-note'));
   assert.equal(json.html.includes('data-comment='), false);
@@ -68,7 +68,7 @@ test('XML comment groups use hyphen marker in popup payload', () => {
     '</catalog>',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'xml');
+  const result = DatatreePreviewProvider.parse(source, 'xml');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(payloads.some(payload => payload.some(item => item.marker === '-' && item.text === 'list heading')));
@@ -82,7 +82,7 @@ test('XML comments follow node keys but not @ attributes', () => {
     '<book id="101" category="fiction"><title>The Great Gatsby</title></book>',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'xml');
+  const result = DatatreePreviewProvider.parse(source, 'xml');
 
   assert.ok(/<span class="tree-key" data-line="\d+">book<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
   assert.equal(/<span class="tree-key" data-line="\d+">@id<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
@@ -109,10 +109,10 @@ test('Document-end comments become outermost standalone comments for JSON/YAML/T
     '<!-- root tail comment -->',
   ].join('\n');
 
-  const jsonResult = CodePreviewProvider.parse(jsonSource, 'json');
-  const yamlResult = CodePreviewProvider.parse(yamlSource, 'yaml');
-  const tomlResult = CodePreviewProvider.parse(tomlSource, 'toml');
-  const xmlResult = CodePreviewProvider.parse(xmlSource, 'xml');
+  const jsonResult = DatatreePreviewProvider.parse(jsonSource, 'json');
+  const yamlResult = DatatreePreviewProvider.parse(yamlSource, 'yaml');
+  const tomlResult = DatatreePreviewProvider.parse(tomlSource, 'toml');
+  const xmlResult = DatatreePreviewProvider.parse(xmlSource, 'xml');
 
   const jsonPayloads = extractCommentPayloads(jsonResult.html);
   const yamlPayloads = extractCommentPayloads(yamlResult.html);
@@ -138,7 +138,7 @@ test('YAML comments follow indentation scope and do not leak to parent keys', ()
     '  next: true',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'yaml');
+  const result = DatatreePreviewProvider.parse(source, 'yaml');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(result.html.includes('tree-standalone-comment'));
@@ -156,7 +156,7 @@ test('JSON comments follow object containment and do not leak to parent siblings
     '}',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(result.html.includes('tree-standalone-comment'));
@@ -174,7 +174,7 @@ test('XML comments follow object containment and do not leak to parent siblings'
     '</root>',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'xml');
+  const result = DatatreePreviewProvider.parse(source, 'xml');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(result.html.includes('tree-standalone-comment'));
@@ -193,7 +193,7 @@ test('JSON comment before object key keeps binding across blank lines', () => {
     '}',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(/<span class="tree-key" data-line="\d+">settings<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
@@ -211,7 +211,7 @@ test('JSON leading block comment binds to same-line key', () => {
     '}',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(/<span class="tree-key" data-line="\d+">maintainer<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
@@ -230,7 +230,7 @@ test('TOML comment before object key keeps binding across blank lines', () => {
     'host = "localhost"',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'toml');
+  const result = DatatreePreviewProvider.parse(source, 'toml');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(/<span class="tree-key" data-line="\d+">server<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
@@ -249,7 +249,7 @@ test('XML comment before object key keeps binding across blank lines', () => {
     '</catalog>',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'xml');
+  const result = DatatreePreviewProvider.parse(source, 'xml');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(/<span class="tree-key" data-line="\d+">catalog<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html));
@@ -270,7 +270,7 @@ test('JSON comment groups are merged into a single icon payload', () => {
         '}',
     ].join('\n');
 
-    const result = CodePreviewProvider.parse(source, 'json');
+    const result = DatatreePreviewProvider.parse(source, 'json');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(result.html.includes('tree-standalone-comment'));
@@ -305,7 +305,7 @@ test('Multiline block and line comments merge into one popup payload', () => {
     '}',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const payloads = extractCommentPayloads(result.html);
 
   const merged = payloads.filter(payload => payload.length === 2
@@ -330,7 +330,7 @@ test('Consecutive multiline block comments merge into one popup payload', () => 
     '}',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const payloads = extractCommentPayloads(result.html);
 
   const merged = payloads.filter(payload => payload.length === 2
@@ -353,7 +353,7 @@ test('Trailing array comment without next element becomes standalone icon', () =
     '}',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const payloads = extractCommentPayloads(result.html);
 
   assert.ok(result.html.includes('tree-standalone-comment'));

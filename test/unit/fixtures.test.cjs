@@ -4,7 +4,7 @@ const {
   fs,
   path,
   vm,
-  CodePreviewProvider,
+  DatatreePreviewProvider,
   TablePreviewProvider,
   MarkdownProvider,
   LatexPreviewProvider,
@@ -46,7 +46,7 @@ function assertCommentOwner(owners, textSnippet, expectedKind, expectedTarget) {
 
 test('Task G JSON fixture label ownership mapping is correct', () => {
   const source = readSupportedFixture('json.jsonc');
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const owners = extractCommentOwners(result.html);
   const labelOwners = buildLabelOwnerMap(owners);
 
@@ -66,7 +66,7 @@ test('Task G JSON fixture label ownership mapping is correct', () => {
 
 test('Task G TOML fixture label ownership mapping is correct', () => {
   const source = readSupportedFixture('toml.toml');
-  const result = CodePreviewProvider.parse(source, 'toml');
+  const result = DatatreePreviewProvider.parse(source, 'toml');
   const owners = extractCommentOwners(result.html);
   const labelOwners = buildLabelOwnerMap(owners);
 
@@ -85,7 +85,7 @@ test('Task G TOML fixture label ownership mapping is correct', () => {
 
 test('TOML fixture nested duplicate keys map to correct section lines', () => {
   const source = readSupportedFixture('toml.toml');
-  const result = CodePreviewProvider.parse(source, 'toml');
+  const result = DatatreePreviewProvider.parse(source, 'toml');
 
   const nameLines = extractKeyLines(result.html, 'name');
   assert.equal(nameLines.length, 5);
@@ -103,7 +103,7 @@ test('TOML fixture nested duplicate keys map to correct section lines', () => {
 
 test('TOML inline table child keys map to branch_priority assignment line', () => {
   const source = readSupportedFixture('toml.toml');
-  const result = CodePreviewProvider.parse(source, 'toml');
+  const result = DatatreePreviewProvider.parse(source, 'toml');
 
   const mainRouteLines = extractKeyLines(result.html, 'main_route');
   const riverDetourLines = extractKeyLines(result.html, 'branch_river_detour');
@@ -120,7 +120,7 @@ test('TOML inline table child keys map to branch_priority assignment line', () =
 
 test('TOML inline table comment binds to parent key only', () => {
   const source = readSupportedFixture('toml.toml');
-  const result = CodePreviewProvider.parse(source, 'toml');
+  const result = DatatreePreviewProvider.parse(source, 'toml');
   const owners = extractCommentOwners(result.html);
 
   assertCommentOwner(owners, 'stable sort order', 'key', 'branch_priority');
@@ -133,7 +133,7 @@ test('TOML inline table comment binds to parent key only', () => {
 
 test('Task G XML fixture label ownership mapping is correct', () => {
   const source = readSupportedFixture('xml.xml');
-  const result = CodePreviewProvider.parse(source, 'xml');
+  const result = DatatreePreviewProvider.parse(source, 'xml');
   const owners = extractCommentOwners(result.html);
   const labelOwners = buildLabelOwnerMap(owners);
 
@@ -145,7 +145,7 @@ test('Task G XML fixture label ownership mapping is correct', () => {
 
 test('Task G YAML fixture label ownership mapping is correct', () => {
   const source = readSupportedFixture('yaml.yaml');
-  const result = CodePreviewProvider.parse(source, 'yaml');
+  const result = DatatreePreviewProvider.parse(source, 'yaml');
   const owners = extractCommentOwners(result.html);
   const labelOwners = buildLabelOwnerMap(owners);
 
@@ -161,7 +161,7 @@ test('Task G YAML fixture label ownership mapping is correct', () => {
 
 test('Task L JSON array comments stay in the expected scopes', () => {
   const source = readSupportedFixture('json.jsonc');
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
   const events = extractCommentRenderEvents(result.html);
 
   const dEvent = getLabelEvent(events, 'D');
@@ -175,7 +175,7 @@ test('Task L JSON array comments stay in the expected scopes', () => {
 
 test('Task F JSON fixture inline object keys map to correct nested array lines', () => {
   const source = readSupportedFixture('json.jsonc');
-  const result = CodePreviewProvider.parse(source, 'json');
+  const result = DatatreePreviewProvider.parse(source, 'json');
 
   const nameLines = extractKeyLines(result.html, 'name');
   assert.equal(nameLines.length, 8);
@@ -225,7 +225,7 @@ test('Task F JSON fixture inline object keys map to correct nested array lines',
 
 test('Task J XML final standalone comment [C] keeps root-object scope', () => {
   const source = readSupportedFixture('xml.xml');
-  const result = CodePreviewProvider.parse(source, 'xml');
+  const result = DatatreePreviewProvider.parse(source, 'xml');
   const events = extractCommentRenderEvents(result.html);
 
   const cEvent = getLabelEvent(events, 'C');
@@ -235,7 +235,7 @@ test('Task J XML final standalone comment [C] keeps root-object scope', () => {
 
 test('Task J YAML final standalone comments remain standalone owners', () => {
   const source = readSupportedFixture('yaml.yaml');
-  const result = CodePreviewProvider.parse(source, 'yaml');
+  const result = DatatreePreviewProvider.parse(source, 'yaml');
   const owners = extractCommentOwners(result.html);
 
   const tailOwner = assertCommentOwner(owners, 'Tail standalone comment', 'standalone', 'standalone');
@@ -244,7 +244,7 @@ test('Task J YAML final standalone comments remain standalone owners', () => {
 
 test('Task J TOML final standalone comments remain standalone owners', () => {
   const source = readSupportedFixture('toml.toml');
-  const result = CodePreviewProvider.parse(source, 'toml');
+  const result = DatatreePreviewProvider.parse(source, 'toml');
   const owners = extractCommentOwners(result.html);
 
   const tailOwner = assertCommentOwner(owners, 'Tail standalone comment for end-of-file behavior', 'standalone', 'standalone');
@@ -261,7 +261,7 @@ test('Task K TOML parent path uses explicit table line even when child table app
     'owner = "docs-team"',
   ].join('\n');
 
-  const result = CodePreviewProvider.parse(source, 'toml');
+  const result = DatatreePreviewProvider.parse(source, 'toml');
   const metadataLines = extractKeyLines(result.html, 'metadata');
 
   assert.deepEqual(metadataLines, [4]);
@@ -274,7 +274,7 @@ test('Task K TOML parent path uses explicit table line even when child table app
 
 test('Task K YAML standalone and checkpoint comments bind to expected owners', () => {
   const source = readSupportedFixture('yaml.yaml');
-  const result = CodePreviewProvider.parse(source, 'yaml');
+  const result = DatatreePreviewProvider.parse(source, 'yaml');
   const owners = extractCommentOwners(result.html);
 
   assertCommentOwner(owners, 'Route plan includes nested arrays and objects with comments in mixed positions', 'standalone', 'standalone');
@@ -285,7 +285,7 @@ test('Task K YAML standalone and checkpoint comments bind to expected owners', (
 
 test('Task K XML top-level and tail comments bind to expected owners', () => {
   const source = readSupportedFixture('xml.xml');
-  const result = CodePreviewProvider.parse(source, 'xml');
+  const result = DatatreePreviewProvider.parse(source, 'xml');
   const owners = extractCommentOwners(result.html);
   const labelOwners = buildLabelOwnerMap(owners);
   const events = extractCommentRenderEvents(result.html);

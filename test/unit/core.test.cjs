@@ -4,7 +4,7 @@ const {
   fs,
   path,
   vm,
-  CodePreviewProvider,
+  DatatreePreviewProvider,
   TablePreviewProvider,
   MarkdownProvider,
   LatexPreviewProvider,
@@ -39,7 +39,7 @@ test('JSON duplicate keys map to distinct source lines', () => {
   }
 }`;
 
-    const result = CodePreviewProvider.parse(source, 'json');
+    const result = DatatreePreviewProvider.parse(source, 'json');
     const idLines = extractKeyLines(result.html, 'id');
 
     assert.deepEqual(idLines, [2, 5]);
@@ -54,7 +54,7 @@ test('YAML duplicate keys map in traversal order', () => {
 meta:
   name: Team`;
 
-    const result = CodePreviewProvider.parse(source, 'yaml');
+    const result = DatatreePreviewProvider.parse(source, 'yaml');
     const nameLines = extractKeyLines(result.html, 'name');
 
     assert.deepEqual(nameLines, [1, 3, 5]);
@@ -67,7 +67,7 @@ port = 8080
 [client]
 port = 3000`;
 
-    const result = CodePreviewProvider.parse(source, 'toml');
+    const result = DatatreePreviewProvider.parse(source, 'toml');
     const portLines = extractKeyLines(result.html, 'port');
 
     assert.deepEqual(portLines, [1, 3]);
@@ -77,9 +77,9 @@ port = 3000`;
 test('Provider locate capabilities stay consistent with file type capabilities', () => {
     const latexResult = LatexPreviewProvider.parse('\\section{Intro}');
     const mermaidResult = MermaidPreviewProvider.parse('graph TD\nA-->B');
-    const jsonResult = CodePreviewProvider.parse('{"k": 1}', 'json');
-  const jsonlResult = CodePreviewProvider.parse('{"k": 1}\n{"k": 2}', 'jsonl');
-  const xmlResult = CodePreviewProvider.parse('<root><k>1</k></root>', 'xml');
+    const jsonResult = DatatreePreviewProvider.parse('{"k": 1}', 'json');
+  const jsonlResult = DatatreePreviewProvider.parse('{"k": 1}\n{"k": 2}', 'jsonl');
+  const xmlResult = DatatreePreviewProvider.parse('<root><k>1</k></root>', 'xml');
   const csvResult = TablePreviewProvider.parse('name,age\nAlice,20', 'csv');
 
     assert.equal(latexResult.supportsLocate, supportsLocate('latex'));
@@ -189,12 +189,12 @@ test('MarkdownProvider task checkbox line mapping supports ordered task items', 
   assert.deepEqual(lineMatches, [0, 1, 2, 3]);
 });
 
-test('CodePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
+test('DatatreePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
     const source = `{
   "name": "Alice", // profile name
   "age": 20,
 }`;
-    const result = CodePreviewProvider.parse(source, 'json');
+    const result = DatatreePreviewProvider.parse(source, 'json');
 
     assert.equal(result.fileType, 'json');
     assert.equal(result.supportsLocate, false);
@@ -208,10 +208,10 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
     const yamlSource = readSupportedFixture('yaml.yaml');
     const tomlSource = readSupportedFixture('toml.toml');
 
-    const jsonResult = CodePreviewProvider.parse(jsonSource, 'json');
-  const jsonlResult = CodePreviewProvider.parse(jsonlSource, 'jsonl');
-    const yamlResult = CodePreviewProvider.parse(yamlSource, 'yaml');
-    const tomlResult = CodePreviewProvider.parse(tomlSource, 'toml');
+    const jsonResult = DatatreePreviewProvider.parse(jsonSource, 'json');
+  const jsonlResult = DatatreePreviewProvider.parse(jsonlSource, 'jsonl');
+    const yamlResult = DatatreePreviewProvider.parse(yamlSource, 'yaml');
+    const tomlResult = DatatreePreviewProvider.parse(tomlSource, 'toml');
 
     assert.equal(jsonResult.fileType, 'json');
   assert.equal(jsonlResult.fileType, 'jsonl');
@@ -237,7 +237,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
 
   test('Supported XML fixture parses successfully', () => {
     const xmlSource = readSupportedFixture('xml.xml');
-    const result = CodePreviewProvider.parse(xmlSource, 'xml');
+    const result = DatatreePreviewProvider.parse(xmlSource, 'xml');
 
     assert.equal(result.fileType, 'xml');
     assert.equal(result.supportsLocate, false);
@@ -248,7 +248,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
 
   test('XML special keys map to source lines for locate', () => {
     const source = readSupportedFixture('xml.xml');
-    const result = CodePreviewProvider.parse(source, 'xml');
+    const result = DatatreePreviewProvider.parse(source, 'xml');
     const lines = source.split('\n');
 
     const textLines = extractKeyLines(result.html, '#TEXT');
@@ -282,7 +282,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
 
   test('XML DTD directive keys map to source lines for locate', () => {
     const source = readSupportedFixture('xml.xml');
-    const result = CodePreviewProvider.parse(source, 'xml');
+    const result = DatatreePreviewProvider.parse(source, 'xml');
 
     const doctypeLines = extractKeyLines(result.html, '!DOCTYPE');
     const declarationLines = extractKeyLines(result.html, '#DECLARATION');
@@ -308,7 +308,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
 
   test('XML preamble processing instructions keep source order before DOCTYPE', () => {
     const source = readSupportedFixture('xml.xml');
-    const result = CodePreviewProvider.parse(source, 'xml');
+    const result = DatatreePreviewProvider.parse(source, 'xml');
 
     const xmlPos = result.html.indexOf('>?xml</span>');
     const missionPos = result.html.indexOf('>?mission</span>');
@@ -323,7 +323,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
 
   test('XML DTD directives are nested under !DOCTYPE block', () => {
     const source = readSupportedFixture('xml.xml');
-    const result = CodePreviewProvider.parse(source, 'xml');
+    const result = DatatreePreviewProvider.parse(source, 'xml');
 
     const doctypePos = result.html.indexOf('>!DOCTYPE</span>');
     const doctypeBracketPos = result.html.indexOf('<span class="tree-bracket">{', doctypePos);
@@ -336,7 +336,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
 
   test('XML attributes are previewed as @-prefixed keys on the same object', () => {
     const source = '<book id="101" category="fiction"><title>The Great Gatsby</title></book>';
-    const result = CodePreviewProvider.parse(source, 'xml');
+    const result = DatatreePreviewProvider.parse(source, 'xml');
 
     assert.equal(result.fileType, 'xml');
     assert.equal(result.html.includes('Failed to parse XML content.'), false);
@@ -348,7 +348,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
 
   test('XML attributes are rendered before non-attribute keys', () => {
     const source = '<book id="101" category="fiction"><title>The Great Gatsby</title><author>Fitzgerald</author></book>';
-    const result = CodePreviewProvider.parse(source, 'xml');
+    const result = DatatreePreviewProvider.parse(source, 'xml');
 
     const idPos = result.html.indexOf('>@id</span>');
     const categoryPos = result.html.indexOf('>@category</span>');
@@ -374,7 +374,7 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
       '</root>',
     ].join('\n');
 
-    const result = CodePreviewProvider.parse(source, 'xml');
+    const result = DatatreePreviewProvider.parse(source, 'xml');
     const codeLines = extractKeyLines(result.html, '@code');
     const modeLines = extractKeyLines(result.html, '@mode');
 

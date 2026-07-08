@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const { CodePreviewProvider } = require('../../out/datatreePreviewProvider');
+const { DatatreePreviewProvider } = require('../../out/datatreePreviewProvider');
 const { TablePreviewProvider } = require('../../out/tablePreviewProvider');
 const { MarkdownProvider } = require('../../out/markdownPreviewProvider');
 const { LatexPreviewProvider } = require('../../out/latexPreviewProvider');
@@ -265,7 +265,7 @@ module.exports = {
   fs,
   path,
   vm,
-  CodePreviewProvider,
+  DatatreePreviewProvider,
   TablePreviewProvider,
   MarkdownProvider,
   LatexPreviewProvider,

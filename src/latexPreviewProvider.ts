@@ -141,7 +141,7 @@ export class LatexPreviewProvider {
     }
 
     /**
-     * 处理当前场景相关逻辑并返回结果
+     * 生成 LaTeX 标题对应的 HTML 锚点 ID
      * @param text - 待处理的文本内容
      * @returns 返回可用于锚点的标题 ID
      */

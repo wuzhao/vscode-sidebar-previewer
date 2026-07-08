@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { MarkdownProvider } from './markdownPreviewProvider';
 import { getFileType, FileType, HeadingInfo, isDataTreeType, PreviewResult } from './fileTypes';
-import { CodePreviewProvider } from './datatreePreviewProvider';
+import { DatatreePreviewProvider } from './datatreePreviewProvider';
 import { LatexPreviewProvider } from './latexPreviewProvider';
 import { MermaidPreviewProvider } from './mermaidPreviewProvider';
 import { TablePreviewProvider } from './tablePreviewProvider';
@@ -101,10 +101,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 解析资源路径并返回最终结果
+     * 解析 Webview 静态资源路径，优先使用打包资源并在开发模式回退到依赖目录
      * @param preferredPath - 优先使用的资源路径
      * @param fallbackPath - 首选资源缺失时的回退路径
-     * @returns 返回最终结果
+     * @returns 可被 Webview 读取的资源路径
      */
     private _resolveAssetPath(preferredPath: string, fallbackPath: string): string {
         if (fs.existsSync(preferredPath)) {
@@ -295,7 +295,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理活动编辑器预览相关逻辑并返回结果
+     * 根据当前活动编辑器刷新侧边栏预览内容
      */
     private _refreshPreviewForActiveEditor(): void {
         if (!this._view || !this._view.visible || !this._webviewReady) {
@@ -561,7 +561,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 case 'yaml':
                 case 'toml':
                 case 'xml':
-                    result = CodePreviewProvider.parse(content, fileType);
+                    result = DatatreePreviewProvider.parse(content, fileType);
                     this._currentHeadings = [];
                     break;
                 case 'csv':
@@ -833,14 +833,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理跟随滚动相关逻辑并返回结果
+     * 启用编辑器滚动时自动同步预览位置
      */
     public enableFollowScroll(): void {
         this._setFollowEditorScroll(true);
     }
 
     /**
-     * 处理跟随滚动相关逻辑并返回结果
+     * 停用编辑器滚动时自动同步预览位置
      */
     public disableFollowScroll(): void {
         this._setFollowEditorScroll(false);
@@ -1016,8 +1016,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理下一次自动滚动抑制状态相关逻辑并返回结果
-     * @returns 返回并清除自动滚动抑制状态
+     * 读取并清除下一次预览自动滚动抑制标记
+     * @returns 是否需要保留当前预览滚动位置
      */
     private _consumeSuppressNextAutoScroll(): boolean {
         const suppress = this._suppressNextAutoScroll;
@@ -1192,7 +1192,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 处理当前场景相关逻辑并返回结果
+     * 释放 Webview 状态与编辑器可视范围监听器
      */
     public dispose(): void {
         this._clearLoadingTimeout();

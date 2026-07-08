@@ -5,9 +5,9 @@ import { escapeHtml } from './utils';
 import { DatatreeXmlFileTypeBase } from './datatree/fileTypes/datatreeXmlFileTypeBase';
 
 /**
- * 提供 CodePreview 相关预览能力
+ * 提供 DataTree 相关预览能力
  */
-export class CodePreviewProvider extends DatatreeXmlFileTypeBase {
+export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
     /**
      * 解析数据文件内容，返回树形结构的 HTML
      * @param content - 待解析的文件内容

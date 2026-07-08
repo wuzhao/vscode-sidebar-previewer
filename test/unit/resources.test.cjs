@@ -4,7 +4,7 @@ const {
   fs,
   path,
   vm,
-  CodePreviewProvider,
+  DatatreePreviewProvider,
   TablePreviewProvider,
   MarkdownProvider,
   LatexPreviewProvider,
@@ -155,7 +155,7 @@ const {
     assert.ok(commonJs.includes('function focusPreviewContent()'));
     assert.ok(commonJs.includes("content.classList.toggle('preview-focused', !!focused);"));
     assert.ok(commonJs.includes("const DATA_TREE_FILE_TYPES = new Set(['json', 'jsonl', 'yaml', 'toml', 'xml']);"));
-    assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', 'json', 'jsonl', 'yaml', 'toml', 'xml']);"));
+    assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', ...DATA_TREE_FILE_TYPES]);"));
     assert.ok(/document\.addEventListener\('keydown', \(e\) => \{[\s\S]*?e\.key\.toLowerCase\(\) !== 'a'[\s\S]*?NO_SELECT_ALL_FILE_TYPES\.has\(currentFileType\)[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?\}, true\);/s.test(commonJs));
     assert.ok(commonJs.includes("tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions'"));
     assert.ok(commonJs.includes("tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown Table'"));
@@ -462,7 +462,7 @@ const {
 
   test('Supported JSONC fixture with mixed comment styles parses successfully', () => {
     const jsoncSource = readSupportedFixture('json.jsonc');
-    const result = CodePreviewProvider.parse(jsoncSource, 'json');
+    const result = DatatreePreviewProvider.parse(jsoncSource, 'json');
 
     assert.equal(getFileType('fixture.jsonc'), 'json');
     assert.equal(result.fileType, 'json');

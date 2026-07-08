@@ -41,9 +41,9 @@ export class MermaidPreviewProvider {
     }
 
     /**
-     * 查找首个指令行并返回匹配结果
+     * 查找 Mermaid 内容中首个有效图表声明行
      * @param content - 待解析的文件内容
-     * @returns 返回匹配结果
+     * @returns 用于语法预检的图表声明文本
      */
     private static findFirstDirectiveLine(content: string): string {
         const lines = content
