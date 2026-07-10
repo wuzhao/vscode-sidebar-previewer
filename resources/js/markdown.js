@@ -15,15 +15,20 @@ let markdownOutlineHideTimer = null;
  * @param headingId - 目标标题锚点 ID
  */
 function scrollToHeading(headingId) {
+    const content = document.getElementById('content');
     if (!headingId) {
-        document.getElementById('content').scrollTop = 0;
+        content.scrollTo({ top: 0, behavior: 'instant' });
         return;
     }
 
     const element = document.getElementById(headingId);
     if (element) {
         isScrollingFromEditor = true;
-        element.scrollIntoView({ behavior: 'instant', block: 'start' });
+        // 仅在预览内容滚动区域内定位标题，避免末项带动 webview 外层滚动
+        const targetScrollTop = content.scrollTop + element.getBoundingClientRect().top - content.getBoundingClientRect().top;
+        const maxScrollTop = Math.max(0, content.scrollHeight - content.clientHeight);
+        const clampedScrollTop = Math.min(maxScrollTop, Math.max(0, targetScrollTop));
+        content.scrollTo({ top: clampedScrollTop, behavior: 'instant' });
         setTimeout(() => {
             isScrollingFromEditor = false;
         }, 300);

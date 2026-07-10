@@ -89,7 +89,7 @@ const {
     assert.ok(/function reportVisibleLine\(\)\s*\{[\s\S]*?const anchorCells = getFirstColumnAnchorCells\(table\);[\s\S]*?const probeTop = containerRect\.top \+ stickyHeaderHeight \+ TABLE_VISIBLE_LINE_PROBE_OFFSET_PX;[\s\S]*?Math\.abs\(rect\.top - probeTop\)/s.test(tableJs));
   });
 
-  test('Task A/B Markdown Skeleton Outline is wired with relative heading levels and full-height hover TOC', () => {
+  test('Task A/B/C/D/E Markdown Skeleton Outline is wired with relative heading levels and full-height hover TOC', () => {
     const css = readResourceCssBundle();
     const markdownJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'markdown.js'), 'utf8');
     const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
@@ -97,6 +97,10 @@ const {
     assert.ok(markdownJs.includes('function initMarkdownSkeletonOutline()'));
     assert.ok(markdownJs.includes('function buildMarkdownOutlineRankMap(headings)'));
     assert.ok(markdownJs.includes('const MARKDOWN_SKELETON_TOC_HIDE_DELAY_MS = 200;'));
+    assert.ok(markdownJs.includes('const maxScrollTop = Math.max(0, content.scrollHeight - content.clientHeight);'));
+    assert.ok(markdownJs.includes('const clampedScrollTop = Math.min(maxScrollTop, Math.max(0, targetScrollTop));'));
+    assert.ok(markdownJs.includes("content.scrollTo({ top: clampedScrollTop, behavior: 'instant' });"));
+    assert.equal(markdownJs.includes("element.scrollIntoView({ behavior: 'instant', block: 'start' });"), false);
     assert.ok(markdownJs.includes('const normalizedHeadingLevels = Array.from(new Set(headings.map(heading => heading.level))).sort((a, b) => a - b);'));
     assert.ok(markdownJs.includes('function resolveMarkdownSkeletonLineWidth(rank, rankCount)'));
     assert.ok(markdownJs.includes('return Math.max(4, Math.round(24 * (normalizedCount - rank) / normalizedCount));'));
@@ -117,7 +121,7 @@ const {
     assert.ok(markdownJs.includes('cleanupMarkdownSkeletonOutline: cleanupMarkdownSkeletonOutline'));
     assert.ok(commonJs.includes('PreviewMarkdown.cleanupMarkdownSkeletonOutline'));
 
-    assert.ok(/\.markdown-skeleton-outline\s*\{[^}]*position:\s*fixed;[^}]*top:\s*56px;[^}]*right:\s*8px;[^}]*width:\s*24px;/s.test(css));
+    assert.ok(/\.markdown-skeleton-outline\s*\{[^}]*position:\s*fixed;[^}]*top:\s*40px;[^}]*right:\s*0;[^}]*width:\s*24px;/s.test(css));
     assert.ok(/\.markdown-skeleton-lines\s*\{[^}]*width:\s*24px;/s.test(css));
     assert.ok(/\.markdown-skeleton-outline\.is-toc-open \.markdown-skeleton-lines\s*\{[^}]*visibility:\s*hidden;[^}]*opacity:\s*0;[^}]*pointer-events:\s*none;/s.test(css));
     assert.ok(/\.markdown-skeleton-line:hover,\s*\.markdown-skeleton-line\.is-active\s*\{[^}]*background-color:\s*var\(--vscode-button-background\);/s.test(css));
@@ -125,11 +129,12 @@ const {
     assert.ok(/\.markdown-skeleton-toc\s*\{[^}]*padding:\s*8px;[^}]*overflow-x:\s*hidden;[^}]*overflow-y:\s*auto;[^}]*background-color:\s*var\(--vscode-editorHoverWidget-background\);/s.test(css));
     assert.equal(/\.markdown-skeleton-toc\s*\{[^}]*border-left:/s.test(css), false);
     assert.ok(/\.markdown-skeleton-outline\.is-toc-open \.markdown-skeleton-toc/s.test(css));
-    assert.ok(/\.markdown-skeleton-toc-item\s*\{[^}]*display:\s*block;[^}]*padding:\s*3px 8px 3px 8px;/s.test(css));
-    assert.ok(/\.markdown-skeleton-toc-item-content\s*\{[^}]*display:\s*inline-flex;[^}]*gap:\s*4px;[^}]*padding:\s*0 4px;[^}]*border-radius:\s*4px;/s.test(css));
-    assert.ok(/\.markdown-skeleton-toc-item:hover \.markdown-skeleton-toc-item-content,\s*\.markdown-skeleton-toc-item\.is-active \.markdown-skeleton-toc-item-content\s*\{[^}]*background-color:\s*var\(--vscode-list-hoverBackground\);/s.test(css));
+    assert.ok(/\.markdown-skeleton-toc-item\s*\{[^}]*display:\s*block;[^}]*min-width:\s*0;[^}]*margin:\s*4px 0;[^}]*padding:\s*1px 6px 1px 6px;[^}]*background-color:\s*transparent;[^}]*line-height:\s*1\.3;/s.test(css));
+    assert.equal(/\.markdown-skeleton-toc-item\s*\{[^}]*width:\s*100%;/s.test(css), false);
+    assert.ok(/\.markdown-skeleton-toc-item-content\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*baseline;[^}]*gap:\s*4px;[^}]*padding:\s*0 4px;/s.test(css));
+    assert.ok(/\.markdown-skeleton-toc-item:hover \.markdown-skeleton-toc-title,\s*\.markdown-skeleton-toc-item\.is-active \.markdown-skeleton-toc-title\s*\{[^}]*color:\s*var\(--vscode-textLink-foreground\);/s.test(css));
     assert.ok(/\.markdown-skeleton-toc-level\s*\{[^}]*color:\s*color-mix\(in srgb, var\(--vscode-descriptionForeground\) 50%, transparent 50%\);[^}]*font-size:\s*9px;/s.test(css));
-    assert.ok(/\.markdown-skeleton-toc-title\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/s.test(css));
+    assert.ok(/\.markdown-skeleton-toc-title\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;/s.test(css));
   });
 
   test('Task H table focus highlight and clipboard actions are wired with i18n labels', () => {
