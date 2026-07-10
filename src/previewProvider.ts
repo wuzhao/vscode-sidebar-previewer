@@ -10,6 +10,9 @@ import { TablePreviewProvider } from './tablePreviewProvider';
 import { i18n } from './i18n';
 import { escapeHtml } from './utils';
 
+// 存储编辑器滚动跟随开关状态的全局键
+const FOLLOW_EDITOR_SCROLL_STATE_KEY = 'sidebarPreviewer.followEditorScroll';
+
 /**
  * 提供 Preview 相关预览能力
  */
@@ -55,6 +58,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * @param _extensionContext - 扩展运行时上下文对象
      */
     constructor(private readonly _extensionContext: vscode.ExtensionContext) {
+        this._followEditorScroll = _extensionContext.globalState.get<boolean>(FOLLOW_EDITOR_SCROLL_STATE_KEY, true);
         const resourcesPath = path.join(_extensionContext.extensionPath, 'resources');
         const cssPath = path.join(resourcesPath, 'css');
         const jsPath = path.join(resourcesPath, 'js');
@@ -1035,6 +1039,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
 
         this._followEditorScroll = enabled;
+        void this._extensionContext.globalState.update(FOLLOW_EDITOR_SCROLL_STATE_KEY, enabled);
         this._updateFollowScrollContext();
         this._updateVisibleRangesListener();
 

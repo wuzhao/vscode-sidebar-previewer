@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 - 2026-07-10
+
+- Added Markdown Skeleton Outline with level-aware visual markers and a hover table of contents for instant heading navigation.
+- Follow-scroll lock now remembers its previous state between extension sessions.
+
+～～～
+
+- 新增 Markdown Skeleton Outline：按标题层级显示概览，悬停打开目录并可瞬间跳转到对应标题。
+- 滚动锁现在会在扩展会话之间记住上次状态。
+
 ## 0.3.17 - 2026-06-13
 
 - Refined Markdown frontmatter preview with a dedicated wrapper container, key icon markers, and long-key truncation for better readability.

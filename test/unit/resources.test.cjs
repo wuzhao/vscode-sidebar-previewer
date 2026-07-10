@@ -137,6 +137,14 @@ const {
     assert.ok(/\.markdown-skeleton-toc-title\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;/s.test(css));
   });
 
+  test('Follow scroll state persists across extension activations', () => {
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+
+    assert.ok(previewProvider.includes("const FOLLOW_EDITOR_SCROLL_STATE_KEY = 'sidebarPreviewer.followEditorScroll';"));
+    assert.ok(previewProvider.includes('this._followEditorScroll = _extensionContext.globalState.get<boolean>(FOLLOW_EDITOR_SCROLL_STATE_KEY, true);'));
+    assert.ok(previewProvider.includes('void this._extensionContext.globalState.update(FOLLOW_EDITOR_SCROLL_STATE_KEY, enabled);'));
+  });
+
   test('Task H table focus highlight and clipboard actions are wired with i18n labels', () => {
     const css = readResourceCssBundle();
     const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
