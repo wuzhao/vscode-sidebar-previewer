@@ -202,3 +202,116 @@ input[type="checkbox"] {
     color: #e5534b;
 }
 /* MARKDOWN_MISC END */
+
+/* MARKDOWN_SKELETON_OUTLINE START */
+.markdown-skeleton-outline {
+    position: fixed;
+    top: 40px;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: flex-start;
+    width: 24px;
+    color: var(--vscode-foreground);
+}
+
+.markdown-skeleton-lines {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    width: 24px;
+    padding: 8px 0;
+}
+
+.markdown-skeleton-outline.is-toc-open .markdown-skeleton-lines {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.markdown-skeleton-line {
+    display: block;
+    height: 3px;
+    max-width: 24px;
+    padding: 0;
+    border: 0;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background-color: var(--vscode-descriptionForeground);
+    opacity: 0.45;
+    cursor: pointer;
+}
+
+.markdown-skeleton-line:hover,
+.markdown-skeleton-line.is-active {
+    background-color: var(--vscode-button-background);
+    opacity: 1;
+}
+
+.markdown-skeleton-toc {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 240px;
+    max-width: calc(100vw - 24px);
+    padding: 8px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background-color: var(--vscode-editorHoverWidget-background);
+    box-shadow: 0 4px 12px var(--vscode-widget-shadow);
+}
+
+.markdown-skeleton-outline.is-toc-open .markdown-skeleton-toc,
+.markdown-skeleton-outline:focus-within .markdown-skeleton-toc {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.markdown-skeleton-toc-item {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 26px;
+    padding: 3px 8px 3px 8px;
+    border: 0;
+    border-radius: 4px;
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editorHoverWidget-background);
+    text-align: left;
+    cursor: pointer;
+}
+
+.markdown-skeleton-toc-item-content {
+    display: inline-flex;
+    max-width: 100%;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+}
+
+.markdown-skeleton-toc-item:hover,
+.markdown-skeleton-toc-item.is-active {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.markdown-skeleton-toc-level {
+    flex: 0 0 auto;
+    min-width: 16px;
+    color: color-mix(in srgb, var(--vscode-descriptionForeground) 50%, transparent 50%);
+    font-size: 9px;
+}
+
+.markdown-skeleton-toc-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* MARKDOWN_SKELETON_OUTLINE END */
