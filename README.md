@@ -44,6 +44,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - GitHub alert block rendering
 - Task list checkbox toggle-writeback
 - Code highlighting and copy button
+- Hover a rendered table to copy it as Markdown, ASCII, or TSV
 - KaTeX and Mermaid block rendering
 - Follow-scroll and locate between editor and preview
 
@@ -73,7 +74,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Follow-scroll and locate between editor and preview
 - Bidirectional selection with click-and-drag support
 - Focus-aware selected-cell highlight (blue when focused, gray when unfocused)
-- Multi-cell quick actions: `Copy as Markdown Table` or `Copy as ASCII Table`
+- Multi-cell split copy action at the selection's upper-right: the main button copies TSV, while the dropdown offers `Copy as ASCII` and `Copy as Markdown`
 - `Cmd/Ctrl+C`: copy single selected cell text, or copy multi-cell selection as TSV
 
 ## Installation
@@ -103,7 +104,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. The preview panel automatically renders the current file
 4. Use toolbar buttons or `Cmd/Ctrl` + mouse wheel to zoom
 5. In Mermaid preview, drag the diagram to pan
-6. In JSON/JSONL/YAML/TOML/XML preview, selected entries use focus-aware highlight (focused blue / unfocused gray); CSV/TSV preview keeps sticky headers, supports cell locate, focus-aware highlight, multi-cell copy actions (`Copy as Markdown Table` / `Copy as ASCII Table`), and `Cmd/Ctrl+C` copy behavior
+6. In Markdown preview, hover a rendered table to copy it as Markdown, ASCII, or TSV; in JSON/JSONL/YAML/TOML/XML preview, selected entries use focus-aware highlight (focused blue / unfocused gray); CSV/TSV preview keeps sticky headers, supports cell locate, focus-aware highlight, an upper-right TSV main copy button with ASCII/Markdown dropdown actions, and `Cmd/Ctrl+C` copy behavior
 
 ## How to show the VS Code Secondary Side Bar?
 

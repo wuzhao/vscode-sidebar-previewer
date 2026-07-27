@@ -118,6 +118,41 @@ li > ol {
 }
 /* MARKDOWN END */
 
+/* MARKDOWN_TABLE_COPY START */
+.markdown-table-copy-wrapper {
+    position: relative;
+    width: max-content;
+    max-width: 100%;
+    margin: 16px 0;
+}
+
+.markdown-table-copy-wrapper > table {
+    margin: 0;
+}
+
+.markdown-table-copy-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.markdown-table-copy-actions .table-copy-button,
+.markdown-table-copy-actions .table-copy-trigger {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.markdown-table-copy-wrapper:hover .markdown-table-copy-actions,
+.markdown-table-copy-wrapper:focus-within .markdown-table-copy-actions {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+/* MARKDOWN_TABLE_COPY END */
+
 /* MARKDOWN_MISC START */
 hr {
     height: 0.25em;

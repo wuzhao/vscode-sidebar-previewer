@@ -44,6 +44,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - GitHub Alert 提示块渲染
 - 任务列表勾选回写
 - 代码高亮与复制按钮
+- 悬停 Markdown 表格时可复制为 Markdown、ASCII 或 TSV
 - KaTeX 和 Mermaid 代码块渲染
 - 编辑器与预览之间滚动同步、互相定位
 
@@ -73,7 +74,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - 编辑器与预览之间滚动同步、互相定位
 - 支持双向选区功能，支持鼠标拖拽框选
 - 选中单元格高亮支持焦点态（获得焦点为蓝色，失焦为灰色）
-- 多单元格选中时提供快捷操作，可执行「复制为 Markdown」或「复制为 ASCII」
+- 多单元格选中时在选区右上方提供分体复制操作：主按钮复制为 TSV，下拉菜单提供「复制为 ASCII」和「复制为 Markdown」
 - `Cmd/Ctrl+C`：单单元格复制文本，多单元格按 TSV 复制
 
 ## 安装方法
@@ -103,7 +104,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. 预览面板会自动显示当前文件的渲染结果
 4. 使用工具栏或 `Cmd/Ctrl` + 鼠标滚轮进行缩放
 5. Mermaid 预览支持拖拽查看放大区域
-6. JSON / JSONL / YAML / TOML / XML 可点击键名跳转到源码对应行并提供焦点态高亮；CSV / TSV 预览为表格视图，支持首行首列固定、点击单元格定位、焦点态高亮、多选复制快捷操作（「复制为 Markdown」/「复制为 ASCII」）与 `Cmd/Ctrl+C` 复制
+6. Markdown 预览可在悬停表格时复制为 Markdown、ASCII 或 TSV；JSON / JSONL / YAML / TOML / XML 可点击键名跳转到源码对应行并提供焦点态高亮；CSV / TSV 预览为表格视图，支持首行首列固定、点击单元格定位、焦点态高亮、选区右上方的 TSV 主复制按钮及 ASCII/Markdown 下拉操作与 `Cmd/Ctrl+C` 复制
 
 ## 如何显示 VS Code 第二侧边栏？
 

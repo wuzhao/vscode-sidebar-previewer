@@ -70,8 +70,8 @@ const FALLBACK_STRINGS: I18nStrings = {
     viewPreview: 'Preview',
     previewError: 'Preview Failed',
     tableSelectionMore: 'Actions',
-    tableSelectionMarkdownTable: 'Copy as Markdown Table',
-    tableSelectionAsciiTable: 'Copy as ASCII Table',
+    tableSelectionMarkdownTable: 'Copy as Markdown',
+    tableSelectionAsciiTable: 'Copy as ASCII',
     tableSelectionTsv: 'Copy as TSV',
     locatorCopied: 'Copied Locator: {0}',
     locatorUnavailable: 'No highlighted data tree region available'

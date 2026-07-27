@@ -162,26 +162,22 @@ const {
     const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
     const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
     const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
-
     assert.ok(/\.table-preview td\.selected\s*\{[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
     assert.ok(/#content\.preview-focused \.table-preview td\.selected\s*\{[\s\S]*?color-mix\(in srgb, var\(--vscode-button-background\) 35%, transparent 65%\)/s.test(css));
     assert.ok(/\.table-preview th\.selected\s*\{[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
     assert.ok(/#content\.preview-focused \.table-preview th\.selected\s*\{[\s\S]*?--vscode-list-activeSelectionBackground/s.test(css));
     assert.ok(/\.data-tree \.tree-item\.is-highlight[\s\S]*?--vscode-list-inactiveSelectionBackground/s.test(css));
     assert.ok(/#content\.preview-focused \.data-tree \.tree-item\.is-highlight/s.test(css));
-    assert.ok(css.includes('.table-selection-copy-btn'));
     assert.ok(/\.table-selection-actions\s*\{[^}]*z-index:\s*1;/s.test(css));
-    assert.ok(/\.table-selection-actions\s*\{[^}]*flex-direction:\s*column;/s.test(css));
-    assert.ok(/\.table-selection-copy-btn\s*\{[^}]*transition:\s*transform 80ms ease, box-shadow 120ms ease;/s.test(css));
-    assert.ok(/\.table-selection-copy-btn:active\s*\{[^}]*transform:\s*translateY\(1px\);/s.test(css));
-    assert.ok(/\.table-selection-copy-btn\.copied\s*\{[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
-    assert.equal(css.includes('.table-selection-copy-btn.fade-out'), false);
+    assert.equal(/\.table-selection-actions\s*\{[^}]*flex-direction:\s*column;/s.test(css), false);
+    assert.ok(css.includes('.table-copy-button'));
+    assert.ok(css.includes('.table-copy-menu-item'));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*z-index:\s*2;/s.test(css));
     assert.ok(/\.table-preview \.table-index-column\s*\{[^}]*user-select:\s*none;[^}]*-webkit-user-select:\s*none;/s.test(css));
 
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionMarkdown'));
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionAscii'));
-    assert.ok(tableJs.includes('table-selection-copy-btn'));
+    assert.ok(tableJs.includes('table-copy-button table-copy-main'));
     assert.ok(tableJs.includes('codicon-copy'));
     assert.ok(tableJs.includes('function buildMarkdownTableText(headerRow, bodyGrid)'));
     assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
@@ -190,30 +186,23 @@ const {
     assert.ok(tableJs.includes('function isFullWidthCodePoint(codePoint)'));
     assert.ok(tableJs.includes("const topBorder = buildAsciiBorder(widths, '┌', '┬', '┐');"));
     assert.ok(tableJs.includes('const TABLE_SELECTION_COPY_SUCCESS_MS = 800;'));
-    assert.ok(tableJs.includes('function showTableCopySuccess(copyBtn, defaultText)'));
-    assert.ok(tableJs.includes('function lockTableSelectionCopyButtonSize(copyBtn)'));
-    assert.ok(tableJs.includes('function resetTableSelectionCopyButton(copyBtn, defaultText)'));
-    assert.ok(tableJs.includes('function scheduleTableCopyButtonReset(copyBtn, defaultText)'));
-    assert.ok(tableJs.includes('function updateTableCopyButtonHoverState(copyBtn, isHovering, defaultText)'));
+    assert.ok(tableJs.includes('function showTableCopySuccess(copyBtn)'));
+    assert.ok(tableJs.includes('function resetTableCopySuccess(actions)'));
+    assert.ok(tableJs.includes('function scheduleTableCopySuccessReset(actions)'));
+    assert.ok(tableJs.includes('function updateTableCopySuccessHoverState(actions, isHovering)'));
     assert.ok(tableJs.includes('function isPreviewContentFocused()'));
     assert.ok(tableJs.includes('function bindTableSelectionFocusEvents()'));
     assert.ok(tableJs.includes('L10N_TEXT.copySuccess'));
     assert.equal(tableJs.includes('TABLE_SELECTION_COPY_FADE_MS'), false);
     assert.equal(tableJs.includes('fade-out'), false);
-    assert.ok(tableJs.includes("markdownButton.addEventListener('mouseenter', () => {"));
-    assert.ok(tableJs.includes("markdownButton.addEventListener('mouseleave', () => {"));
-    assert.ok(tableJs.includes("asciiButton.addEventListener('mouseenter', () => {"));
-    assert.ok(tableJs.includes("asciiButton.addEventListener('mouseleave', () => {"));
-    assert.equal(tableJs.includes("tsvButton.addEventListener('mouseenter', () => {"), false);
-    assert.equal(tableJs.includes("tsvButton.addEventListener('mouseleave', () => {"), false);
-    assert.equal(tableJs.includes("tsvButton.addEventListener('click', async (e) => {"), false);
-    assert.ok(tableJs.includes("updateTableCopyButtonHoverState(copyBtn, copyBtn.matches(':hover'), defaultText);"));
+    assert.ok(tableJs.includes('function bindTableCopyButton(copyButton, buildText)'));
+    assert.ok(tableJs.includes("updateTableCopySuccessHoverState(actions, actions.matches(':hover'));"));
     assert.ok(tableJs.includes('if (!isPreviewContentFocused()) {'));
     assert.ok(tableJs.includes("document.addEventListener('focusin', handleTableSelectionFocusChange);"));
     assert.ok(tableJs.includes("window.addEventListener('blur', handleTableSelectionFocusChange);"));
     assert.ok(tableJs.includes('bindTableSelectionFocusEvents();'));
-    assert.ok(tableJs.includes('let left = bounds.left - containerRect.left + tableSelectionUi.container.scrollLeft;'));
-    assert.ok(tableJs.includes('let top = bounds.bottom - containerRect.top + tableSelectionUi.container.scrollTop + TABLE_SELECTION_ACTION_MARGIN_PX;'));
+    assert.ok(tableJs.includes('let left = bounds.right - containerRect.left + tableSelectionUi.container.scrollLeft'));
+    assert.ok(tableJs.includes('let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop + TABLE_SELECTION_ACTION_MARGIN_PX;'));
     assert.equal(tableJs.includes('table-selection-more-btn'), false);
     assert.equal(tableJs.includes('table-selection-menu-item'), false);
     assert.ok(tableJs.includes('selectedCells.length === 1'));
@@ -225,8 +214,8 @@ const {
     assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', ...DATA_TREE_FILE_TYPES]);"));
     assert.ok(/document\.addEventListener\('keydown', \(e\) => \{[\s\S]*?e\.key\.toLowerCase\(\) !== 'a'[\s\S]*?NO_SELECT_ALL_FILE_TYPES\.has\(currentFileType\)[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?\}, true\);/s.test(commonJs));
     assert.ok(commonJs.includes("tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions'"));
-    assert.ok(commonJs.includes("tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown Table'"));
-    assert.ok(commonJs.includes("tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy as ASCII Table'"));
+    assert.ok(commonJs.includes("tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown'"));
+    assert.ok(commonJs.includes("tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy as ASCII'"));
     assert.ok(commonJs.includes("tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy as TSV'"));
 
     assert.ok(previewProvider.includes('data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}"'));
@@ -239,9 +228,73 @@ const {
     assert.ok(i18n.includes('tableSelectionAsciiTable'));
     assert.ok(i18n.includes('tableSelectionTsv'));
     assert.ok(i18n.includes("tableSelectionMore: 'Actions'"));
-    assert.ok(i18n.includes("tableSelectionMarkdownTable: 'Copy as Markdown Table'"));
-    assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy as ASCII Table'"));
+    assert.ok(i18n.includes("tableSelectionMarkdownTable: 'Copy as Markdown'"));
+    assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy as ASCII'"));
     assert.ok(i18n.includes("tableSelectionTsv: 'Copy as TSV'"));
+  });
+
+  test('Task E table split actions use icon-only triggers, group feedback, and top-right selection placement', () => {
+    const css = readResourceCssBundle();
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const markdownActionsSource = tableJs.slice(
+      tableJs.indexOf('function ensureMarkdownTableCopyActions(table)'),
+      tableJs.indexOf('function bindMarkdownTableCopyActions()')
+    );
+    const selectionActionsSource = tableJs.slice(
+      tableJs.indexOf('function ensureTableSelectionActionElements(table)'),
+      tableJs.indexOf('function updateTableSelectionActions()')
+    );
+    const selectionPositionSource = tableJs.slice(
+      tableJs.indexOf('function updateTableSelectionActions()'),
+      tableJs.indexOf('function highlightTableRangeFunc(')
+    );
+
+    assert.ok(tableJs.includes('function buildMarkdownPreviewTableSnapshot(table)'));
+    assert.ok(tableJs.includes("document.querySelectorAll('#content table:not(.frontmatter):not(.tabular-table)')"));
+    assert.ok(tableJs.includes("wrapper.className = 'markdown-table-copy-wrapper';"));
+    assert.ok(markdownActionsSource.includes("actions.className = 'markdown-table-copy-actions table-copy-actions';"));
+    assert.ok(markdownActionsSource.includes("markdownButton.className = 'table-copy-button table-copy-main';"));
+    assert.ok(markdownActionsSource.includes("markdownButton.innerHTML = '<i class=\"codicon codicon-copy\"></i>';"));
+    assert.equal(/markdownButton\.innerHTML\s*=\s*[^;]*<span>/s.test(markdownActionsSource), false);
+    assert.ok(markdownActionsSource.includes("dropdown.className = 'table-copy-dropdown';"));
+    assert.ok(markdownActionsSource.includes("dropdownTrigger.className = 'table-copy-trigger';"));
+    assert.ok(markdownActionsSource.includes("dropdownTrigger.innerHTML = '<i class=\"codicon codicon-chevron-down\"></i>';"));
+    assert.equal(/dropdownTrigger\.innerHTML\s*=\s*[^;]*<span>/s.test(markdownActionsSource), false);
+    assert.ok(/menu\.appendChild\(asciiButton\);\s*menu\.appendChild\(tsvButton\);/s.test(markdownActionsSource));
+    assert.ok(markdownActionsSource.includes('return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);'));
+    assert.ok(markdownActionsSource.includes('return buildAsciiTableText(buildGridWithHeader(snapshot));'));
+    assert.ok(markdownActionsSource.includes('return buildTsvText(buildGridWithHeader(snapshot));'));
+    assert.ok(tableJs.includes("PreviewCommon.registerDomainInit(['markdown'], 'markdown-table-copy'"));
+
+    assert.ok(selectionActionsSource.includes("wrapper.className = 'table-selection-actions table-copy-actions';"));
+    assert.ok(selectionActionsSource.includes("tsvButton.className = 'table-copy-button table-copy-main';"));
+    assert.ok(selectionActionsSource.includes("tsvButton.innerHTML = '<i class=\"codicon codicon-copy\"></i>';"));
+    assert.equal(/tsvButton\.innerHTML\s*=\s*[^;]*<span>/s.test(selectionActionsSource), false);
+    assert.ok(selectionActionsSource.includes("dropdownTrigger.innerHTML = '<i class=\"codicon codicon-chevron-down\"></i>';"));
+    assert.equal(/dropdownTrigger\.innerHTML\s*=\s*[^;]*<span>/s.test(selectionActionsSource), false);
+    assert.ok(/menu\.appendChild\(asciiButton\);\s*menu\.appendChild\(markdownButton\);/s.test(selectionActionsSource));
+    assert.ok(selectionActionsSource.includes('return buildTsvText(buildGridWithHeader(snapshot));'));
+    assert.ok(selectionActionsSource.includes('return buildAsciiTableText(buildGridWithHeader(snapshot));'));
+    assert.ok(selectionActionsSource.includes('return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);'));
+    assert.ok(tableJs.includes("feedback.className = 'table-copy-feedback';"));
+    assert.ok(tableJs.includes('<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>'));
+    assert.ok(tableJs.includes("actions.classList.add('copied');"));
+    assert.ok(selectionPositionSource.includes('right: Number.NEGATIVE_INFINITY'));
+    assert.ok(selectionPositionSource.includes('top: Number.POSITIVE_INFINITY'));
+    assert.ok(selectionPositionSource.includes('let left = bounds.right - containerRect.left + tableSelectionUi.container.scrollLeft'));
+    assert.ok(selectionPositionSource.includes('- wrapper.offsetWidth - TABLE_SELECTION_ACTION_MARGIN_PX;'));
+    assert.ok(selectionPositionSource.includes('let top = bounds.top - containerRect.top + tableSelectionUi.container.scrollTop + TABLE_SELECTION_ACTION_MARGIN_PX;'));
+
+    assert.ok(/\.markdown-table-copy-wrapper\s*\{[^}]*position:\s*relative;[^}]*max-width:\s*100%;/s.test(css));
+    assert.ok(/\.markdown-table-copy-actions\s*\{[^}]*position:\s*absolute;[^}]*top:\s*8px;[^}]*right:\s*8px;[^}]*visibility:\s*hidden;/s.test(css));
+    assert.ok(/\.markdown-table-copy-wrapper:hover \.markdown-table-copy-actions,[\s\S]*?visibility:\s*visible;[\s\S]*?pointer-events:\s*auto;/s.test(css));
+    assert.ok(/\.table-copy-button,\s*\.table-copy-trigger,\s*\.table-copy-menu-item\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryBackground\);/s.test(css));
+    assert.ok(/\.table-copy-main\s*\{[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(css));
+    assert.ok(/\.table-copy-trigger\s*\{[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(css));
+    assert.ok(/\.table-copy-dropdown\[open\] \.table-copy-menu\s*\{[^}]*display:\s*flex;/s.test(css));
+    assert.ok(/\.table-copy-feedback\s*\{[^}]*display:\s*none;[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
+    assert.ok(/\.table-copy-actions\.copied > \.table-copy-button,[\s\S]*?display:\s*none;/s.test(css));
+    assert.ok(/\.table-copy-actions\.copied > \.table-copy-feedback\s*\{[^}]*display:\s*inline-flex;/s.test(css));
   });
 
   test('Task H datatree highlight prefers XML array index and avoids root over-highlight', () => {
@@ -468,8 +521,8 @@ const {
     const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
     const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'codeblock.js'), 'utf8');
 
-    assert.ok(tableJs.includes('function updateTableCopyButtonHoverState(copyBtn, isHovering, defaultText)'));
-    assert.ok(tableJs.includes('function scheduleTableCopyButtonReset(copyBtn, defaultText)'));
+    assert.ok(tableJs.includes('function updateTableCopySuccessHoverState(actions, isHovering)'));
+    assert.ok(tableJs.includes('function scheduleTableCopySuccessReset(actions)'));
     assert.ok(tableJs.includes('if (isHovering) {'));
 
     assert.ok(codeblockJs.includes('function updateCopyButtonHoverState(isHovering)'));
