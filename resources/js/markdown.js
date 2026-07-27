@@ -4,6 +4,12 @@
 (function() {
 // TOC 面板离开后恢复 Skeleton Outline 的延迟时间
 const MARKDOWN_SKELETON_TOC_HIDE_DELAY_MS = 200;
+// Skeleton Outline 横线的基础宽度
+const MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX = 2;
+// Skeleton Outline 相邻标题层级的宽度差
+const MARKDOWN_SKELETON_LINE_LEVEL_STEP_PX = 3;
+// Markdown 支持的标题层级总数
+const MARKDOWN_HEADING_LEVEL_COUNT = 6;
 
 let markdownOutlineHeadings = [];
 let markdownOutlineScrollTarget = null;
@@ -107,14 +113,14 @@ function buildMarkdownOutlineRankMap(headings) {
 }
 
 /**
- * 根据标题层级数量计算 Skeleton Outline 横线宽度
- * @param rank - 标题在当前文档中的相对层级
- * @param rankCount - 当前文档的标题层级数量
+ * 根据 Markdown 标题层级计算 Skeleton Outline 横线宽度
+ * @param headingLevel - Markdown 标题层级
  * @returns 横线宽度像素值
  */
-function resolveMarkdownSkeletonLineWidth(rank, rankCount) {
-    const normalizedCount = Math.max(1, rankCount);
-    return Math.max(4, Math.round(24 * (normalizedCount - rank) / normalizedCount));
+function resolveMarkdownSkeletonLineWidth(headingLevel) {
+    const normalizedHeadingLevel = Math.min(MARKDOWN_HEADING_LEVEL_COUNT, Math.max(1, headingLevel));
+    return MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX
+        + (MARKDOWN_HEADING_LEVEL_COUNT - normalizedHeadingLevel + 1) * MARKDOWN_SKELETON_LINE_LEVEL_STEP_PX;
 }
 
 /**
@@ -214,7 +220,6 @@ function buildMarkdownSkeletonLines(headings, rankMap) {
     const lines = document.createElement('div');
     lines.className = 'markdown-skeleton-lines';
     lines.addEventListener('mouseenter', showMarkdownSkeletonToc);
-    const rankCount = Math.max(1, rankMap.size);
 
     headings.forEach(heading => {
         const rank = rankMap.get(heading.level) || 0;
@@ -223,7 +228,7 @@ function buildMarkdownSkeletonLines(headings, rankMap) {
         line.className = 'markdown-skeleton-line';
         line.dataset.headingId = heading.id;
         line.dataset.headingRank = String(rank);
-        line.style.width = `${resolveMarkdownSkeletonLineWidth(rank, rankCount)}px`;
+        line.style.width = `${resolveMarkdownSkeletonLineWidth(heading.level)}px`;
         line.title = heading.text;
         line.addEventListener('click', () => {
             scrollToHeading(heading.id);

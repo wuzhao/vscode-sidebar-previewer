@@ -148,11 +148,6 @@
           "command": "sidebarPreviewer.enableFollowScroll",
           "when": "view == sidebar-previewer && sidebarPreviewer.hasPreview && sidebarPreviewer.supportsLocate && !sidebarPreviewer.followScrollEnabled",
           "group": "navigation@7"
-        },
-        {
-          "command": "sidebarPreviewer.feedback",
-          "when": "view == sidebar-previewer",
-          "group": "navigation@9"
         }
       ]
     },

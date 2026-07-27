@@ -89,7 +89,7 @@ const {
     assert.ok(/function reportVisibleLine\(\)\s*\{[\s\S]*?const anchorCells = getFirstColumnAnchorCells\(table\);[\s\S]*?const probeTop = containerRect\.top \+ stickyHeaderHeight \+ TABLE_VISIBLE_LINE_PROBE_OFFSET_PX;[\s\S]*?Math\.abs\(rect\.top - probeTop\)/s.test(tableJs));
   });
 
-  test('Task A/B/C/D/E Markdown Skeleton Outline is wired with relative heading levels and full-height hover TOC', () => {
+  test('Task B Markdown Skeleton Outline uses fixed heading widths and a full-height hover TOC', () => {
     const css = readResourceCssBundle();
     const markdownJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'markdown.js'), 'utf8');
     const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
@@ -102,10 +102,13 @@ const {
     assert.ok(markdownJs.includes("content.scrollTo({ top: clampedScrollTop, behavior: 'instant' });"));
     assert.equal(markdownJs.includes("element.scrollIntoView({ behavior: 'instant', block: 'start' });"), false);
     assert.ok(markdownJs.includes('const normalizedHeadingLevels = Array.from(new Set(headings.map(heading => heading.level))).sort((a, b) => a - b);'));
-    assert.ok(markdownJs.includes('function resolveMarkdownSkeletonLineWidth(rank, rankCount)'));
-    assert.ok(markdownJs.includes('return Math.max(4, Math.round(24 * (normalizedCount - rank) / normalizedCount));'));
+    assert.ok(markdownJs.includes('const MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX = 2;'));
+    assert.ok(markdownJs.includes('const MARKDOWN_SKELETON_LINE_LEVEL_STEP_PX = 3;'));
+    assert.ok(markdownJs.includes('const MARKDOWN_HEADING_LEVEL_COUNT = 6;'));
+    assert.ok(markdownJs.includes('function resolveMarkdownSkeletonLineWidth(headingLevel)'));
+    assert.ok(markdownJs.includes('+ (MARKDOWN_HEADING_LEVEL_COUNT - normalizedHeadingLevel + 1) * MARKDOWN_SKELETON_LINE_LEVEL_STEP_PX;'));
     assert.ok(markdownJs.includes("line.dataset.headingRank = String(rank);"));
-    assert.ok(markdownJs.includes('line.style.width = `${resolveMarkdownSkeletonLineWidth(rank, rankCount)}px`;'));
+    assert.ok(markdownJs.includes('line.style.width = `${resolveMarkdownSkeletonLineWidth(heading.level)}px`;'));
     assert.ok(markdownJs.includes("levelLabel.textContent = `H${heading.level}`;"));
     assert.ok(markdownJs.includes('item.style.marginLeft = `${rank * 20}px`;'));
     assert.ok(markdownJs.includes("content.className = 'markdown-skeleton-toc-item-content';"));
@@ -121,11 +124,12 @@ const {
     assert.ok(markdownJs.includes('cleanupMarkdownSkeletonOutline: cleanupMarkdownSkeletonOutline'));
     assert.ok(commonJs.includes('PreviewMarkdown.cleanupMarkdownSkeletonOutline'));
 
-    assert.ok(/\.markdown-skeleton-outline\s*\{[^}]*position:\s*fixed;[^}]*top:\s*40px;[^}]*right:\s*0;[^}]*width:\s*24px;/s.test(css));
-    assert.ok(/\.markdown-skeleton-lines\s*\{[^}]*width:\s*24px;/s.test(css));
+    assert.ok(/\.markdown-skeleton-outline\s*\{[^}]*position:\s*fixed;[^}]*top:\s*40px;[^}]*right:\s*0;[^}]*width:\s*20px;/s.test(css));
+    assert.ok(/\.markdown-skeleton-lines\s*\{[^}]*width:\s*20px;/s.test(css));
+    assert.ok(/\.markdown-skeleton-line\s*\{[^}]*max-width:\s*20px;/s.test(css));
     assert.ok(/\.markdown-skeleton-outline\.is-toc-open \.markdown-skeleton-lines\s*\{[^}]*visibility:\s*hidden;[^}]*opacity:\s*0;[^}]*pointer-events:\s*none;/s.test(css));
     assert.ok(/\.markdown-skeleton-line:hover,\s*\.markdown-skeleton-line\.is-active\s*\{[^}]*background-color:\s*var\(--vscode-button-background\);/s.test(css));
-    assert.ok(/\.markdown-skeleton-toc\s*\{[^}]*position:\s*fixed;[^}]*top:\s*0;[^}]*right:\s*0;[^}]*bottom:\s*0;[^}]*width:\s*240px;[^}]*max-width:\s*calc\(100vw - 24px\);/s.test(css));
+    assert.ok(/\.markdown-skeleton-toc\s*\{[^}]*position:\s*fixed;[^}]*top:\s*0;[^}]*right:\s*0;[^}]*bottom:\s*0;[^}]*width:\s*240px;[^}]*max-width:\s*calc\(100vw - 20px\);/s.test(css));
     assert.ok(/\.markdown-skeleton-toc\s*\{[^}]*padding:\s*8px;[^}]*overflow-x:\s*hidden;[^}]*overflow-y:\s*auto;[^}]*background-color:\s*var\(--vscode-editorHoverWidget-background\);/s.test(css));
     assert.equal(/\.markdown-skeleton-toc\s*\{[^}]*border-left:/s.test(css), false);
     assert.ok(/\.markdown-skeleton-outline\.is-toc-open \.markdown-skeleton-toc/s.test(css));
@@ -135,6 +139,13 @@ const {
     assert.ok(/\.markdown-skeleton-toc-item:hover \.markdown-skeleton-toc-title,\s*\.markdown-skeleton-toc-item\.is-active \.markdown-skeleton-toc-title\s*\{[^}]*color:\s*var\(--vscode-textLink-foreground\);/s.test(css));
     assert.ok(/\.markdown-skeleton-toc-level\s*\{[^}]*color:\s*color-mix\(in srgb, var\(--vscode-descriptionForeground\) 50%, transparent 50%\);[^}]*font-size:\s*9px;/s.test(css));
     assert.ok(/\.markdown-skeleton-toc-title\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;/s.test(css));
+  });
+
+  test('Task A keeps Feedback out of every preview title bar', () => {
+    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8'));
+    const previewTitleCommands = packageJson.contributes.menus['view/title'];
+
+    assert.equal(previewTitleCommands.some(item => item.command === 'sidebarPreviewer.feedback'), false);
   });
 
   test('Follow scroll state persists across extension activations', () => {

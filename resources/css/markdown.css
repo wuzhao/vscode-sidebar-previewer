@@ -211,7 +211,7 @@ input[type="checkbox"] {
     z-index: 3;
     display: flex;
     align-items: flex-start;
-    width: 24px;
+    width: 20px;
     color: var(--vscode-foreground);
 }
 
@@ -220,7 +220,7 @@ input[type="checkbox"] {
     flex-direction: column;
     align-items: flex-end;
     gap: 6px;
-    width: 24px;
+    width: 20px;
     padding: 8px 0;
 }
 
@@ -233,7 +233,7 @@ input[type="checkbox"] {
 .markdown-skeleton-line {
     display: block;
     height: 3px;
-    max-width: 24px;
+    max-width: 20px;
     padding: 0;
     border: 0;
     border-top-left-radius: 4px;
@@ -255,7 +255,7 @@ input[type="checkbox"] {
     right: 0;
     bottom: 0;
     width: 240px;
-    max-width: calc(100vw - 24px);
+    max-width: calc(100vw - 20px);
     padding: 8px;
     overflow-x: hidden;
     overflow-y: auto;
