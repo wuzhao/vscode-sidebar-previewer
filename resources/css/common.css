@@ -254,6 +254,12 @@ pre.error-detail {
 .table-copy-actions.copied > .table-copy-feedback {
     display: inline-flex;
 }
+
+.table-copy-actions.copied {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
 /* COMMON_TABLE_COPY END */
 
 /* COMMON_RENDER_ERROR START */

@@ -487,7 +487,7 @@ function bindTableCopyButton(copyButton, buildText) {
 }
 
 /**
- * 为分体复制控件添加整组成功提示并绑定悬停复原行为
+ * 为分体复制控件添加整组成功提示并绑定菜单悬停行为
  * @param actions - 分体复制控件容器
  * @param dropdown - 分体复制控件的下拉菜单
  */
@@ -504,14 +504,12 @@ function bindTableCopyActionGroup(actions, dropdown) {
             clearTimeout(dropdownHideTimer);
             dropdownHideTimer = null;
         }
-        updateTableCopySuccessHoverState(actions, true);
     });
     actions.addEventListener('mouseleave', () => {
         dropdownHideTimer = setTimeout(() => {
             dropdown.removeAttribute('open');
             dropdownHideTimer = null;
         }, TABLE_COPY_DROPDOWN_HIDE_DELAY_MS);
-        updateTableCopySuccessHoverState(actions, false);
     });
 }
 
@@ -680,28 +678,6 @@ function scheduleTableCopySuccessReset(actions) {
 }
 
 /**
- * 根据鼠标悬停状态控制整组成功提示的复原时机
- * @param actions - 分体复制控件容器
- * @param isHovering - 鼠标是否悬停在复制提示区域
- */
-function updateTableCopySuccessHoverState(actions, isHovering) {
-    const timers = TABLE_COPY_SUCCESS_TIMER_MAP.get(actions);
-    if (!timers) {
-        return;
-    }
-
-    if (isHovering) {
-        if (timers.resetTimer) {
-            clearTimeout(timers.resetTimer);
-            timers.resetTimer = null;
-        }
-        return;
-    }
-
-    scheduleTableCopySuccessReset(actions);
-}
-
-/**
  * 将整个分体复制控件切换为成功提示
  * @param copyBtn - 目标复制按钮
  */
@@ -722,7 +698,7 @@ function showTableCopySuccess(copyBtn) {
     TABLE_COPY_SUCCESS_TIMER_MAP.set(actions, {
         resetTimer: null
     });
-    updateTableCopySuccessHoverState(actions, actions.matches(':hover'));
+    scheduleTableCopySuccessReset(actions);
 }
 
 /**

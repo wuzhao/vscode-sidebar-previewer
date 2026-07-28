@@ -234,14 +234,13 @@ const {
     assert.ok(tableJs.includes('function showTableCopySuccess(copyBtn)'));
     assert.ok(tableJs.includes('function resetTableCopySuccess(actions)'));
     assert.ok(tableJs.includes('function scheduleTableCopySuccessReset(actions)'));
-    assert.ok(tableJs.includes('function updateTableCopySuccessHoverState(actions, isHovering)'));
     assert.ok(tableJs.includes('function isPreviewContentFocused()'));
     assert.ok(tableJs.includes('function bindTableSelectionFocusEvents()'));
     assert.ok(tableJs.includes('L10N_TEXT.copySuccess'));
     assert.equal(tableJs.includes('TABLE_SELECTION_COPY_FADE_MS'), false);
     assert.equal(tableJs.includes('fade-out'), false);
     assert.ok(tableJs.includes('function bindTableCopyButton(copyButton, buildText)'));
-    assert.ok(tableJs.includes("updateTableCopySuccessHoverState(actions, actions.matches(':hover'));"));
+    assert.equal(tableJs.includes('function updateTableCopySuccessHoverState(actions, isHovering)'), false);
     assert.ok(tableJs.includes("if (!isPreviewContentFocused() && !wrapper.classList.contains('copied')) {"));
     assert.ok(tableJs.includes("document.addEventListener('focusin', handleTableSelectionFocusChange);"));
     assert.ok(tableJs.includes("window.addEventListener('blur', handleTableSelectionFocusChange);"));
@@ -540,7 +539,7 @@ const {
   test('2026-07-28 Task D aligns copy icons with labels and softens the TSV hint', () => {
     const css = readResourceCssBundle();
 
-    assert.ok(/\.table-copy-menu-item\.has-description\s*\{[^}]*padding:\s*4px 8px;[^}]*align-items:\s*flex-start;/s.test(css));
+    assert.ok(/\.table-copy-menu-item\.has-description\s*\{[^}]*align-items:\s*flex-start;/s.test(css));
     assert.ok(/\.table-copy-menu-item > \.codicon,\s*\.table-copy-menu-label\s*\{[^}]*line-height:\s*16px;/s.test(css));
     assert.ok(/\.table-copy-menu-text\s*\{[^}]*gap:\s*0;/s.test(css));
     assert.ok(/\.table-copy-menu-description\s*\{[^}]*margin-top:\s*4px;[^}]*opacity:\s*0\.65;/s.test(css));
@@ -766,17 +765,23 @@ const {
     assert.equal(codeblockJs.includes('fade-out'), false);
   });
 
-  test('Task E copy success remains while hovering and resets after leave', () => {
+  test('2026-07-28 Task E keeps table copy success visible for the fixed delay', () => {
+    const css = readResourceCssBundle();
     const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
-    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'codeblock.js'), 'utf8');
+    const showCopySuccessSource = tableJs.slice(
+      tableJs.indexOf('function showTableCopySuccess(copyBtn)'),
+      tableJs.indexOf('function ensureTableSelectionActionElements(table)')
+    );
+    const actionGroupSource = tableJs.slice(
+      tableJs.indexOf('function bindTableCopyActionGroup(actions, dropdown)'),
+      tableJs.indexOf('function ensureMarkdownTableCopyActions(table)')
+    );
 
-    assert.ok(tableJs.includes('function updateTableCopySuccessHoverState(actions, isHovering)'));
-    assert.ok(tableJs.includes('function scheduleTableCopySuccessReset(actions)'));
-    assert.ok(tableJs.includes('if (isHovering) {'));
-
-    assert.ok(codeblockJs.includes('function updateCopyButtonHoverState(isHovering)'));
-    assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseenter', () => {"));
-    assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseleave', () => {"));
+    assert.ok(showCopySuccessSource.includes("actions.classList.add('copied');"));
+    assert.ok(showCopySuccessSource.includes('scheduleTableCopySuccessReset(actions);'));
+    assert.equal(showCopySuccessSource.includes("actions.matches(':hover')"), false);
+    assert.equal(actionGroupSource.includes('updateTableCopySuccessHoverState'), false);
+    assert.ok(/\.table-copy-actions\.copied\s*\{[^}]*visibility:\s*visible;[^}]*opacity:\s*1;[^}]*pointer-events:\s*auto;/s.test(css));
   });
 
   test('Task C comment tooltip hover shows after delay while click remains immediate', () => {
