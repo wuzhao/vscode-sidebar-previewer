@@ -70,6 +70,8 @@ export class MarkdownProvider {
         // 配置 marked
         const renderer = new Renderer();
         let taskIndex = 0;
+        const markdownTableData: string[] = [];
+        let markdownTableIndex = 0;
 
         renderer.checkbox = function (checked: boolean): string {
             const line = taskLines[taskIndex] ?? -1;
@@ -94,6 +96,20 @@ export class MarkdownProvider {
             const tag = flags.align ? `<${type} align="${flags.align}">` : `<${type}>`;
             const cellContent = flags.header ? content : MarkdownProvider.renderTableTaskCheckbox(content);
             return tag + cellContent + `</${type}>\n`;
+        };
+
+        renderer.table = function (header: string, body: string): string {
+            const tableData = markdownTableData[markdownTableIndex++] || '';
+            const tableDataAttr = tableData
+                ? ` data-markdown-table="${escapeHtml(tableData)}"`
+                : '';
+            const tableBody = body ? `<tbody>${body}</tbody>` : '';
+            return `<table${tableDataAttr}>\n`
+                + '<thead>\n'
+                + header
+                + '</thead>\n'
+                + tableBody
+                + '</table>\n';
         };
 
         let headingIndex = 0;
@@ -177,8 +193,17 @@ export class MarkdownProvider {
         });
         parser.use({ extensions: [mathExtension, mathBlockExtension] });
 
-        // 解析 Markdown（不含 front matter）
-        let html = parser.parse(bodyContent) as string;
+        // 解析 Markdown（不含 front matter），并保留 GFM 表格源码供复制使用
+        const markdownTokens = parser.lexer(bodyContent);
+        parser.walkTokens(markdownTokens, token => {
+            if (token.type === 'table') {
+                markdownTableData.push(JSON.stringify({
+                    source: token.raw,
+                    alignments: token.align,
+                }));
+            }
+        });
+        let html = parser.parser(markdownTokens);
 
         // 转换 GitHub 风格的 alert blockquote
         html = this.transformGitHubAlerts(html);

@@ -224,7 +224,9 @@ const {
     assert.ok(tableJs.includes('L10N_TEXT.tableSelectionAscii'));
     assert.ok(tableJs.includes('table-copy-button table-copy-main'));
     assert.ok(tableJs.includes('codicon-copy'));
-    assert.ok(tableJs.includes('function buildMarkdownTableText(headerRow, bodyGrid)'));
+    assert.ok(tableJs.includes(
+      'function buildMarkdownTableText(headerRow, bodyGrid, alignments = [], preserveCellFormatting = false)'
+    ));
     assert.ok(tableJs.includes('function buildAsciiTableText(grid)'));
     assert.ok(tableJs.includes('function buildSelectionCopySnapshot(selectedCells)'));
     assert.ok(tableJs.includes('function buildGridWithHeader(snapshot)'));
@@ -317,7 +319,7 @@ const {
     assert.ok(markdownActionsSource.includes("dropdownTrigger.innerHTML = '<i class=\"codicon codicon-chevron-down\"></i>';"));
     assert.equal(/dropdownTrigger\.innerHTML\s*=\s*[^;]*<span>/s.test(markdownActionsSource), false);
     assert.ok(markdownActionsSource.includes('const copyMenu = createTableCopyMenuElements();'));
-    assert.ok(markdownActionsSource.includes('return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);'));
+    assert.ok(markdownActionsSource.includes('getMarkdownPreviewTableSource(table)'));
     assert.ok(markdownActionsSource.includes('return buildAsciiTableText(buildGridWithHeader(snapshot));'));
     assert.ok(markdownActionsSource.includes('return buildTsvText(buildGridWithHeader(snapshot));'));
     assert.ok(markdownActionsSource.includes('return buildCsvText(buildGridWithHeader(snapshot));'));
@@ -784,7 +786,7 @@ const {
     assert.ok(/\.table-copy-actions\.copied\s*\{[^}]*visibility:\s*visible;[^}]*opacity:\s*1;[^}]*pointer-events:\s*auto;/s.test(css));
   });
 
-  test('2026-07-28 Task G copies interactive table checkboxes as task markers', () => {
+  test('2026-07-28 Task G serializes interactive table checkbox state for plain-text formats', () => {
     const css = readResourceCssBundle();
     const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
     const cellTextSource = tableJs.slice(
@@ -840,7 +842,6 @@ const {
       ${copyFormatSource}
       snapshot = buildMarkdownPreviewTableSnapshot(table);
       grid = buildGridWithHeader(snapshot);
-      markdownText = buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
       asciiText = buildAsciiTableText(grid);
       tsvText = buildTsvText(grid);
       csvText = buildCsvText(grid);`,
@@ -851,15 +852,133 @@ const {
       Array.from(context.snapshot.bodyGrid, row => Array.from(row)),
       [['Login', '- [x] Hello'], ['Search', '- [ ]']]
     );
-    assert.equal(
-      context.markdownText,
-      '| Task | Done |\n| --- | --- |\n| Login | - [x] Hello |\n| Search | - [ ] |'
-    );
     assert.ok(context.asciiText.includes('│ Login  │ - [x] Hello │'));
     assert.ok(context.asciiText.includes('│ Search │ - [ ]       │'));
     assert.equal(context.tsvText, 'Task\tDone\r\nLogin\t- [x] Hello\r\nSearch\t- [ ]');
     assert.equal(context.csvText, 'Task,Done\r\nLogin,- [x] Hello\r\nSearch,- [ ]');
     assert.ok(/\.table-task-checkbox\s*\{[^}]*cursor:\s*pointer;/s.test(css));
+  });
+
+  test('2026-07-28 Task H preserves cell-level Markdown source when copying', () => {
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const sourceFunctions = tableJs.slice(
+      tableJs.indexOf('function parseMarkdownTableSourceRow(line)'),
+      tableJs.indexOf('function buildGridWithHeader(snapshot)')
+    );
+    const formattingFunctions = tableJs.slice(
+      tableJs.indexOf('function isCombiningMarkCodePoint(codePoint)'),
+      tableJs.indexOf('function buildAsciiBorder(widths, left, middle, right)')
+    );
+    const actionsSource = tableJs.slice(
+      tableJs.indexOf('function ensureMarkdownTableCopyActions(table)'),
+      tableJs.indexOf('function bindMarkdownTableCopyActions()')
+    );
+    const markdownSource = [
+      '| Type | Content |',
+      '| --- | --- |',
+      '| Image | ![xxx](image.png) |',
+      '| Task | - [ ] Hello |',
+      '| HTML | <u>xxx</u> |',
+      '| Escaped | a \\| b |',
+    ].join('\n');
+    const markdownTableData = JSON.stringify({
+      source: markdownSource,
+      alignments: [null, null],
+    });
+    const context = {
+      table: {
+        getAttribute(name) {
+          return name === 'data-markdown-table' ? markdownTableData : null;
+        },
+      },
+    };
+
+    vm.runInNewContext(
+      `${sourceFunctions}
+      ${formattingFunctions}
+      copiedMarkdown = getMarkdownPreviewTableSource(table);`,
+      context
+    );
+
+    assert.ok(context.copiedMarkdown.includes('![xxx](image.png)'));
+    assert.ok(context.copiedMarkdown.includes('- [ ] Hello'));
+    assert.ok(context.copiedMarkdown.includes('<u>xxx</u>'));
+    assert.ok(context.copiedMarkdown.includes('a \\| b'));
+    assert.ok(actionsSource.includes(
+      'bindTableCopyButton(markdownButton, () => getMarkdownPreviewTableSource(table));'
+    ));
+    assert.ok(actionsSource.includes(
+      'bindTableCopyButton(copyMenu.markdownButton, () => getMarkdownPreviewTableSource(table));'
+    ));
+    assert.ok(actionsSource.includes('return buildAsciiTableText(buildGridWithHeader(snapshot));'));
+    assert.ok(actionsSource.includes('return buildTsvText(buildGridWithHeader(snapshot));'));
+    assert.ok(actionsSource.includes('return buildCsvText(buildGridWithHeader(snapshot));'));
+  });
+
+  test('2026-07-28 Task I standardizes Markdown table widths and alignment markers', () => {
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const formattingFunctions = tableJs.slice(
+      tableJs.indexOf('function isCombiningMarkCodePoint(codePoint)'),
+      tableJs.indexOf('function buildAsciiBorder(widths, left, middle, right)')
+    );
+    const context = {};
+
+    vm.runInNewContext(
+      `${formattingFunctions}
+      markdownText = buildMarkdownTableText(
+        ['A', 'Mid', 'Done'],
+        [['中文', '中', '9']],
+        ['left', 'center', 'right'],
+        true
+      );`,
+      context
+    );
+
+    assert.equal(
+      context.markdownText,
+      '| A    |  Mid  | Done |\n'
+        + '| ---- | :---: | ---: |\n'
+        + '| 中文 |  中   |    9 |'
+    );
+    assert.equal(context.markdownText.includes('|------|'), false);
+    assert.equal(context.markdownText.includes(':--- |'), false);
+  });
+
+  test('2026-07-28 Task J does not append rows from trailing Markdown source lines', () => {
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const sourceFunctions = tableJs.slice(
+      tableJs.indexOf('function parseMarkdownTableSourceRow(line)'),
+      tableJs.indexOf('function buildGridWithHeader(snapshot)')
+    );
+    const formattingFunctions = tableJs.slice(
+      tableJs.indexOf('function isCombiningMarkCodePoint(codePoint)'),
+      tableJs.indexOf('function buildAsciiBorder(widths, left, middle, right)')
+    );
+    const markdownTableData = JSON.stringify({
+      source: '| A | B |\n| --- | --- |\n| 1 | 2 |\n\n',
+      alignments: [null, null],
+    });
+    const context = {
+      table: {
+        getAttribute(name) {
+          return name === 'data-markdown-table' ? markdownTableData : null;
+        },
+      },
+    };
+
+    vm.runInNewContext(
+      `${sourceFunctions}
+      ${formattingFunctions}
+      copiedMarkdown = getMarkdownPreviewTableSource(table);`,
+      context
+    );
+
+    assert.equal(
+      context.copiedMarkdown,
+      '| A   | B   |\n'
+        + '| --- | --- |\n'
+        + '| 1   | 2   |'
+    );
   });
 
   test('Task C comment tooltip hover shows after delay while click remains immediate', () => {

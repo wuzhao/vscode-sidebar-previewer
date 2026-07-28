@@ -189,6 +189,93 @@ function buildMarkdownPreviewTableSnapshot(table) {
 }
 
 /**
+ * 拆分 Markdown 表格源码行并保留转义后的竖线
+ * @param line - 单行 Markdown 表格源码
+ * @returns 返回去除外围空白的单元格源码数组
+ */
+function parseMarkdownTableSourceRow(line) {
+    const source = String(line || '').trim();
+    const cells = [];
+    let currentCell = '';
+    let consecutiveBackslashes = 0;
+    let lastCharacterWasDelimiter = false;
+
+    for (const char of source) {
+        if (char === '|' && consecutiveBackslashes % 2 === 0) {
+            cells.push(currentCell.trim());
+            currentCell = '';
+            consecutiveBackslashes = 0;
+            lastCharacterWasDelimiter = true;
+            continue;
+        }
+
+        currentCell += char;
+        lastCharacterWasDelimiter = false;
+        if (char === '\\') {
+            consecutiveBackslashes++;
+        } else {
+            consecutiveBackslashes = 0;
+        }
+    }
+    cells.push(currentCell.trim());
+
+    if (source.startsWith('|')) {
+        cells.shift();
+    }
+    if (lastCharacterWasDelimiter) {
+        cells.pop();
+    }
+    return cells;
+}
+
+/**
+ * 从 GFM 表格源码提取表头和正文单元格
+ * @param source - Markdown 表格原始代码片段
+ * @returns 返回保留行内语法的表格数据，源码无效时返回 null
+ */
+function parseMarkdownTableSource(source) {
+    const lines = String(source || '').split(/\r?\n/);
+    while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+        lines.pop();
+    }
+    if (lines.length < 2) {
+        return null;
+    }
+    return {
+        headerRow: parseMarkdownTableSourceRow(lines[0]),
+        bodyGrid: lines.slice(2).map(parseMarkdownTableSourceRow)
+    };
+}
+
+/**
+ * 获取 Markdown 预览表格的原始代码片段
+ * @param table - Markdown 预览表格元素
+ * @returns 返回保留行内格式的 Markdown 表格代码
+ */
+function getMarkdownPreviewTableSource(table) {
+    const markdownTableData = table.getAttribute('data-markdown-table');
+    if (markdownTableData !== null) {
+        try {
+            const tableData = JSON.parse(markdownTableData);
+            const sourceTable = parseMarkdownTableSource(tableData.source);
+            if (sourceTable) {
+                return buildMarkdownTableText(
+                    sourceTable.headerRow,
+                    sourceTable.bodyGrid,
+                    tableData.alignments,
+                    true
+                );
+            }
+        } catch (_) {
+            // 表格源码元数据异常时沿用渲染内容重建，避免复制入口失效
+        }
+    }
+
+    const snapshot = buildMarkdownPreviewTableSnapshot(table);
+    return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
+}
+
+/**
  * 合并表头和正文为完整网格
  * @param snapshot - 复制快照
  * @returns 返回完整网格
@@ -313,29 +400,89 @@ function escapeMarkdownTableCell(value) {
 }
 
 /**
+ * 按列宽和对齐方式补齐 Markdown 单元格
+ * @param value - 保留 Markdown 语法的单元格文本
+ * @param width - 当前列的目标显示宽度
+ * @param alignment - 当前列的对齐方式
+ * @returns 返回按显示宽度补齐空格的单元格文本
+ */
+function padMarkdownTableCell(value, width, alignment) {
+    const text = String(value ?? '');
+    const padding = Math.max(0, width - getDisplayWidth(text));
+    if (alignment === 'right') {
+        return ' '.repeat(padding) + text;
+    }
+    if (alignment === 'center') {
+        const leftPadding = Math.floor(padding / 2);
+        return ' '.repeat(leftPadding) + text + ' '.repeat(padding - leftPadding);
+    }
+    return text + ' '.repeat(padding);
+}
+
+/**
+ * 按列宽生成标准 Markdown 表格分隔单元格
+ * @param width - 当前列的目标显示宽度
+ * @param alignment - 当前列的对齐方式
+ * @returns 返回保留右对齐或居中标记的标准分隔内容
+ */
+function buildMarkdownSeparatorCell(width, alignment) {
+    if (alignment === 'right') {
+        return '-'.repeat(Math.max(3, width - 1)) + ':';
+    }
+    if (alignment === 'center') {
+        return ':' + '-'.repeat(Math.max(3, width - 2)) + ':';
+    }
+    return '-'.repeat(Math.max(3, width));
+}
+
+/**
  * 将表头和正文转换为 Markdown Table 文本
  * @param headerRow - 表头行
  * @param bodyGrid - 正文网格
+ * @param alignments - 各列需要保留的对齐方式
+ * @param preserveCellFormatting - 是否保留单元格内已有的 Markdown 语法
  * @returns 返回 Markdown Table 字符串
  */
-function buildMarkdownTableText(headerRow, bodyGrid) {
+function buildMarkdownTableText(headerRow, bodyGrid, alignments = [], preserveCellFormatting = false) {
     if (!Array.isArray(headerRow) || headerRow.length === 0) {
         return '';
     }
     const colCount = headerRow.length;
     const normalizeRow = (row) => {
         const safeRow = Array.isArray(row) ? row : [];
-        return new Array(colCount).fill('').map((_, index) => escapeMarkdownTableCell(safeRow[index] ?? ''));
+        return new Array(colCount).fill('').map((_, index) => {
+            const value = safeRow[index] ?? '';
+            return preserveCellFormatting ? String(value) : escapeMarkdownTableCell(value);
+        });
     };
 
     const normalizedHeader = normalizeRow(headerRow);
+    const normalizedBody = (Array.isArray(bodyGrid) ? bodyGrid : []).map(normalizeRow);
+    const normalizedAlignments = new Array(colCount).fill(null).map((_, index) => {
+        const alignment = Array.isArray(alignments) ? alignments[index] : null;
+        return alignment === 'right' || alignment === 'center' ? alignment : null;
+    });
+    const columnWidths = new Array(colCount).fill(0).map((_, index) => {
+        const alignment = normalizedAlignments[index];
+        const minimumWidth = alignment === 'center' ? 5 : alignment === 'right' ? 4 : 3;
+        return [normalizedHeader, ...normalizedBody].reduce((width, row) => {
+            return Math.max(width, getDisplayWidth(row[index] ?? ''));
+        }, minimumWidth);
+    });
+
     const lines = [
-        formatMarkdownTableRow(normalizedHeader),
-        formatMarkdownTableRow(new Array(colCount).fill('---'))
+        formatMarkdownTableRow(normalizedHeader.map((value, index) => {
+            return padMarkdownTableCell(value, columnWidths[index], normalizedAlignments[index]);
+        })),
+        formatMarkdownTableRow(columnWidths.map((width, index) => {
+            return buildMarkdownSeparatorCell(width, normalizedAlignments[index]);
+        }))
     ];
 
-    (Array.isArray(bodyGrid) ? bodyGrid : []).forEach(row => {
-        lines.push(formatMarkdownTableRow(normalizeRow(row)));
+    normalizedBody.forEach(row => {
+        lines.push(formatMarkdownTableRow(row.map((value, index) => {
+            return padMarkdownTableCell(value, columnWidths[index], normalizedAlignments[index]);
+        })));
     });
     return lines.join('\n');
 }
@@ -566,14 +713,8 @@ function ensureMarkdownTableCopyActions(table) {
     bindTableCopyActionGroup(actions, dropdown);
     wrapper.appendChild(actions);
 
-    bindTableCopyButton(markdownButton, () => {
-        const snapshot = buildMarkdownPreviewTableSnapshot(table);
-        return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
-    });
-    bindTableCopyButton(copyMenu.markdownButton, () => {
-        const snapshot = buildMarkdownPreviewTableSnapshot(table);
-        return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
-    });
+    bindTableCopyButton(markdownButton, () => getMarkdownPreviewTableSource(table));
+    bindTableCopyButton(copyMenu.markdownButton, () => getMarkdownPreviewTableSource(table));
     bindTableCopyButton(copyMenu.asciiButton, () => {
         const snapshot = buildMarkdownPreviewTableSnapshot(table);
         return buildAsciiTableText(buildGridWithHeader(snapshot));

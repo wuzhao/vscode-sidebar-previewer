@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.4.0-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.4.1-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -42,10 +42,11 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 - Front Matter 属性表格
 - GitHub Alert 提示块渲染
+- 带悬停目录的 Skeleton Outline
 - 任务列表勾选回写
 - 表格单元格内的可交互任务列表复选框
 - 代码高亮与复制按钮
-- 悬停 Markdown 表格时可复制为 Markdown、ASCII、TSV 或 CSV
+- 悬停 Markdown 表格时，可复制为 Markdown，或复制为 ASCII、TSV、CSV
 - KaTeX 和 Mermaid 代码块渲染
 - 编辑器与预览之间滚动同步、互相定位
 

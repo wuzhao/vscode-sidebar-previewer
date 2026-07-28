@@ -213,6 +213,33 @@ test('MarkdownProvider renders task checkboxes at the start of table cells', () 
   assert.equal(/table-task-checkbox[^>]*data-line=/.test(result.html), false);
 });
 
+test('MarkdownProvider preserves formatted Markdown table data for copying', () => {
+  const source = [
+    '| Type | Content |',
+    '| :-- | --: |',
+    '| Image | ![xxx](image.png) |',
+    '| Task | - [ ] Hello |',
+    '| HTML | <u>xxx</u> |',
+  ].join('\n');
+
+  const result = MarkdownProvider.parse(source);
+  const tableDataMatch = result.html.match(/data-markdown-table="([^"]+)"/);
+
+  assert.ok(tableDataMatch);
+  const tableData = JSON.parse(
+    tableDataMatch[1]
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+  );
+  assert.equal(tableData.source, source);
+  assert.deepEqual(tableData.alignments, ['left', 'right']);
+  assert.ok(result.html.includes('<img src="image.png" alt="xxx">'));
+  assert.ok(result.html.includes('<input type="checkbox" class="table-task-checkbox">Hello'));
+  assert.ok(result.html.includes('<u>xxx</u>'));
+});
+
 test('DatatreePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
     const source = `{
   "name": "Alice", // profile name

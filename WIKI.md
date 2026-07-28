@@ -110,9 +110,10 @@ Webview → Host : webviewReady | zoomChange | visibleHeading | visibleLine |
 | 交互能力 | 主要文件 |
 | --- | --- |
 | Host / Webview 消息分发、内容注入、缩放和按类型初始化 | `resources/js/common.js` |
+| Markdown 任务列表回写、Skeleton Outline 与标题定位 | `resources/js/markdown.js` |
 | 点击 data-tree key 跳转编辑器（`navigateToLine`），并根据编辑器选区高亮树节点（`highlightTreeRange`） | `resources/js/datatree.js` |
 | 读取 data-tree 当前高亮节点并回传定位路径和高亮状态（`dataTreeLocator` / `dataTreeHighlightState`） | `resources/js/datatree.js` |
-| CSV/TSV 单元格选择、编辑器选区同步、多单元格复制快捷操作（Markdown/ASCII/TSV） | `resources/js/table.js` |
+| Markdown 表格复制及 CSV/TSV 单元格选择、编辑器选区同步、Markdown/ASCII/TSV/CSV 多格式复制 | `resources/js/table.js` |
 | comment popup 展示与交互锁 | `resources/js/comment-tooltip.js` |
 | datatree 展开与折叠（`expandAllNodes` / `collapseAllNodes`） | `resources/js/datatree.js` |
 | datatree 展开/折叠命令分发（Host -> Webview） | `src/previewProvider.ts` |

@@ -322,6 +322,8 @@ $$
 | Login | - [x] Hello |
 | Search | - [ ] |
 | Literal | Keep - [x] marker |
+| Image | ![xxx](image.png) |
+| Underline | <u>xxx</u> |
 
 ---
 

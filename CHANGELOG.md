@@ -1,17 +1,31 @@
 # Changelog
 
+## 0.4.1 - 2026-07-28
+
+- Refined Markdown Skeleton Outline widths based on the heading levels present in the document.
+- Unified Markdown and CSV/TSV table copy menus with Markdown, ASCII, TSV, and CSV formats, including spreadsheet compatibility guidance for TSV.
+- Markdown table copy now preserves cell source formatting, normalizes separators, retains right/center alignment, aligns columns by display width, and avoids appending extra rows.
+- Improved table copy interactions by keeping dropdown menus reachable and showing fixed-duration `Copied` feedback for buttons and CSV/TSV keyboard copies.
+- Added interactive Task List checkboxes inside Markdown table cells, with task markers preserved when copying tables.
+- Removed the Feedback entry from every preview title bar.
+
+～～～
+
+- 根据文档中实际存在的标题层级优化 Markdown Skeleton Outline 宽度。
+- 统一 Markdown 与 CSV/TSV 表格复制菜单，提供 Markdown、ASCII、TSV 和 CSV 格式，并为 TSV 补充电子表格兼容性说明。
+- Markdown 表格复制现在会保留单元格源码格式、规范化分隔线、保留右对齐与居中、按显示宽度对齐各列，并避免在末尾追加多余行。
+- 优化表格复制交互：下拉菜单保持可达，按钮复制及 CSV/TSV 快捷键复制均显示固定时长的 `Copied` 提示。
+- 新增 Markdown 表格单元格内的可交互 Task List 复选框，复制表格时会保留任务标记。
+- 移除所有预览标题栏中的 Feedback 入口。
+
 ## 0.4.0 - 2026-07-10
 
 - Added Markdown Skeleton Outline with level-aware visual markers and a hover table of contents for instant heading navigation.
-- Unified Markdown and CSV/TSV table copy menus with Markdown, ASCII, TSV, and CSV formats, including spreadsheet compatibility guidance for TSV.
-- Added interactive Task List checkboxes inside Markdown table cells, with task markers preserved when copying tables.
 - Follow-scroll lock now remembers its previous state between extension sessions.
 
 ～～～
 
 - 新增 Markdown Skeleton Outline：按标题层级显示概览，悬停打开目录并可瞬间跳转到对应标题。
-- 统一 Markdown 与 CSV/TSV 表格复制菜单，提供 Markdown、ASCII、TSV 和 CSV 格式，并为 TSV 补充电子表格兼容性说明。
-- 新增 Markdown 表格单元格内的可交互 Task List 复选框，复制表格时会保留任务标记。
 - 滚动锁现在会在扩展会话之间记住上次状态。
 
 ## 0.3.17 - 2026-06-13

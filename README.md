@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.4.0-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.4.1-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.ja-JP.md)
 
@@ -42,10 +42,11 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 - Front matter table
 - GitHub alert block rendering
+- Skeleton Outline with a hover table of contents
 - Task list checkbox toggle-writeback
 - Interactive task list checkboxes in table cells
 - Code highlighting and copy button
-- Hover a rendered table to copy it as Markdown, ASCII, TSV, or CSV
+- Hover a rendered table to copy it as Markdown, or as ASCII, TSV, or CSV
 - KaTeX and Mermaid block rendering
 - Follow-scroll and locate between editor and preview
 
