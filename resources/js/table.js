@@ -1059,6 +1059,9 @@ document.addEventListener('copy', (e) => {
     }
     const grid = buildSelectionGrid(selectedCells);
     e.clipboardData.setData('text/plain', buildTsvText(grid));
+    if (tableSelectionUi.tsvButton) {
+        showTableCopySuccess(tableSelectionUi.tsvButton);
+    }
 });
 
 // 向公共注册中心登记：仅在 CSV / TSV 文件类型时激活

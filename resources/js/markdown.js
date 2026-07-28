@@ -6,10 +6,8 @@
 const MARKDOWN_SKELETON_TOC_HIDE_DELAY_MS = 200;
 // Skeleton Outline 横线的基础宽度
 const MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX = 2;
-// Skeleton Outline 相邻标题层级的宽度差
-const MARKDOWN_SKELETON_LINE_LEVEL_STEP_PX = 3;
-// Markdown 支持的标题层级总数
-const MARKDOWN_HEADING_LEVEL_COUNT = 6;
+// Skeleton Outline 横线的最大宽度
+const MARKDOWN_SKELETON_LINE_MAX_WIDTH_PX = 20;
 
 let markdownOutlineHeadings = [];
 let markdownOutlineScrollTarget = null;
@@ -113,14 +111,20 @@ function buildMarkdownOutlineRankMap(headings) {
 }
 
 /**
- * 根据 Markdown 标题层级计算 Skeleton Outline 横线宽度
- * @param headingLevel - Markdown 标题层级
+ * 根据 Markdown 标题相对层级计算 Skeleton Outline 横线宽度
+ * @param headingRank - 标题在当前文档实际层级中的相对位置
+ * @param headingLevelCount - 当前文档包含的标题层级数量
  * @returns 横线宽度像素值
  */
-function resolveMarkdownSkeletonLineWidth(headingLevel) {
-    const normalizedHeadingLevel = Math.min(MARKDOWN_HEADING_LEVEL_COUNT, Math.max(1, headingLevel));
-    return MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX
-        + (MARKDOWN_HEADING_LEVEL_COUNT - normalizedHeadingLevel + 1) * MARKDOWN_SKELETON_LINE_LEVEL_STEP_PX;
+function resolveMarkdownSkeletonLineWidth(headingRank, headingLevelCount) {
+    const normalizedHeadingLevelCount = Math.max(1, headingLevelCount);
+    const normalizedHeadingRank = Math.min(normalizedHeadingLevelCount - 1, Math.max(0, headingRank));
+    const distributableWidth = MARKDOWN_SKELETON_LINE_MAX_WIDTH_PX - MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX;
+    const averageWidth = distributableWidth / normalizedHeadingLevelCount;
+    const widthOffset = Math.floor(
+        normalizedHeadingRank * averageWidth / MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX
+    ) * MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX;
+    return MARKDOWN_SKELETON_LINE_MAX_WIDTH_PX - widthOffset;
 }
 
 /**
@@ -228,7 +232,7 @@ function buildMarkdownSkeletonLines(headings, rankMap) {
         line.className = 'markdown-skeleton-line';
         line.dataset.headingId = heading.id;
         line.dataset.headingRank = String(rank);
-        line.style.width = `${resolveMarkdownSkeletonLineWidth(heading.level)}px`;
+        line.style.width = `${resolveMarkdownSkeletonLineWidth(rank, rankMap.size)}px`;
         line.title = heading.text;
         line.addEventListener('click', () => {
             scrollToHeading(heading.id);
