@@ -17,6 +17,8 @@ const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;
 const TABLE_SELECTION_ACTION_MARGIN_PX = 6;
 // 复制成功状态展示时长（毫秒）
 const TABLE_SELECTION_COPY_SUCCESS_MS = 800;
+// 分体复制菜单离开后延迟关闭的时间（毫秒）
+const TABLE_COPY_DROPDOWN_HIDE_DELAY_MS = 200;
 // 记录分体复制控件的成功提示计时器
 const TABLE_COPY_SUCCESS_TIMER_MAP = new WeakMap();
 
@@ -414,11 +416,20 @@ function bindTableCopyActionGroup(actions, dropdown) {
     feedback.innerHTML = `<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>`;
     actions.appendChild(feedback);
 
+    let dropdownHideTimer = null;
+
     actions.addEventListener('mouseenter', () => {
+        if (dropdownHideTimer) {
+            clearTimeout(dropdownHideTimer);
+            dropdownHideTimer = null;
+        }
         updateTableCopySuccessHoverState(actions, true);
     });
     actions.addEventListener('mouseleave', () => {
-        dropdown.removeAttribute('open');
+        dropdownHideTimer = setTimeout(() => {
+            dropdown.removeAttribute('open');
+            dropdownHideTimer = null;
+        }, TABLE_COPY_DROPDOWN_HIDE_DELAY_MS);
         updateTableCopySuccessHoverState(actions, false);
     });
 }
@@ -765,7 +776,8 @@ function updateTableSelectionActions() {
         return;
     }
 
-    if (!isPreviewContentFocused()) {
+    const wrapper = tableSelectionUi.wrapper;
+    if (!isPreviewContentFocused() && !wrapper.classList.contains('copied')) {
         hideTableSelectionActions();
         return;
     }
@@ -781,7 +793,6 @@ function updateTableSelectionActions() {
     });
 
     const containerRect = tableSelectionUi.container.getBoundingClientRect();
-    const wrapper = tableSelectionUi.wrapper;
     wrapper.classList.add('is-visible');
 
     // 将按钮组右侧与选区右侧对齐，并在选区内保留横向边距

@@ -197,7 +197,7 @@ const {
     assert.equal(tableJs.includes('fade-out'), false);
     assert.ok(tableJs.includes('function bindTableCopyButton(copyButton, buildText)'));
     assert.ok(tableJs.includes("updateTableCopySuccessHoverState(actions, actions.matches(':hover'));"));
-    assert.ok(tableJs.includes('if (!isPreviewContentFocused()) {'));
+    assert.ok(tableJs.includes("if (!isPreviewContentFocused() && !wrapper.classList.contains('copied')) {"));
     assert.ok(tableJs.includes("document.addEventListener('focusin', handleTableSelectionFocusChange);"));
     assert.ok(tableJs.includes("window.addEventListener('blur', handleTableSelectionFocusChange);"));
     assert.ok(tableJs.includes('bindTableSelectionFocusEvents();'));
@@ -290,11 +290,111 @@ const {
     assert.ok(/\.markdown-table-copy-wrapper:hover \.markdown-table-copy-actions,[\s\S]*?visibility:\s*visible;[\s\S]*?pointer-events:\s*auto;/s.test(css));
     assert.ok(/\.table-copy-button,\s*\.table-copy-trigger,\s*\.table-copy-menu-item\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryBackground\);/s.test(css));
     assert.ok(/\.table-copy-main\s*\{[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(css));
-    assert.ok(/\.table-copy-trigger\s*\{[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(css));
+    assert.ok(/\.table-copy-trigger\s*\{[^}]*width:\s*20px;[^}]*padding:\s*0;/s.test(css));
     assert.ok(/\.table-copy-dropdown\[open\] \.table-copy-menu\s*\{[^}]*display:\s*flex;/s.test(css));
     assert.ok(/\.table-copy-feedback\s*\{[^}]*display:\s*none;[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
     assert.ok(/\.table-copy-actions\.copied > \.table-copy-button,[\s\S]*?display:\s*none;/s.test(css));
     assert.ok(/\.table-copy-actions\.copied > \.table-copy-feedback\s*\{[^}]*display:\s*inline-flex;/s.test(css));
+  });
+
+  test('2026-07-28 Task A keeps copy dropdowns reachable and applies group feedback to CSV and TSV controls', () => {
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const actionGroupSource = tableJs.slice(
+      tableJs.indexOf('function bindTableCopyActionGroup(actions, dropdown)'),
+      tableJs.indexOf('function ensureMarkdownTableCopyActions(table)')
+    );
+    const selectionActionsSource = tableJs.slice(
+      tableJs.indexOf('function ensureTableSelectionActionElements(table)'),
+      tableJs.indexOf('function updateTableSelectionActions()')
+    );
+    const copySuccessSource = tableJs.slice(
+      tableJs.indexOf('function showTableCopySuccess(copyBtn)'),
+      tableJs.indexOf('function ensureTableSelectionActionElements(table)')
+    );
+
+    assert.ok(tableJs.includes('const TABLE_COPY_DROPDOWN_HIDE_DELAY_MS = 200;'));
+    assert.ok(actionGroupSource.includes('let dropdownHideTimer = null;'));
+    assert.ok(actionGroupSource.includes('clearTimeout(dropdownHideTimer);'));
+    assert.ok(actionGroupSource.includes('dropdownHideTimer = setTimeout(() => {'));
+    assert.ok(actionGroupSource.includes("dropdown.removeAttribute('open');"));
+    assert.ok(actionGroupSource.includes('}, TABLE_COPY_DROPDOWN_HIDE_DELAY_MS);'));
+
+    assert.ok(selectionActionsSource.includes("wrapper.className = 'table-selection-actions table-copy-actions';"));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(tsvButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(asciiButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(markdownButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyActionGroup(wrapper, dropdown);'));
+    assert.ok(copySuccessSource.includes("copyBtn.closest('.table-copy-actions')"));
+    assert.ok(copySuccessSource.includes("actions.classList.add('copied');"));
+  });
+
+  test('2026-07-28 Task A keeps CSV and TSV copy feedback visible during clipboard focus changes', () => {
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const updateSelectionActionsSource = tableJs.slice(
+      tableJs.indexOf('function updateTableSelectionActions()'),
+      tableJs.indexOf('function highlightTableRangeFunc(')
+    );
+    const classes = new Set(['table-selection-actions', 'table-copy-actions', 'copied']);
+    const wrapper = {
+      classList: {
+        add(name) {
+          classes.add(name);
+        },
+        contains(name) {
+          return classes.has(name);
+        },
+      },
+      offsetWidth: 72,
+      style: {},
+    };
+    const container = {
+      scrollLeft: 0,
+      scrollTop: 0,
+      getBoundingClientRect() {
+        return { left: 0, top: 0 };
+      },
+    };
+    const selectedCells = [
+      {
+        getBoundingClientRect() {
+          return { right: 120, top: 20 };
+        },
+      },
+      {
+        getBoundingClientRect() {
+          return { right: 180, top: 20 };
+        },
+      },
+    ];
+    let hideCount = 0;
+
+    vm.runInNewContext(`${updateSelectionActionsSource}\nupdateTableSelectionActions();`, {
+      document: {
+        querySelector(selector) {
+          return selector === '.tabular-table' ? {} : null;
+        },
+      },
+      ensureTableSelectionActionElements() {},
+      getSelectedCells() {
+        return selectedCells;
+      },
+      isPreviewContentFocused() {
+        return false;
+      },
+      hideTableSelectionActions() {
+        hideCount += 1;
+      },
+      tableSelectionUi: {
+        container,
+        wrapper,
+      },
+      TABLE_SELECTION_ACTION_MARGIN_PX: 6,
+    });
+
+    assert.equal(hideCount, 0);
+    assert.equal(classes.has('is-visible'), true);
+    assert.equal(wrapper.style.left, '102px');
+    assert.equal(wrapper.style.top, '26px');
   });
 
   test('Task H datatree highlight prefers XML array index and avoids root over-highlight', () => {
