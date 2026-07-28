@@ -34,7 +34,7 @@ let tableSelectionUi = {
 let tableSelectionFocusEventsBound = false;
 
 /**
- * 从单元格提取纯文本值
+ * 从单元格提取纯文本值，并将 Markdown 表格 checkbox 还原为任务标记
  * @param cell - 目标单元格
  * @returns 返回标准化后的单元格文本
  */
@@ -43,7 +43,15 @@ function getCellPlainText(cell) {
         return '';
     }
     const raw = cell.textContent || '';
-    return raw.replace(/\t/g, ' ').replace(/\r?\n/g, ' ');
+    const text = raw.replace(/\t/g, ' ').replace(/\r?\n/g, ' ');
+    const checkbox = cell.querySelector('.table-task-checkbox');
+    if (!checkbox) {
+        return text;
+    }
+
+    const taskMarker = checkbox.checked ? '- [x]' : '- [ ]';
+    const taskText = text.trim();
+    return taskText ? `${taskMarker} ${taskText}` : taskMarker;
 }
 
 /**

@@ -112,6 +112,13 @@ li.task-list-item input[type="checkbox"] {
     cursor: pointer;
 }
 
+.table-task-checkbox {
+    margin: 0 0.4em 0 0;
+    vertical-align: middle;
+    opacity: 1;
+    cursor: pointer;
+}
+
 li > ul,
 li > ol {
     margin-top: 0.35em;

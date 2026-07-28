@@ -86,6 +86,16 @@ export class MarkdownProvider {
             return '<li>' + text + '</li>\n';
         };
 
+        renderer.tablecell = function (
+            content: string,
+            flags: { header: boolean; align: 'center' | 'left' | 'right' | null }
+        ): string {
+            const type = flags.header ? 'th' : 'td';
+            const tag = flags.align ? `<${type} align="${flags.align}">` : `<${type}>`;
+            const cellContent = flags.header ? content : MarkdownProvider.renderTableTaskCheckbox(content);
+            return tag + cellContent + `</${type}>\n`;
+        };
+
         let headingIndex = 0;
         renderer.heading = function (text: string, level: number, _raw: string): string {
             const heading = headings[headingIndex++];
@@ -219,6 +229,24 @@ export class MarkdownProvider {
         }
 
         return taskLines;
+    }
+
+    /**
+     * 将 Markdown 表格单元格开头的任务标记渲染为可交互复选框
+     * @param content - 已完成行内语法渲染的单元格内容
+     * @returns 返回包含可交互任务复选框的单元格内容
+     */
+    private static renderTableTaskCheckbox(content: string): string {
+        const taskMatch = content.match(/^-\s+\[([ xX])\](?:\s+|$)/);
+        if (!taskMatch) {
+            return content;
+        }
+
+        const checked = taskMatch[1].toLowerCase() === 'x';
+        const checkbox = '<input type="checkbox" class="table-task-checkbox"'
+            + (checked ? ' checked=""' : '')
+            + '>';
+        return checkbox + content.slice(taskMatch[0].length);
     }
 
     /**

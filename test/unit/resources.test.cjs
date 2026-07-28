@@ -784,6 +784,84 @@ const {
     assert.ok(/\.table-copy-actions\.copied\s*\{[^}]*visibility:\s*visible;[^}]*opacity:\s*1;[^}]*pointer-events:\s*auto;/s.test(css));
   });
 
+  test('2026-07-28 Task G copies interactive table checkboxes as task markers', () => {
+    const css = readResourceCssBundle();
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const cellTextSource = tableJs.slice(
+      tableJs.indexOf('function getCellPlainText(cell)'),
+      tableJs.indexOf('function getSelectedCells()')
+    );
+    const snapshotSource = tableJs.slice(
+      tableJs.indexOf('function buildMarkdownPreviewTableSnapshot(table)'),
+      tableJs.indexOf('function buildGridWithHeader(snapshot)')
+    );
+    const copyFormatSource = tableJs.slice(
+      tableJs.indexOf('function buildGridWithHeader(snapshot)'),
+      tableJs.indexOf('async function writeTextToClipboard(text)')
+    );
+    const createCell = (text, checked) => ({
+      textContent: text,
+      querySelector(selector) {
+        if (selector === '.table-empty-cell') {
+          return null;
+        }
+        if (selector === '.table-task-checkbox' && typeof checked === 'boolean') {
+          return { checked };
+        }
+        return null;
+      },
+    });
+    const headerCells = [createCell('Task'), createCell('Done')];
+    const rows = [
+      [createCell('Login'), createCell('Hello', true)],
+      [createCell('Search'), createCell('', false)],
+    ].map(cells => ({
+      querySelectorAll() {
+        return cells;
+      },
+    }));
+    const context = {
+      table: {
+        querySelectorAll(selector) {
+          if (selector === 'thead th') {
+            return headerCells;
+          }
+          if (selector === 'tbody tr') {
+            return rows;
+          }
+          return [];
+        },
+      },
+    };
+
+    vm.runInNewContext(
+      `${cellTextSource}
+      ${snapshotSource}
+      ${copyFormatSource}
+      snapshot = buildMarkdownPreviewTableSnapshot(table);
+      grid = buildGridWithHeader(snapshot);
+      markdownText = buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
+      asciiText = buildAsciiTableText(grid);
+      tsvText = buildTsvText(grid);
+      csvText = buildCsvText(grid);`,
+      context
+    );
+
+    assert.deepEqual(
+      Array.from(context.snapshot.bodyGrid, row => Array.from(row)),
+      [['Login', '- [x] Hello'], ['Search', '- [ ]']]
+    );
+    assert.equal(
+      context.markdownText,
+      '| Task | Done |\n| --- | --- |\n| Login | - [x] Hello |\n| Search | - [ ] |'
+    );
+    assert.ok(context.asciiText.includes('│ Login  │ - [x] Hello │'));
+    assert.ok(context.asciiText.includes('│ Search │ - [ ]       │'));
+    assert.equal(context.tsvText, 'Task\tDone\r\nLogin\t- [x] Hello\r\nSearch\t- [ ]');
+    assert.equal(context.csvText, 'Task,Done\r\nLogin,- [x] Hello\r\nSearch,- [ ]');
+    assert.ok(/\.table-task-checkbox\s*\{[^}]*cursor:\s*pointer;/s.test(css));
+  });
+
   test('Task C comment tooltip hover shows after delay while click remains immediate', () => {
     const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
     const commentTooltipJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'comment-tooltip.js'), 'utf8');

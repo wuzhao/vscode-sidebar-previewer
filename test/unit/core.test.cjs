@@ -189,6 +189,30 @@ test('MarkdownProvider task checkbox line mapping supports ordered task items', 
   assert.deepEqual(lineMatches, [0, 1, 2, 3]);
 });
 
+test('MarkdownProvider renders task checkboxes at the start of table cells', () => {
+  const source = [
+    '| Task | Done |',
+    '| --- | --- |',
+    '| Login | - [x] Hello |',
+    '| Search | - [ ] |',
+    '| Literal | Keep - [x] marker |',
+    '- [ ] regular task',
+  ].join('\n');
+
+  const result = MarkdownProvider.parse(source);
+
+  assert.ok(result.html.includes(
+    '<td><input type="checkbox" class="table-task-checkbox" checked="">Hello</td>'
+  ));
+  assert.ok(result.html.includes(
+    '<td><input type="checkbox" class="table-task-checkbox"></td>'
+  ));
+  assert.ok(result.html.includes('<td>Keep - [x] marker</td>'));
+  assert.ok(result.html.includes('<input type="checkbox" data-line="5">'));
+  assert.equal(result.html.includes('table-task-checkbox" disabled'), false);
+  assert.equal(/table-task-checkbox[^>]*data-line=/.test(result.html), false);
+});
+
 test('DatatreePreviewProvider parses JSON comment-tolerant mode (comments and trailing commas)', () => {
     const source = `{
   "name": "Alice", // profile name

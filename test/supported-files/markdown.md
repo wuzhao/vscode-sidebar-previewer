@@ -315,6 +315,14 @@ $$
 | 36 | Flaming Mountain | environmental blockade | Bull Demon King | fan route secured | branch-river-detour |
 | 81 | Thunder Monastery | canon verification | N/A | mission complete | main-route |
 
+### Task Checkbox Table
+
+| Task | Done |
+| --- | --- |
+| Login | - [x] Hello |
+| Search | - [ ] |
+| Literal | Keep - [x] marker |
+
 ---
 
 ## Horizontal Rules

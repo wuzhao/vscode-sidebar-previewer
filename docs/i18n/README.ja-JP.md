@@ -43,6 +43,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - フロントマター（Front matter）のテーブル表示
 - GitHub Alert ブロックのレンダリング
 - タスクリストのチェックボックス操作（トグル）とファイルへの書き戻し
+- テーブルセル内の操作可能なタスクリストチェックボックス
 - コードハイライトおよびコピーボタン
 - Markdown テーブルにホバーして Markdown、ASCII、TSV、CSV 形式でコピー
 - KaTeX および Mermaid ブロックのレンダリング

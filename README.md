@@ -43,6 +43,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Front matter table
 - GitHub alert block rendering
 - Task list checkbox toggle-writeback
+- Interactive task list checkboxes in table cells
 - Code highlighting and copy button
 - Hover a rendered table to copy it as Markdown, ASCII, TSV, or CSV
 - KaTeX and Mermaid block rendering

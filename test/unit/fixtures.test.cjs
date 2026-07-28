@@ -361,6 +361,12 @@ test('Supported markdown fixture keeps middle divider and heading locate metadat
 
   assert.ok(middleHeading);
   assert.ok(/id="middle-divider-locate-check">Middle Divider Locate Check<\/h2>[\s\S]*?<hr>/.test(result.html));
+  assert.ok(result.html.includes(
+    '<td><input type="checkbox" class="table-task-checkbox" checked="">Hello</td>'
+  ));
+  assert.ok(result.html.includes(
+    '<td><input type="checkbox" class="table-task-checkbox"></td>'
+  ));
 
   const located = MarkdownProvider.findCurrentHeading(result.headings, middleHeading.line + 2);
   assert.equal(located?.id, 'middle-divider-locate-check');

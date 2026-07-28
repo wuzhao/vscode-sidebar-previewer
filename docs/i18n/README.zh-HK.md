@@ -43,6 +43,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - Front Matter 屬性表格
 - GitHub Alert 提示塊渲染
 - 任務列表勾選回寫
+- 表格儲存格入面嘅互動式任務列表剔選框
 - 代碼高亮同埋複製掣
 - 懸停 Markdown 表格時可以複製為 Markdown、ASCII、TSV 或 CSV
 - KaTeX 同 Mermaid 代碼塊渲染
