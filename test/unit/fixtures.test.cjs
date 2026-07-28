@@ -362,10 +362,12 @@ test('Supported markdown fixture keeps middle divider and heading locate metadat
   assert.ok(middleHeading);
   assert.ok(/id="middle-divider-locate-check">Middle Divider Locate Check<\/h2>[\s\S]*?<hr>/.test(result.html));
   assert.ok(result.html.includes(
-    '<td><input type="checkbox" class="table-task-checkbox" checked="" data-line="321" data-char="12">Hello</td>'
+    '<td><input type="checkbox" class="table-task-checkbox" checked=""'
+      + ' data-line="321" data-char="12" data-source-line="2" data-source-char="12">Hello</td>'
   ));
   assert.ok(result.html.includes(
-    '<td><input type="checkbox" class="table-task-checkbox" data-line="322" data-char="13"></td>'
+    '<td><input type="checkbox" class="table-task-checkbox"'
+      + ' data-line="322" data-char="13" data-source-line="3" data-source-char="13"></td>'
   ));
   assert.ok(result.html.includes('![xxx](image.png)'));
   assert.ok(result.html.includes('&lt;u&gt;xxx&lt;/u&gt;'));

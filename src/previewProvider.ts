@@ -40,7 +40,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     private _currentFileType: FileType | null = null;
     private _supportsLocate: boolean = false;
     private _followEditorScroll: boolean = true;
-    private _suppressNextAutoScroll: boolean = false;
+    private _skipNextPreviewUpdate: boolean = false;
     private _visibleRangesListener?: vscode.Disposable;
     private _zoomLevel: number = 100;
     private _lastPreviewDocumentUri: string | null = null;
@@ -245,12 +245,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                         if (e.contentChanges.length === 0) {
                             return;
                         }
+                        if (this._consumeSkipNextPreviewUpdate()) {
+                            return;
+                        }
                         const editedLine = e.contentChanges[0].range.start.line;
-                        const suppressAutoScroll = this._consumeSuppressNextAutoScroll();
-                        this._updatePreview(e.document, editedLine, {
-                            suppressAutoScroll,
-                            preserveScrollPosition: suppressAutoScroll,
-                        });
+                        this._updatePreview(e.document, editedLine);
                     }
                 } catch (error) {
                     console.error('Sidebar Previewer: Error in onDidChangeTextDocument', error);
@@ -519,8 +518,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      */
     private _updatePreview(
         document: vscode.TextDocument,
-        editedLine?: number,
-        options?: { suppressAutoScroll?: boolean; preserveScrollPosition?: boolean }
+        editedLine?: number
     ): void {
         try {
             this._clearLoadingTimeout();
@@ -589,12 +587,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             this._updateDataTreeHighlightContext(false);
 
             const isTableType = fileType === 'csv' || fileType === 'tsv';
-            const scrollTargetHeadingId = options?.suppressAutoScroll ? undefined
-                : isTableType ? undefined
-                : this._getScrollTargetHeadingId(document);
-            const scrollTargetLine = options?.suppressAutoScroll ? undefined
-                : isTableType ? this._getScrollTargetLine(document)
-                : undefined;
+            const scrollTargetHeadingId = isTableType ? undefined : this._getScrollTargetHeadingId(document);
+            const scrollTargetLine = isTableType ? this._getScrollTargetLine(document) : undefined;
             const selectionRange = (dataTree || isTableType) ? this._getEditorSelectionRange(document) : null;
             const message: {
                 type: 'update';
@@ -607,7 +601,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 selectionStartChar: number | null;
                 selectionEndChar: number | null;
                 editedLine: number | null;
-                preserveScrollPosition: boolean;
                 scrollToHeadingId?: string | null;
                 scrollToLine?: number | null;
                 baseUri?: string | null;
@@ -622,7 +615,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 selectionStartChar: selectionRange ? selectionRange.startChar : null,
                 selectionEndChar: selectionRange ? selectionRange.endChar : null,
                 editedLine: editedLine !== undefined ? editedLine : null,
-                preserveScrollPosition: options?.preserveScrollPosition === true,
             };
 
             if (scrollTargetHeadingId !== undefined) {
@@ -1032,21 +1024,21 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             new vscode.Range(line, markerStart, line, markerStart + 3),
             replacement
         );
-        this._suppressNextAutoScroll = true;
+        this._skipNextPreviewUpdate = true;
         const applied = await vscode.workspace.applyEdit(edit);
         if (!applied) {
-            this._suppressNextAutoScroll = false;
+            this._skipNextPreviewUpdate = false;
         }
     }
 
     /**
-     * 读取并清除下一次预览自动滚动抑制标记
-     * @returns 是否需要保留当前预览滚动位置
+     * 读取并清除下一次预览更新跳过标记
+     * @returns 是否跳过由预览 checkbox 回写触发的完整刷新
      */
-    private _consumeSuppressNextAutoScroll(): boolean {
-        const suppress = this._suppressNextAutoScroll;
-        this._suppressNextAutoScroll = false;
-        return suppress;
+    private _consumeSkipNextPreviewUpdate(): boolean {
+        const skip = this._skipNextPreviewUpdate;
+        this._skipNextPreviewUpdate = false;
+        return skip;
     }
 
     /**

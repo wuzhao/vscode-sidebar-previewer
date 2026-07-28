@@ -532,7 +532,6 @@ function updateContent(data) {
     }
 
     const messageData = (data && typeof data === 'object') ? data : {};
-    const previousScrollTop = content.scrollTop;
     if (typeof PreviewCommentTooltip !== 'undefined') PreviewCommentTooltip.hideCommentTooltip(true);
     if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.cleanupMarkdownSkeletonOutline) {
         PreviewMarkdown.cleanupMarkdownSkeletonOutline();
@@ -586,11 +585,7 @@ function updateContent(data) {
     // 应用当前缩放级别
     applyZoom();
 
-    if (messageData.preserveScrollPosition) {
-        requestAnimationFrame(() => {
-            content.scrollTop = previousScrollTop;
-        });
-    } else if (Object.prototype.hasOwnProperty.call(messageData, 'scrollToHeadingId')) {
+    if (Object.prototype.hasOwnProperty.call(messageData, 'scrollToHeadingId')) {
         requestAnimationFrame(() => {
             scrollToHeading(normalizeOptionalString(messageData.scrollToHeadingId));
         });

@@ -15,6 +15,8 @@ const MARKDOWN_TABLE_TASK_SOURCE_PREFIX_PATTERN = /^(\s*-\s+)(?=\[[ xX]\](?:\s+|
 interface MarkdownTableTaskLocation {
     line: number;
     character: number;
+    sourceLine: number;
+    sourceCharacter: number;
 }
 
 /**
@@ -349,6 +351,8 @@ export class MarkdownProvider {
                     locations.push({
                         line: documentLineIndex,
                         character: contentOffset + taskCharacter,
+                        sourceLine: sourceLineIndex,
+                        sourceCharacter: taskCharacter,
                     });
                 } else {
                     locations.push(null);
@@ -457,6 +461,7 @@ export class MarkdownProvider {
         const checked = taskMatch[1].toLowerCase() === 'x';
         const locationAttributes = location
             ? ` data-line="${location.line}" data-char="${location.character}"`
+                + ` data-source-line="${location.sourceLine}" data-source-char="${location.sourceCharacter}"`
             : '';
         const checkbox = '<input type="checkbox" class="table-task-checkbox"'
             + (checked ? ' checked=""' : '')

@@ -294,6 +294,46 @@ function initMarkdownSkeletonOutline() {
 }
 
 /**
+ * 将表格 checkbox 的最新状态同步到复制功能使用的 Markdown 源码
+ * @param checkbox - 当前发生状态变化的表格 checkbox
+ */
+function updateMarkdownTableCheckboxSource(checkbox) {
+    if (!checkbox || typeof checkbox.closest !== 'function') {
+        return;
+    }
+    const table = checkbox.closest('table[data-markdown-table]');
+    if (!table) {
+        return;
+    }
+
+    const sourceLine = parseInt(checkbox.getAttribute('data-source-line'), 10);
+    const sourceChar = parseInt(checkbox.getAttribute('data-source-char'), 10);
+    if (isNaN(sourceLine) || isNaN(sourceChar) || sourceLine < 0 || sourceChar < 0) {
+        return;
+    }
+
+    try {
+        const tableData = JSON.parse(table.getAttribute('data-markdown-table'));
+        if (!tableData || typeof tableData.source !== 'string') {
+            return;
+        }
+        const lineEnding = tableData.source.includes('\r\n') ? '\r\n' : '\n';
+        const sourceLines = tableData.source.split(/\r?\n/);
+        const sourceRow = sourceLines[sourceLine];
+        if (typeof sourceRow !== 'string' || !/^\[[ xX]\]$/.test(sourceRow.slice(sourceChar, sourceChar + 3))) {
+            return;
+        }
+        sourceLines[sourceLine] = sourceRow.slice(0, sourceChar)
+            + (checkbox.checked ? '[x]' : '[ ]')
+            + sourceRow.slice(sourceChar + 3);
+        tableData.source = sourceLines.join(lineEnding);
+        table.setAttribute('data-markdown-table', JSON.stringify(tableData));
+    } catch (_) {
+        // 表格源码数据无效时等待下一次完整预览刷新恢复
+    }
+}
+
+/**
  * 绑定任务列表复选框事件
  * 绑定任务列表复选框变更事件，并同步回编辑器
  */
@@ -306,6 +346,9 @@ function bindCheckboxEvents() {
             const line = parseInt(e.target.getAttribute('data-line'), 10);
             if (!isNaN(line) && line >= 0) {
                 const char = parseInt(e.target.getAttribute('data-char'), 10);
+                if (!isNaN(char)) {
+                    updateMarkdownTableCheckboxSource(e.target);
+                }
                 VSCODE_API.postMessage({
                     type: 'toggleCheckbox',
                     line: line,

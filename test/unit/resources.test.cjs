@@ -1061,7 +1061,7 @@ const {
       'utf8'
     );
     const checkboxBindingSource = markdownJs.slice(
-      markdownJs.indexOf('function bindCheckboxEvents()'),
+      markdownJs.indexOf('function updateMarkdownTableCheckboxSource(checkbox)'),
       markdownJs.indexOf('// 向公共注册中心登记：仅在 Markdown 文件类型时激活')
     );
     const context = {
@@ -1107,6 +1107,57 @@ const {
     assert.ok(previewProvider.includes(
       'new vscode.Range(line, markerStart, line, markerStart + 3)'
     ));
+  });
+
+  test('2026-07-28 Task M keeps the preview stable after checkbox writeback', () => {
+    const markdownJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'markdown.js'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const previewProvider = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'),
+      'utf8'
+    );
+    const updateSource = markdownJs.slice(
+      markdownJs.indexOf('function updateMarkdownTableCheckboxSource(checkbox)'),
+      markdownJs.indexOf('function bindCheckboxEvents()')
+    );
+    let tableDataAttribute = JSON.stringify({
+      source: '| Task | Done |\n| --- | --- |\n| Login | - [ ] |',
+      alignments: [null, null],
+    });
+    const table = {
+      getAttribute() {
+        return tableDataAttribute;
+      },
+      setAttribute(name, value) {
+        assert.equal(name, 'data-markdown-table');
+        tableDataAttribute = value;
+      },
+    };
+    const checkbox = {
+      checked: true,
+      closest() {
+        return table;
+      },
+      getAttribute(name) {
+        if (name === 'data-source-line') {
+          return '2';
+        }
+        if (name === 'data-source-char') {
+          return '12';
+        }
+        return null;
+      },
+    };
+    const context = { checkbox };
+
+    vm.runInNewContext(`${updateSource}\nupdateMarkdownTableCheckboxSource(checkbox);`, context);
+
+    assert.equal(JSON.parse(tableDataAttribute).source.includes('| Login | - [x] |'), true);
+    assert.ok(previewProvider.includes('private _skipNextPreviewUpdate: boolean = false;'));
+    assert.ok(previewProvider.includes('if (this._consumeSkipNextPreviewUpdate()) {'));
+    assert.ok(previewProvider.includes('this._skipNextPreviewUpdate = true;'));
+    assert.equal(previewProvider.includes('preserveScrollPosition'), false);
+    assert.equal(commonJs.includes('messageData.preserveScrollPosition'), false);
   });
 
   test('Supported JSONC fixture with mixed comment styles parses successfully', () => {

@@ -202,10 +202,12 @@ test('MarkdownProvider renders task checkboxes at the start of table cells', () 
   const result = MarkdownProvider.parse(source);
 
   assert.ok(result.html.includes(
-    '<td><input type="checkbox" class="table-task-checkbox" checked="" data-line="2" data-char="12">Hello</td>'
+    '<td><input type="checkbox" class="table-task-checkbox" checked=""'
+      + ' data-line="2" data-char="12" data-source-line="2" data-source-char="12">Hello</td>'
   ));
   assert.ok(result.html.includes(
-    '<td><input type="checkbox" class="table-task-checkbox" data-line="3" data-char="13"></td>'
+    '<td><input type="checkbox" class="table-task-checkbox"'
+      + ' data-line="3" data-char="13" data-source-line="3" data-source-char="13"></td>'
   ));
   assert.ok(result.html.includes('<td>Keep - [x] marker</td>'));
   assert.ok(result.html.includes('<input type="checkbox" data-line="5">'));
@@ -258,7 +260,8 @@ test('MarkdownProvider preserves formatted Markdown table data for copying', () 
   assert.deepEqual(tableData.alignments, ['left', 'right']);
   assert.ok(result.html.includes('<img src="image.png" alt="xxx">'));
   assert.ok(result.html.includes(
-    '<input type="checkbox" class="table-task-checkbox" data-line="3" data-char="11">Hello'
+    '<input type="checkbox" class="table-task-checkbox"'
+      + ' data-line="3" data-char="11" data-source-line="3" data-source-char="11">Hello'
   ));
   assert.ok(result.html.includes('<u>xxx</u>'));
 });
