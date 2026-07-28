@@ -1,8 +1,21 @@
-import { Marked, Renderer } from 'marked';
+import { Marked, Renderer, type Tokens } from 'marked';
 import hljs from 'highlight.js';
 import * as yaml from 'js-yaml';
 import { HeadingInfo } from './fileTypes';
 import { escapeHtml } from './utils';
+
+// Markdown 表格单元格开头的 Task List 标记
+const MARKDOWN_TABLE_TASK_PATTERN = /^-\s+\[([ xX])\](?:\s+|$)/;
+// Markdown 表格源码中 Task List 标记之前的单元格前缀
+const MARKDOWN_TABLE_TASK_SOURCE_PREFIX_PATTERN = /^(\s*-\s+)(?=\[[ xX]\](?:\s+|$))/;
+
+/**
+ * Markdown 表格 Task List 标记在源文档中的定位信息
+ */
+interface MarkdownTableTaskLocation {
+    line: number;
+    character: number;
+}
 
 /**
  * 提供 Markdown 相关预览能力
@@ -34,7 +47,7 @@ export class MarkdownProvider {
 
         // 先提取标题信息
         const usedIds = new Map<string, number>();
-        const lines = content.split('\n');
+        const lines = content.split(/\r?\n/);
         let headingFenceMarker: string | null = null;
         lines.forEach((line, index) => {
             const fenceMatch = line.match(/^\s*([`~]{3,})/);
@@ -72,6 +85,9 @@ export class MarkdownProvider {
         let taskIndex = 0;
         const markdownTableData: string[] = [];
         let markdownTableIndex = 0;
+        const markdownTableTaskLocations: Array<MarkdownTableTaskLocation | null> = [];
+        let markdownTableCellIndex = 0;
+        let markdownTableSearchLine = content.slice(0, content.length - bodyContent.length).split('\n').length - 1;
 
         renderer.checkbox = function (checked: boolean): string {
             const line = taskLines[taskIndex] ?? -1;
@@ -92,9 +108,12 @@ export class MarkdownProvider {
             content: string,
             flags: { header: boolean; align: 'center' | 'left' | 'right' | null }
         ): string {
+            const taskLocation = markdownTableTaskLocations[markdownTableCellIndex++] ?? null;
             const type = flags.header ? 'th' : 'td';
             const tag = flags.align ? `<${type} align="${flags.align}">` : `<${type}>`;
-            const cellContent = flags.header ? content : MarkdownProvider.renderTableTaskCheckbox(content);
+            const cellContent = flags.header
+                ? content
+                : MarkdownProvider.renderTableTaskCheckbox(content, taskLocation);
             return tag + cellContent + `</${type}>\n`;
         };
 
@@ -144,7 +163,7 @@ export class MarkdownProvider {
             // 定位行内数学公式的起始位置
             start(src: string) { return src.match(/\$\$/)?.index; },
             // 将 $$...$$ 片段解析为行内数学标记
-            tokenizer(src: string, tokens: any) {
+            tokenizer(src: string) {
                 const rule = /^\$\$([\s\S]+?)\$\$/;
                 const match = rule.exec(src);
                 if (match) {
@@ -168,7 +187,7 @@ export class MarkdownProvider {
             // 定位块级数学公式的起始位置
             start(src: string) { return src.match(/\\begin\{([a-zA-Z*]+)\}/)?.index; },
             // 将 begin/end 包裹的片段解析为块级数学标记
-            tokenizer(src: string, tokens: any) {
+            tokenizer(src: string) {
                 const rule = /^\\begin\{([a-zA-Z*]+)\}[\s\S]*?\\end\{\1\}/;
                 const match = rule.exec(src);
                 if (match) {
@@ -197,9 +216,28 @@ export class MarkdownProvider {
         const markdownTokens = parser.lexer(bodyContent);
         parser.walkTokens(markdownTokens, token => {
             if (token.type === 'table') {
+                const tableToken = token as Tokens.Table;
+                const tableSourceLines = tableToken.raw.split(/\r?\n/);
+                while (tableSourceLines.length > 0 && tableSourceLines[tableSourceLines.length - 1].trim() === '') {
+                    tableSourceLines.pop();
+                }
+                const tableStartLine = this.findMarkdownTableStartLine(
+                    lines,
+                    tableSourceLines,
+                    markdownTableSearchLine
+                );
+                markdownTableTaskLocations.push(...this.collectMarkdownTableTaskLocations(
+                    tableToken,
+                    lines,
+                    tableSourceLines,
+                    tableStartLine
+                ));
+                if (tableStartLine !== null) {
+                    markdownTableSearchLine = tableStartLine + tableSourceLines.length;
+                }
                 markdownTableData.push(JSON.stringify({
-                    source: token.raw,
-                    alignments: token.align,
+                    source: tableToken.raw,
+                    alignments: tableToken.align,
                 }));
             }
         });
@@ -218,6 +256,151 @@ export class MarkdownProvider {
             : headings;
 
         return { html, headings: locateHeadings };
+    }
+
+    /**
+     * 在 Markdown 文档中定位表格源码的起始行
+     * @param documentLines - Markdown 文档源码行
+     * @param tableSourceLines - 解析器提供的表格源码行
+     * @param searchStartLine - 当前表格的最早搜索行
+     * @returns 表格在文档中的起始行，无法定位时返回 null
+     */
+    private static findMarkdownTableStartLine(
+        documentLines: string[],
+        tableSourceLines: string[],
+        searchStartLine: number
+    ): number | null {
+        if (tableSourceLines.length < 2) {
+            return null;
+        }
+
+        const lastStartLine = documentLines.length - tableSourceLines.length;
+        for (let line = Math.max(0, searchStartLine); line <= lastStartLine; line++) {
+            const matches = tableSourceLines.every((tableLine, index) => (
+                this.getMarkdownTableLineContentOffset(documentLines[line + index], tableLine) !== null
+            ));
+            if (matches) {
+                return line;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 获取表格源码行在文档行中的字符偏移
+     * 支持由引用标记包裹的 Markdown 表格
+     * @param documentLine - Markdown 文档中的完整源码行
+     * @param tableSourceLine - 解析器提供的表格源码行
+     * @returns 表格源码的起始字符，无法匹配时返回 null
+     */
+    private static getMarkdownTableLineContentOffset(
+        documentLine: string,
+        tableSourceLine: string
+    ): number | null {
+        const offset = documentLine.indexOf(tableSourceLine);
+        if (offset < 0) {
+            return null;
+        }
+
+        const prefix = documentLine.slice(0, offset);
+        const suffix = documentLine.slice(offset + tableSourceLine.length);
+        if (!/^[\s>]*$/.test(prefix) || suffix.trim().length > 0) {
+            return null;
+        }
+
+        return offset;
+    }
+
+    /**
+     * 按渲染顺序收集 Markdown 表格 Task List 标记位置
+     * @param tableToken - Marked 解析得到的表格 token
+     * @param documentLines - Markdown 文档源码行
+     * @param tableSourceLines - 解析器提供的表格源码行
+     * @param tableStartLine - 表格在文档中的起始行
+     * @returns 与表格单元格渲染顺序对应的任务标记位置
+     */
+    private static collectMarkdownTableTaskLocations(
+        tableToken: Tokens.Table,
+        documentLines: string[],
+        tableSourceLines: string[],
+        tableStartLine: number | null
+    ): Array<MarkdownTableTaskLocation | null> {
+        const locations: Array<MarkdownTableTaskLocation | null> = tableToken.header.map(() => null);
+
+        tableToken.rows.forEach((row, rowIndex) => {
+            const sourceLineIndex = rowIndex + 2;
+            const documentLineIndex = tableStartLine === null ? -1 : tableStartLine + sourceLineIndex;
+            const tableSourceLine = tableSourceLines[sourceLineIndex] ?? '';
+            const documentLine = documentLineIndex >= 0 ? documentLines[documentLineIndex] : '';
+            const contentOffset = documentLine
+                ? this.getMarkdownTableLineContentOffset(documentLine, tableSourceLine)
+                : null;
+            const taskCharacters = this.findMarkdownTableTaskCharacters(tableSourceLine);
+
+            row.forEach((cell, cellIndex) => {
+                const taskCharacter = taskCharacters[cellIndex];
+                if (
+                    documentLineIndex >= 0
+                    && contentOffset !== null
+                    && taskCharacter !== null
+                    && MARKDOWN_TABLE_TASK_PATTERN.test(cell.text)
+                ) {
+                    locations.push({
+                        line: documentLineIndex,
+                        character: contentOffset + taskCharacter,
+                    });
+                } else {
+                    locations.push(null);
+                }
+            });
+        });
+
+        return locations;
+    }
+
+    /**
+     * 提取 Markdown 表格源码行中各单元格的 Task List 标记字符位置
+     * @param line - Markdown 表格源码行
+     * @returns 与源码单元格顺序对应的任务标记字符位置
+     */
+    private static findMarkdownTableTaskCharacters(line: string): Array<number | null> {
+        const cellRanges: Array<{ start: number; end: number }> = [];
+        let cellStart = 0;
+
+        for (let index = 0; index < line.length; index++) {
+            if (line[index] !== '|') {
+                continue;
+            }
+
+            let backslashCount = 0;
+            for (let cursor = index - 1; cursor >= 0 && line[cursor] === '\\'; cursor--) {
+                backslashCount++;
+            }
+            if (backslashCount % 2 === 1) {
+                continue;
+            }
+
+            cellRanges.push({ start: cellStart, end: index });
+            cellStart = index + 1;
+        }
+        cellRanges.push({ start: cellStart, end: line.length });
+
+        if (cellRanges.length > 0 && line.slice(cellRanges[0].start, cellRanges[0].end).trim() === '') {
+            cellRanges.shift();
+        }
+        if (
+            cellRanges.length > 0
+            && line.slice(cellRanges[cellRanges.length - 1].start, cellRanges[cellRanges.length - 1].end).trim() === ''
+        ) {
+            cellRanges.pop();
+        }
+
+        return cellRanges.map(range => {
+            const cellSource = line.slice(range.start, range.end);
+            const match = MARKDOWN_TABLE_TASK_SOURCE_PREFIX_PATTERN.exec(cellSource);
+            return match ? range.start + match[1].length : null;
+        });
     }
 
     /**
@@ -259,17 +442,25 @@ export class MarkdownProvider {
     /**
      * 将 Markdown 表格单元格开头的任务标记渲染为可交互复选框
      * @param content - 已完成行内语法渲染的单元格内容
+     * @param location - Task List 标记在 Markdown 源码中的位置
      * @returns 返回包含可交互任务复选框的单元格内容
      */
-    private static renderTableTaskCheckbox(content: string): string {
-        const taskMatch = content.match(/^-\s+\[([ xX])\](?:\s+|$)/);
+    private static renderTableTaskCheckbox(
+        content: string,
+        location: MarkdownTableTaskLocation | null
+    ): string {
+        const taskMatch = content.match(MARKDOWN_TABLE_TASK_PATTERN);
         if (!taskMatch) {
             return content;
         }
 
         const checked = taskMatch[1].toLowerCase() === 'x';
+        const locationAttributes = location
+            ? ` data-line="${location.line}" data-char="${location.character}"`
+            : '';
         const checkbox = '<input type="checkbox" class="table-task-checkbox"'
             + (checked ? ' checked=""' : '')
+            + locationAttributes
             + '>';
         return checkbox + content.slice(taskMatch[0].length);
     }

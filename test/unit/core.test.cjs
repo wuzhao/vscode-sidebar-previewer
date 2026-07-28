@@ -202,15 +202,36 @@ test('MarkdownProvider renders task checkboxes at the start of table cells', () 
   const result = MarkdownProvider.parse(source);
 
   assert.ok(result.html.includes(
-    '<td><input type="checkbox" class="table-task-checkbox" checked="">Hello</td>'
+    '<td><input type="checkbox" class="table-task-checkbox" checked="" data-line="2" data-char="12">Hello</td>'
   ));
   assert.ok(result.html.includes(
-    '<td><input type="checkbox" class="table-task-checkbox"></td>'
+    '<td><input type="checkbox" class="table-task-checkbox" data-line="3" data-char="13"></td>'
   ));
   assert.ok(result.html.includes('<td>Keep - [x] marker</td>'));
   assert.ok(result.html.includes('<input type="checkbox" data-line="5">'));
   assert.equal(result.html.includes('table-task-checkbox" disabled'), false);
-  assert.equal(/table-task-checkbox[^>]*data-line=/.test(result.html), false);
+});
+
+test('2026-07-28 Task L maps each Markdown table checkbox to its exact source marker', () => {
+  const source = [
+    '> | Label | First | Second |',
+    '> | --- | --- | --- |',
+    '> | Literal [x] | - [ ] One | - [x] Two |',
+  ].join('\n');
+  const sourceLines = source.split('\n');
+
+  const result = MarkdownProvider.parse(source);
+  const locations = Array.from(
+    result.html.matchAll(
+      /class="table-task-checkbox"(?: checked="")? data-line="(\d+)" data-char="(\d+)"/g
+    ),
+    match => ({ line: Number(match[1]), char: Number(match[2]) })
+  );
+
+  assert.deepEqual(locations, [
+    { line: 2, char: sourceLines[2].indexOf('[ ]') },
+    { line: 2, char: sourceLines[2].lastIndexOf('[x]') },
+  ]);
 });
 
 test('MarkdownProvider preserves formatted Markdown table data for copying', () => {
@@ -236,7 +257,9 @@ test('MarkdownProvider preserves formatted Markdown table data for copying', () 
   assert.equal(tableData.source, source);
   assert.deepEqual(tableData.alignments, ['left', 'right']);
   assert.ok(result.html.includes('<img src="image.png" alt="xxx">'));
-  assert.ok(result.html.includes('<input type="checkbox" class="table-task-checkbox">Hello'));
+  assert.ok(result.html.includes(
+    '<input type="checkbox" class="table-task-checkbox" data-line="3" data-char="11">Hello'
+  ));
   assert.ok(result.html.includes('<u>xxx</u>'));
 });
 

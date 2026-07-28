@@ -15,31 +15,6 @@ let markdownOutlineScrollHandler = null;
 let markdownOutlineHideTimer = null;
 
 /**
- * 将预览滚动到指定锚点，缺省时回到顶部
- * @param headingId - 目标标题锚点 ID
- */
-function scrollToHeading(headingId) {
-    const content = document.getElementById('content');
-    if (!headingId) {
-        content.scrollTo({ top: 0, behavior: 'instant' });
-        return;
-    }
-
-    const element = document.getElementById(headingId);
-    if (element) {
-        isScrollingFromEditor = true;
-        // 仅在预览内容滚动区域内定位标题，避免末项带动 webview 外层滚动
-        const targetScrollTop = content.scrollTop + element.getBoundingClientRect().top - content.getBoundingClientRect().top;
-        const maxScrollTop = Math.max(0, content.scrollHeight - content.clientHeight);
-        const clampedScrollTop = Math.min(maxScrollTop, Math.max(0, targetScrollTop));
-        content.scrollTo({ top: clampedScrollTop, behavior: 'instant' });
-        setTimeout(() => {
-            isScrollingFromEditor = false;
-        }, 300);
-    }
-}
-
-/**
  * 报告当前预览中可见的标题
  * 计算当前可见锚点并回传给扩展端
  */
@@ -323,14 +298,18 @@ function initMarkdownSkeletonOutline() {
  * 绑定任务列表复选框变更事件，并同步回编辑器
  */
 function bindCheckboxEvents() {
-    const checkboxes = document.querySelectorAll('li.task-list-item input[type="checkbox"]');
+    const checkboxes = document.querySelectorAll(
+        'li.task-list-item input[type="checkbox"], .table-task-checkbox[data-line][data-char]'
+    );
     checkboxes.forEach(cb => {
         cb.addEventListener('change', (e) => {
             const line = parseInt(e.target.getAttribute('data-line'), 10);
             if (!isNaN(line) && line >= 0) {
+                const char = parseInt(e.target.getAttribute('data-char'), 10);
                 VSCODE_API.postMessage({
                     type: 'toggleCheckbox',
                     line: line,
+                    char: isNaN(char) ? null : char,
                     checked: e.target.checked
                 });
             }

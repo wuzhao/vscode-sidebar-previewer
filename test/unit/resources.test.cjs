@@ -97,10 +97,10 @@ const {
     assert.ok(markdownJs.includes('function initMarkdownSkeletonOutline()'));
     assert.ok(markdownJs.includes('function buildMarkdownOutlineRankMap(headings)'));
     assert.ok(markdownJs.includes('const MARKDOWN_SKELETON_TOC_HIDE_DELAY_MS = 200;'));
-    assert.ok(markdownJs.includes('const maxScrollTop = Math.max(0, content.scrollHeight - content.clientHeight);'));
-    assert.ok(markdownJs.includes('const clampedScrollTop = Math.min(maxScrollTop, Math.max(0, targetScrollTop));'));
-    assert.ok(markdownJs.includes("content.scrollTo({ top: clampedScrollTop, behavior: 'instant' });"));
-    assert.equal(markdownJs.includes("element.scrollIntoView({ behavior: 'instant', block: 'start' });"), false);
+    assert.ok(commonJs.includes('const maxScrollTop = Math.max(0, content.scrollHeight - content.clientHeight);'));
+    assert.ok(commonJs.includes('const clampedScrollTop = Math.min(maxScrollTop, Math.max(0, targetScrollTop));'));
+    assert.ok(commonJs.includes("content.scrollTo({ top: clampedScrollTop, behavior: 'instant' });"));
+    assert.equal(commonJs.includes("element.scrollIntoView({ behavior: 'instant', block: 'start' });"), false);
     assert.ok(markdownJs.includes('const normalizedHeadingLevels = Array.from(new Set(headings.map(heading => heading.level))).sort((a, b) => a - b);'));
     assert.ok(markdownJs.includes('const MARKDOWN_SKELETON_LINE_BASE_WIDTH_PX = 2;'));
     assert.ok(markdownJs.includes('const MARKDOWN_SKELETON_LINE_MAX_WIDTH_PX = 20;'));
@@ -1026,9 +1026,87 @@ const {
     assert.ok(i18n.includes('const SUPPORTED_EXTENSIONS = ['));
     assert.ok(i18n.includes('const SUPPORTED_LIST_HTML = SUPPORTED_EXTENSIONS.map('));
     assert.ok(i18n.includes("'JSONL (.jsonl)'"));
-    assert.ok(i18n.includes('const I18N_STRINGS: Record<string, I18nStrings> = {'));
-    assert.ok(i18n.includes('const AVAILABLE_LOCALES = Object.keys(I18N_STRINGS) as LocaleKey[];'));
-    assert.ok(i18n.includes('const LOCALE_LOOKUP = new Map<string, LocaleKey>('));
+    assert.ok(i18n.includes('const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {'));
+    assert.ok(i18n.includes('const FALLBACK_STRINGS: I18nStrings = {'));
+  });
+
+  test('2026-07-28 Task K removes unused and inconsistent preview code', () => {
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const markdownJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'markdown.js'), 'utf8');
+    const markdownProvider = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'src', 'markdownPreviewProvider.ts'),
+      'utf8'
+    );
+    const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
+    const tsconfig = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'tsconfig.json'), 'utf8'));
+
+    assert.equal(i18n.includes('I18N_STRINGS'), false);
+    assert.equal(i18n.includes('AVAILABLE_LOCALES'), false);
+    assert.equal(i18n.includes('LOCALE_LOOKUP'), false);
+    assert.equal(markdownProvider.includes('tokenizer(src: string, tokens: any)'), false);
+    assert.equal((commonJs.match(/PreviewMermaid\.renderMermaid\(\)/g) || []).length, 2);
+    assert.equal(
+      (commonJs.match(/function scrollToHeading\(/g) || []).length
+        + (markdownJs.match(/function scrollToHeading\(/g) || []).length,
+      1
+    );
+    assert.equal(tsconfig.compilerOptions.noUnusedLocals, true);
+    assert.equal(tsconfig.compilerOptions.noUnusedParameters, true);
+  });
+
+  test('2026-07-28 Task L writes Markdown table checkbox changes back to the exact marker', () => {
+    const markdownJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'markdown.js'), 'utf8');
+    const previewProvider = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'),
+      'utf8'
+    );
+    const checkboxBindingSource = markdownJs.slice(
+      markdownJs.indexOf('function bindCheckboxEvents()'),
+      markdownJs.indexOf('// 向公共注册中心登记：仅在 Markdown 文件类型时激活')
+    );
+    const context = {
+      checkboxHandler: null,
+      postedMessage: null,
+      document: {
+        querySelectorAll(selector) {
+          context.selector = selector;
+          return [{
+            addEventListener(type, handler) {
+              assert.equal(type, 'change');
+              context.checkboxHandler = handler;
+            },
+          }];
+        },
+      },
+      VSCODE_API: {
+        postMessage(message) {
+          context.postedMessage = message;
+        },
+      },
+    };
+
+    vm.runInNewContext(`${checkboxBindingSource}\nbindCheckboxEvents();`, context);
+    context.checkboxHandler({
+      target: {
+        checked: true,
+        getAttribute(name) {
+          return name === 'data-line' ? '12' : '27';
+        },
+      },
+    });
+
+    assert.ok(context.selector.includes('.table-task-checkbox[data-line][data-char]'));
+    assert.deepEqual(
+      { ...context.postedMessage },
+      { type: 'toggleCheckbox', line: 12, char: 27, checked: true }
+    );
+    assert.ok(previewProvider.includes(
+      'this._handleToggleCheckbox(message.line, message.checked, message.char);'
+    ));
+    assert.ok(previewProvider.includes('const marker = lineText.slice(character, character + 3);'));
+    assert.ok(previewProvider.includes(
+      'new vscode.Range(line, markerStart, line, markerStart + 3)'
+    ));
   });
 
   test('Supported JSONC fixture with mixed comment styles parses successfully', () => {

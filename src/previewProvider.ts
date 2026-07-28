@@ -173,7 +173,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 } else if (message.type === 'visibleLine') {
                     this._handleLocateEditorFromLine(message.line, message.char);
                 } else if (message.type === 'toggleCheckbox') {
-                    this._handleToggleCheckbox(message.line, message.checked);
+                    this._handleToggleCheckbox(message.line, message.checked, message.char);
                 } else if (message.type === 'navigateToLine') {
                     this._navigateToLine(message.line, message.char);
                 } else if (message.type === 'updateEditorSelection') {
@@ -986,10 +986,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
     /**
      * 处理 checkbox 切换
-     * @param line - 当前处理的行内容或行号
-     * @param checked - 复选框目标状态
+     * @param line - Markdown 任务标记所在的零基行号
+     * @param checked - 需要写入源码的勾选状态
+     * @param character - 表格 Task List 标记在当前行中的起始字符
      */
-    private async _handleToggleCheckbox(line: number, checked: boolean): Promise<void> {
+    private async _handleToggleCheckbox(
+        line: number,
+        checked: boolean,
+        character?: number
+    ): Promise<void> {
         const editor = vscode.window.activeTextEditor;
         if (!editor || this._currentFileType !== 'markdown') {
             return;
@@ -1001,21 +1006,36 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
         const lineText = document.lineAt(line).text;
 
-        let newText: string;
-        if (checked) {
-            newText = lineText.replace(/\[ \]/, '[x]');
+        let markerStart: number;
+        if (typeof character === 'number' && Number.isInteger(character) && character >= 0) {
+            const marker = lineText.slice(character, character + 3);
+            if (!/^\[[ xX]\]$/.test(marker)) {
+                return;
+            }
+            markerStart = character;
         } else {
-            newText = lineText.replace(/\[[xX]\]/, '[ ]');
+            markerStart = lineText.search(/\[[ xX]\]/);
         }
 
-        if (newText !== lineText) {
-            const edit = new vscode.WorkspaceEdit();
-            edit.replace(document.uri, new vscode.Range(line, 0, line, lineText.length), newText);
-            this._suppressNextAutoScroll = true;
-            const applied = await vscode.workspace.applyEdit(edit);
-            if (!applied) {
-                this._suppressNextAutoScroll = false;
-            }
+        if (markerStart < 0) {
+            return;
+        }
+
+        const replacement = checked ? '[x]' : '[ ]';
+        if (lineText.slice(markerStart, markerStart + 3) === replacement) {
+            return;
+        }
+
+        const edit = new vscode.WorkspaceEdit();
+        edit.replace(
+            document.uri,
+            new vscode.Range(line, markerStart, line, markerStart + 3),
+            replacement
+        );
+        this._suppressNextAutoScroll = true;
+        const applied = await vscode.workspace.applyEdit(edit);
+        if (!applied) {
+            this._suppressNextAutoScroll = false;
         }
     }
 

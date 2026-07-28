@@ -83,14 +83,6 @@ const FALLBACK_STRINGS: I18nStrings = {
     locatorUnavailable: 'No highlighted data tree region available'
 };
 
-// 保留基础默认字典，兼容现有注释与常量规范检查
-const I18N_STRINGS: Record<string, I18nStrings> = {
-    en_US: FALLBACK_STRINGS
-};
-
-type LocaleKey = keyof typeof I18N_STRINGS;
-const AVAILABLE_LOCALES = Object.keys(I18N_STRINGS) as LocaleKey[];
-
 type NlsBundle = Record<string, string>;
 let currentBundle: NlsBundle = {};
 
@@ -102,10 +94,6 @@ function formatTemplate(template: string, ...args: string[]): string {
 function normalizeLocale(locale: string): string {
     return locale.replace(/_/g, '-').toLowerCase();
 }
-
-const LOCALE_LOOKUP = new Map<string, LocaleKey>(
-    AVAILABLE_LOCALES.map(locale => [normalizeLocale(locale), locale])
-);
 
 function resolveNlsFileName(locale: string): string {
     const normalized = normalizeLocale(locale);
