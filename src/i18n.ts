@@ -19,6 +19,8 @@ interface I18nStrings {
     tableSelectionMarkdownTable: string;
     tableSelectionAsciiTable: string;
     tableSelectionTsv: string;
+    tableSelectionTsvHint: string;
+    tableSelectionCsv: string;
     locatorCopied: string;
     locatorUnavailable: string;
 }
@@ -55,6 +57,8 @@ const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {
     tableSelectionMarkdownTable: 'runtime.tableSelectionMarkdownTable',
     tableSelectionAsciiTable: 'runtime.tableSelectionAsciiTable',
     tableSelectionTsv: 'runtime.tableSelectionTsv',
+    tableSelectionTsvHint: 'runtime.tableSelectionTsvHint',
+    tableSelectionCsv: 'runtime.tableSelectionCsv',
     locatorCopied: 'runtime.locatorCopied',
     locatorUnavailable: 'runtime.locatorUnavailable'
 };
@@ -73,6 +77,8 @@ const FALLBACK_STRINGS: I18nStrings = {
     tableSelectionMarkdownTable: 'Copy as Markdown',
     tableSelectionAsciiTable: 'Copy as ASCII',
     tableSelectionTsv: 'Copy as TSV',
+    tableSelectionTsvHint: 'For Excel, Numbers & Sheets',
+    tableSelectionCsv: 'Copy as CSV',
     locatorCopied: 'Copied Locator: {0}',
     locatorUnavailable: 'No highlighted data tree region available'
 };
@@ -196,6 +202,12 @@ export const i18n = {
     },
     get tableSelectionTsv(): string {
         return getString('tableSelectionTsv');
+    },
+    get tableSelectionTsvHint(): string {
+        return getString('tableSelectionTsvHint');
+    },
+    get tableSelectionCsv(): string {
+        return getString('tableSelectionCsv');
     },
     get locatorCopied(): string {
         return getString('locatorCopied');

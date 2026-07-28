@@ -26,6 +26,8 @@
   "runtime.tableSelectionMarkdownTable": "Copy as Markdown",
   "runtime.tableSelectionAsciiTable": "Copy as ASCII",
   "runtime.tableSelectionTsv": "Copy as TSV",
+  "runtime.tableSelectionTsvHint": "For Excel, Numbers & Sheets",
+  "runtime.tableSelectionCsv": "Copy as CSV",
   "runtime.locatorCopied": "Copied Locator: {0}",
   "runtime.locatorUnavailable": "No highlighted data tree region available"
 }

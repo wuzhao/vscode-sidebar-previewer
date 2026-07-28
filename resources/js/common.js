@@ -12,6 +12,8 @@ const L10N_TEXT = {
     tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown',
     tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy as ASCII',
     tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy as TSV',
+    tableSelectionTsvHint: L10N_SOURCE.tableSelectionTsvHint || 'For Excel, Numbers & Sheets',
+    tableSelectionCsv: L10N_SOURCE.tableSelectionCsv || 'Copy as CSV',
 };
 // 允许接收的消息类型枚举，避免无效消息触发渲染流程
 const VALID_MESSAGE_TYPES = new Set([

@@ -262,20 +262,28 @@ const {
     assert.ok(commonJs.includes("tableSelectionMarkdown: L10N_SOURCE.tableSelectionMarkdown || 'Copy as Markdown'"));
     assert.ok(commonJs.includes("tableSelectionAscii: L10N_SOURCE.tableSelectionAscii || 'Copy as ASCII'"));
     assert.ok(commonJs.includes("tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy as TSV'"));
+    assert.ok(commonJs.includes("tableSelectionTsvHint: L10N_SOURCE.tableSelectionTsvHint || 'For Excel, Numbers & Sheets'"));
+    assert.ok(commonJs.includes("tableSelectionCsv: L10N_SOURCE.tableSelectionCsv || 'Copy as CSV'"));
 
     assert.ok(previewProvider.includes('data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}"'));
     assert.ok(previewProvider.includes('data-table-selection-markdown="${escapeHtml(i18n.tableSelectionMarkdownTable)}"'));
     assert.ok(previewProvider.includes('data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}"'));
     assert.ok(previewProvider.includes('data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}"'));
+    assert.ok(previewProvider.includes('data-table-selection-tsv-hint="${escapeHtml(i18n.tableSelectionTsvHint)}"'));
+    assert.ok(previewProvider.includes('data-table-selection-csv="${escapeHtml(i18n.tableSelectionCsv)}"'));
 
     assert.ok(i18n.includes('tableSelectionMore'));
     assert.ok(i18n.includes('tableSelectionMarkdownTable'));
     assert.ok(i18n.includes('tableSelectionAsciiTable'));
     assert.ok(i18n.includes('tableSelectionTsv'));
+    assert.ok(i18n.includes('tableSelectionTsvHint'));
+    assert.ok(i18n.includes('tableSelectionCsv'));
     assert.ok(i18n.includes("tableSelectionMore: 'Actions'"));
     assert.ok(i18n.includes("tableSelectionMarkdownTable: 'Copy as Markdown'"));
     assert.ok(i18n.includes("tableSelectionAsciiTable: 'Copy as ASCII'"));
     assert.ok(i18n.includes("tableSelectionTsv: 'Copy as TSV'"));
+    assert.ok(i18n.includes("tableSelectionTsvHint: 'For Excel, Numbers & Sheets'"));
+    assert.ok(i18n.includes("tableSelectionCsv: 'Copy as CSV'"));
   });
 
   test('Task E table split actions use icon-only triggers, group feedback, and top-right selection placement', () => {
@@ -293,6 +301,10 @@ const {
       tableJs.indexOf('function updateTableSelectionActions()'),
       tableJs.indexOf('function highlightTableRangeFunc(')
     );
+    const copyMenuSource = tableJs.slice(
+      tableJs.indexOf('function createTableCopyMenuElements()'),
+      tableJs.indexOf('function bindTableCopyButton(copyButton, buildText)')
+    );
 
     assert.ok(tableJs.includes('function buildMarkdownPreviewTableSnapshot(table)'));
     assert.ok(tableJs.includes("document.querySelectorAll('#content table:not(.frontmatter):not(.tabular-table)')"));
@@ -305,10 +317,11 @@ const {
     assert.ok(markdownActionsSource.includes("dropdownTrigger.className = 'table-copy-trigger';"));
     assert.ok(markdownActionsSource.includes("dropdownTrigger.innerHTML = '<i class=\"codicon codicon-chevron-down\"></i>';"));
     assert.equal(/dropdownTrigger\.innerHTML\s*=\s*[^;]*<span>/s.test(markdownActionsSource), false);
-    assert.ok(/menu\.appendChild\(asciiButton\);\s*menu\.appendChild\(tsvButton\);/s.test(markdownActionsSource));
+    assert.ok(markdownActionsSource.includes('const copyMenu = createTableCopyMenuElements();'));
     assert.ok(markdownActionsSource.includes('return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);'));
     assert.ok(markdownActionsSource.includes('return buildAsciiTableText(buildGridWithHeader(snapshot));'));
     assert.ok(markdownActionsSource.includes('return buildTsvText(buildGridWithHeader(snapshot));'));
+    assert.ok(markdownActionsSource.includes('return buildCsvText(buildGridWithHeader(snapshot));'));
     assert.ok(tableJs.includes("PreviewCommon.registerDomainInit(['markdown'], 'markdown-table-copy'"));
 
     assert.ok(selectionActionsSource.includes("wrapper.className = 'table-selection-actions table-copy-actions';"));
@@ -317,10 +330,12 @@ const {
     assert.equal(/tsvButton\.innerHTML\s*=\s*[^;]*<span>/s.test(selectionActionsSource), false);
     assert.ok(selectionActionsSource.includes("dropdownTrigger.innerHTML = '<i class=\"codicon codicon-chevron-down\"></i>';"));
     assert.equal(/dropdownTrigger\.innerHTML\s*=\s*[^;]*<span>/s.test(selectionActionsSource), false);
-    assert.ok(/menu\.appendChild\(asciiButton\);\s*menu\.appendChild\(markdownButton\);/s.test(selectionActionsSource));
+    assert.ok(selectionActionsSource.includes('const copyMenu = createTableCopyMenuElements();'));
     assert.ok(selectionActionsSource.includes('return buildTsvText(buildGridWithHeader(snapshot));'));
     assert.ok(selectionActionsSource.includes('return buildAsciiTableText(buildGridWithHeader(snapshot));'));
     assert.ok(selectionActionsSource.includes('return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);'));
+    assert.ok(selectionActionsSource.includes('return buildCsvText(buildGridWithHeader(snapshot));'));
+    assert.ok(/menu\.appendChild\(markdownButton\);\s*menu\.appendChild\(asciiButton\);\s*menu\.appendChild\(tsvButton\);\s*menu\.appendChild\(csvButton\);/s.test(copyMenuSource));
     assert.ok(tableJs.includes("feedback.className = 'table-copy-feedback';"));
     assert.ok(tableJs.includes('<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>'));
     assert.ok(tableJs.includes("actions.classList.add('copied');"));
@@ -337,6 +352,7 @@ const {
     assert.ok(/\.table-copy-main\s*\{[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(css));
     assert.ok(/\.table-copy-trigger\s*\{[^}]*width:\s*20px;[^}]*padding:\s*0;/s.test(css));
     assert.ok(/\.table-copy-dropdown\[open\] \.table-copy-menu\s*\{[^}]*display:\s*flex;/s.test(css));
+    assert.ok(/\.table-copy-menu-description\s*\{[^}]*color:\s*var\(--vscode-descriptionForeground\);[^}]*font-size:\s*9px;/s.test(css));
     assert.ok(/\.table-copy-feedback\s*\{[^}]*display:\s*none;[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
     assert.ok(/\.table-copy-actions\.copied > \.table-copy-button,[\s\S]*?display:\s*none;/s.test(css));
     assert.ok(/\.table-copy-actions\.copied > \.table-copy-feedback\s*\{[^}]*display:\s*inline-flex;/s.test(css));
@@ -366,8 +382,8 @@ const {
 
     assert.ok(selectionActionsSource.includes("wrapper.className = 'table-selection-actions table-copy-actions';"));
     assert.ok(selectionActionsSource.includes('bindTableCopyButton(tsvButton, () =>'));
-    assert.ok(selectionActionsSource.includes('bindTableCopyButton(asciiButton, () =>'));
-    assert.ok(selectionActionsSource.includes('bindTableCopyButton(markdownButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(copyMenu.asciiButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(copyMenu.markdownButton, () =>'));
     assert.ok(selectionActionsSource.includes('bindTableCopyActionGroup(wrapper, dropdown);'));
     assert.ok(copySuccessSource.includes("copyBtn.closest('.table-copy-actions')"));
     assert.ok(copySuccessSource.includes("actions.classList.add('copied');"));
@@ -440,6 +456,94 @@ const {
     assert.equal(classes.has('is-visible'), true);
     assert.equal(wrapper.style.left, '102px');
     assert.equal(wrapper.style.top, '26px');
+  });
+
+  test('2026-07-28 Task C keeps both table copy menus in the same format order', () => {
+    const css = readResourceCssBundle();
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const copyMenuSource = tableJs.slice(
+      tableJs.indexOf('function createTableCopyMenuElements()'),
+      tableJs.indexOf('function bindTableCopyButton(copyButton, buildText)')
+    );
+    const markdownActionsSource = tableJs.slice(
+      tableJs.indexOf('function ensureMarkdownTableCopyActions(table)'),
+      tableJs.indexOf('function bindMarkdownTableCopyActions()')
+    );
+    const selectionActionsSource = tableJs.slice(
+      tableJs.indexOf('function ensureTableSelectionActionElements(table)'),
+      tableJs.indexOf('function updateTableSelectionActions()')
+    );
+
+    assert.ok(copyMenuSource.includes('createTableCopyMenuButton(L10N_TEXT.tableSelectionMarkdown)'));
+    assert.ok(copyMenuSource.includes('createTableCopyMenuButton(L10N_TEXT.tableSelectionAscii)'));
+    assert.ok(copyMenuSource.includes('createTableCopyMenuButton(L10N_TEXT.tableSelectionTsv, L10N_TEXT.tableSelectionTsvHint)'));
+    assert.ok(copyMenuSource.includes('createTableCopyMenuButton(L10N_TEXT.tableSelectionCsv)'));
+    assert.ok(/menu\.appendChild\(markdownButton\);\s*menu\.appendChild\(asciiButton\);\s*menu\.appendChild\(tsvButton\);\s*menu\.appendChild\(csvButton\);/s.test(copyMenuSource));
+
+    assert.ok(markdownActionsSource.includes("markdownButton.className = 'table-copy-button table-copy-main';"));
+    assert.ok(markdownActionsSource.includes('const copyMenu = createTableCopyMenuElements();'));
+    assert.ok(markdownActionsSource.includes('bindTableCopyButton(copyMenu.markdownButton, () =>'));
+    assert.ok(markdownActionsSource.includes('bindTableCopyButton(copyMenu.asciiButton, () =>'));
+    assert.ok(markdownActionsSource.includes('bindTableCopyButton(copyMenu.tsvButton, () =>'));
+    assert.ok(markdownActionsSource.includes('bindTableCopyButton(copyMenu.csvButton, () =>'));
+
+    assert.ok(selectionActionsSource.includes("tsvButton.className = 'table-copy-button table-copy-main';"));
+    assert.ok(selectionActionsSource.includes('const copyMenu = createTableCopyMenuElements();'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(copyMenu.markdownButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(copyMenu.asciiButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(copyMenu.tsvButton, () =>'));
+    assert.ok(selectionActionsSource.includes('bindTableCopyButton(copyMenu.csvButton, () =>'));
+
+    assert.ok(/\.table-copy-menu-item\.has-description\s*\{[^}]*min-height:\s*40px;/s.test(css));
+    assert.ok(/\.table-copy-menu-text\s*\{[^}]*flex-direction:\s*column;[^}]*align-items:\s*flex-start;/s.test(css));
+    assert.ok(/\.table-copy-menu-description\s*\{[^}]*color:\s*var\(--vscode-descriptionForeground\);[^}]*font-size:\s*9px;/s.test(css));
+  });
+
+  test('2026-07-28 Task C escapes copied CSV values and keeps locale keys synchronized', () => {
+    const tableJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'table.js'), 'utf8');
+    const csvFunctionsSource = tableJs.slice(
+      tableJs.indexOf('function escapeCsvCell(value)'),
+      tableJs.indexOf('function isCombiningMarkCodePoint(codePoint)')
+    );
+    const context = {};
+
+    vm.runInNewContext(
+      `${csvFunctionsSource}
+      csvText = buildCsvText([
+        ['Name', 'Note'],
+        ['Ada', 'Hello, "world"'],
+        ['Lin', 'line 1\\nline 2']
+      ]);`,
+      context
+    );
+
+    assert.equal(context.csvText, 'Name,Note\r\nAda,"Hello, ""world"""\r\nLin,"line 1\nline 2"');
+
+    const localesDir = path.join(__dirname, '..', '..', 'locales');
+    const localeFiles = fs.readdirSync(localesDir)
+      .filter(fileName => /^nls(?:\..+)?\.json$/i.test(fileName))
+      .sort();
+    const bundles = localeFiles.map(fileName => {
+      return JSON.parse(fs.readFileSync(path.join(localesDir, fileName), 'utf8'));
+    });
+    const baseBundle = JSON.parse(fs.readFileSync(path.join(localesDir, 'nls.json'), 'utf8'));
+    const expectedKeys = Object.keys(baseBundle).sort();
+    bundles.forEach(bundle => {
+      assert.deepEqual(Object.keys(bundle).sort(), expectedKeys);
+      assert.equal(typeof bundle['runtime.tableSelectionCsv'], 'string');
+      assert.equal(typeof bundle['runtime.tableSelectionTsvHint'], 'string');
+    });
+    assert.equal(baseBundle['runtime.tableSelectionCsv'], 'Copy as CSV');
+    assert.equal(baseBundle['runtime.tableSelectionTsvHint'], 'For Excel, Numbers & Sheets');
+  });
+
+  test('2026-07-28 Task D aligns copy icons with labels and softens the TSV hint', () => {
+    const css = readResourceCssBundle();
+
+    assert.ok(/\.table-copy-menu-item\.has-description\s*\{[^}]*padding:\s*4px 8px;[^}]*align-items:\s*flex-start;/s.test(css));
+    assert.ok(/\.table-copy-menu-item > \.codicon,\s*\.table-copy-menu-label\s*\{[^}]*line-height:\s*16px;/s.test(css));
+    assert.ok(/\.table-copy-menu-text\s*\{[^}]*gap:\s*0;/s.test(css));
+    assert.ok(/\.table-copy-menu-description\s*\{[^}]*margin-top:\s*4px;[^}]*opacity:\s*0\.65;/s.test(css));
   });
 
   test('Task H datatree highlight prefers XML array index and avoids root over-highlight', () => {

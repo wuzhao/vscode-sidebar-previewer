@@ -44,7 +44,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - GitHub Alert ブロックのレンダリング
 - タスクリストのチェックボックス操作（トグル）とファイルへの書き戻し
 - コードハイライトおよびコピーボタン
-- Markdown テーブルにホバーして Markdown、ASCII、TSV 形式でコピー
+- Markdown テーブルにホバーして Markdown、ASCII、TSV、CSV 形式でコピー
 - KaTeX および Mermaid ブロックのレンダリング
 - エディタとプレビュー間の同期スクロールおよび位置特定（双方向スクロール）
 
@@ -74,7 +74,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 - エディタとプレビュー間のスクロール同期・相互ロケート
 - 双方向選択機能をサポートし、クリック＆ドラッグでのセル選択
 - 選択セルのハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
-- 複数セル選択時に選択範囲の右上へ分割コピーボタンを表示し、メインボタンは TSV、ドロップダウンは「ASCII としてコピー」と「Markdown としてコピー」を提供
+- 複数セル選択時に選択範囲の右上へ分割コピーボタンを表示し、メインボタンは TSV、ドロップダウンは Markdown、ASCII、TSV、CSV 形式を提供
 - `Cmd/Ctrl+C`：単一セルはセル文字列をコピー、複数セルはTSV形式でコピー
 
 ## インストール
@@ -104,7 +104,7 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 3. プレビューパネルに現在のファイルが自動的に表示（レンダリング）される
 4. ツールバーのボタン、または `Cmd/Ctrl` + マウスホイールでズーム操作を行う
 5. Mermaid のプレビューでは、図をドラッグしてパン（移動）させる
-6. Markdown プレビューではテーブルにホバーして Markdown、ASCII、TSV 形式でコピーできます。JSON/JSONL/YAML/TOML/XML のプレビューではキーをクリックしてソース行へジャンプでき、選択ハイライトはフォーカス連動します。CSV/TSV は先頭行・先頭列の固定、セルクリックでのロケート、フォーカス連動ハイライト、選択範囲右上の TSV メインコピーボタンと ASCII/Markdown のドロップダウン操作、`Cmd/Ctrl+C` コピーに対応します
+6. Markdown プレビューではテーブルにホバーして Markdown、ASCII、TSV、CSV 形式でコピーできます。JSON/JSONL/YAML/TOML/XML のプレビューではキーをクリックしてソース行へジャンプでき、選択ハイライトはフォーカス連動します。CSV/TSV は先頭行・先頭列の固定、セルクリックでのロケート、フォーカス連動ハイライト、選択範囲右上の TSV メインコピーボタンと Markdown/ASCII/TSV/CSV のドロップダウン操作、`Cmd/Ctrl+C` コピーに対応します
 
 ## VS Code のセカンダリサイドバーを表示するには？
 

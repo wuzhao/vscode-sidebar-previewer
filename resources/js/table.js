@@ -202,6 +202,28 @@ function buildTsvText(grid) {
 }
 
 /**
+ * 转义 CSV 单元格中的引号与分隔字符
+ * @param value - 原始单元格值
+ * @returns 返回符合 CSV 规则的单元格文本
+ */
+function escapeCsvCell(value) {
+    const text = String(value ?? '');
+    if (!/[",\r\n]/.test(text)) {
+        return text;
+    }
+    return `"${text.replace(/"/g, '""')}"`;
+}
+
+/**
+ * 将选区网格转换为 CSV 文本
+ * @param grid - 选区网格
+ * @returns 返回 CSV 字符串
+ */
+function buildCsvText(grid) {
+    return grid.map(row => row.map(escapeCsvCell).join(',')).join('\r\n');
+}
+
+/**
  * 判断字符是否为零宽组合字符
  * @param codePoint - 目标字符码点
  * @returns 返回是否为零宽组合字符
@@ -384,6 +406,65 @@ async function writeTextToClipboard(text) {
 }
 
 /**
+ * 创建表格复制菜单中的格式操作按钮
+ * @param label - 复制格式名称
+ * @param description - 格式用途的辅助说明
+ * @returns 返回菜单操作按钮
+ */
+function createTableCopyMenuButton(label, description = '') {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'table-copy-menu-item';
+    button.title = label;
+
+    const icon = document.createElement('i');
+    icon.className = 'codicon codicon-copy';
+    const text = document.createElement('span');
+    text.className = 'table-copy-menu-text';
+    const labelElement = document.createElement('span');
+    labelElement.className = 'table-copy-menu-label';
+    labelElement.textContent = label;
+    text.appendChild(labelElement);
+
+    if (description) {
+        button.classList.add('has-description');
+        const descriptionElement = document.createElement('span');
+        descriptionElement.className = 'table-copy-menu-description';
+        descriptionElement.textContent = description;
+        text.appendChild(descriptionElement);
+    }
+
+    button.appendChild(icon);
+    button.appendChild(text);
+    return button;
+}
+
+/**
+ * 按统一顺序创建表格复制格式菜单
+ * @returns 返回菜单容器及各格式操作按钮
+ */
+function createTableCopyMenuElements() {
+    const menu = document.createElement('div');
+    menu.className = 'table-copy-menu';
+    const markdownButton = createTableCopyMenuButton(L10N_TEXT.tableSelectionMarkdown);
+    const asciiButton = createTableCopyMenuButton(L10N_TEXT.tableSelectionAscii);
+    const tsvButton = createTableCopyMenuButton(L10N_TEXT.tableSelectionTsv, L10N_TEXT.tableSelectionTsvHint);
+    const csvButton = createTableCopyMenuButton(L10N_TEXT.tableSelectionCsv);
+
+    menu.appendChild(markdownButton);
+    menu.appendChild(asciiButton);
+    menu.appendChild(tsvButton);
+    menu.appendChild(csvButton);
+    return {
+        menu,
+        markdownButton,
+        asciiButton,
+        tsvButton,
+        csvButton
+    };
+}
+
+/**
  * 为表格复制按钮绑定格式转换与反馈交互
  * @param copyButton - 目标复制按钮
  * @param buildText - 根据当前表格或选区生成复制文本的函数
@@ -471,25 +552,9 @@ function ensureMarkdownTableCopyActions(table) {
     dropdownTrigger.setAttribute('aria-label', L10N_TEXT.tableSelectionMore);
     dropdownTrigger.innerHTML = '<i class="codicon codicon-chevron-down"></i>';
 
-    const menu = document.createElement('div');
-    menu.className = 'table-copy-menu';
-
-    const asciiButton = document.createElement('button');
-    asciiButton.type = 'button';
-    asciiButton.className = 'table-copy-menu-item';
-    asciiButton.title = L10N_TEXT.tableSelectionAscii;
-    asciiButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionAscii}</span>`;
-
-    const tsvButton = document.createElement('button');
-    tsvButton.type = 'button';
-    tsvButton.className = 'table-copy-menu-item';
-    tsvButton.title = L10N_TEXT.tableSelectionTsv;
-    tsvButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionTsv}</span>`;
-
-    menu.appendChild(asciiButton);
-    menu.appendChild(tsvButton);
+    const copyMenu = createTableCopyMenuElements();
     dropdown.appendChild(dropdownTrigger);
-    dropdown.appendChild(menu);
+    dropdown.appendChild(copyMenu.menu);
     actions.appendChild(markdownButton);
     actions.appendChild(dropdown);
     bindTableCopyActionGroup(actions, dropdown);
@@ -499,13 +564,21 @@ function ensureMarkdownTableCopyActions(table) {
         const snapshot = buildMarkdownPreviewTableSnapshot(table);
         return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
     });
-    bindTableCopyButton(asciiButton, () => {
+    bindTableCopyButton(copyMenu.markdownButton, () => {
+        const snapshot = buildMarkdownPreviewTableSnapshot(table);
+        return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
+    });
+    bindTableCopyButton(copyMenu.asciiButton, () => {
         const snapshot = buildMarkdownPreviewTableSnapshot(table);
         return buildAsciiTableText(buildGridWithHeader(snapshot));
     });
-    bindTableCopyButton(tsvButton, () => {
+    bindTableCopyButton(copyMenu.tsvButton, () => {
         const snapshot = buildMarkdownPreviewTableSnapshot(table);
         return buildTsvText(buildGridWithHeader(snapshot));
+    });
+    bindTableCopyButton(copyMenu.csvButton, () => {
+        const snapshot = buildMarkdownPreviewTableSnapshot(table);
+        return buildCsvText(buildGridWithHeader(snapshot));
     });
 
     table.dataset.copyActionsBound = 'true';
@@ -691,25 +764,9 @@ function ensureTableSelectionActionElements(table) {
     dropdownTrigger.setAttribute('aria-label', L10N_TEXT.tableSelectionMore);
     dropdownTrigger.innerHTML = '<i class="codicon codicon-chevron-down"></i>';
 
-    const menu = document.createElement('div');
-    menu.className = 'table-copy-menu';
-
-    const asciiButton = document.createElement('button');
-    asciiButton.type = 'button';
-    asciiButton.className = 'table-copy-menu-item';
-    asciiButton.title = L10N_TEXT.tableSelectionAscii;
-    asciiButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionAscii}</span>`;
-
-    const markdownButton = document.createElement('button');
-    markdownButton.type = 'button';
-    markdownButton.className = 'table-copy-menu-item';
-    markdownButton.title = L10N_TEXT.tableSelectionMarkdown;
-    markdownButton.innerHTML = `<i class="codicon codicon-copy"></i><span>${L10N_TEXT.tableSelectionMarkdown}</span>`;
-
-    menu.appendChild(asciiButton);
-    menu.appendChild(markdownButton);
+    const copyMenu = createTableCopyMenuElements();
     dropdown.appendChild(dropdownTrigger);
-    dropdown.appendChild(menu);
+    dropdown.appendChild(copyMenu.menu);
     wrapper.appendChild(tsvButton);
     wrapper.appendChild(dropdown);
     bindTableCopyActionGroup(wrapper, dropdown);
@@ -725,17 +782,7 @@ function ensureTableSelectionActionElements(table) {
         return buildTsvText(buildGridWithHeader(snapshot));
     });
 
-    bindTableCopyButton(asciiButton, () => {
-        const selectedCells = getSelectedCells();
-        if (selectedCells.length < 2) {
-            hideTableSelectionActions();
-            return null;
-        }
-        const snapshot = buildSelectionCopySnapshot(selectedCells);
-        return buildAsciiTableText(buildGridWithHeader(snapshot));
-    });
-
-    bindTableCopyButton(markdownButton, () => {
+    bindTableCopyButton(copyMenu.markdownButton, () => {
         const selectedCells = getSelectedCells();
         if (selectedCells.length < 2) {
             hideTableSelectionActions();
@@ -745,12 +792,42 @@ function ensureTableSelectionActionElements(table) {
         return buildMarkdownTableText(snapshot.headerRow, snapshot.bodyGrid);
     });
 
+    bindTableCopyButton(copyMenu.asciiButton, () => {
+        const selectedCells = getSelectedCells();
+        if (selectedCells.length < 2) {
+            hideTableSelectionActions();
+            return null;
+        }
+        const snapshot = buildSelectionCopySnapshot(selectedCells);
+        return buildAsciiTableText(buildGridWithHeader(snapshot));
+    });
+
+    bindTableCopyButton(copyMenu.tsvButton, () => {
+        const selectedCells = getSelectedCells();
+        if (selectedCells.length < 2) {
+            hideTableSelectionActions();
+            return null;
+        }
+        const snapshot = buildSelectionCopySnapshot(selectedCells);
+        return buildTsvText(buildGridWithHeader(snapshot));
+    });
+
+    bindTableCopyButton(copyMenu.csvButton, () => {
+        const selectedCells = getSelectedCells();
+        if (selectedCells.length < 2) {
+            hideTableSelectionActions();
+            return null;
+        }
+        const snapshot = buildSelectionCopySnapshot(selectedCells);
+        return buildCsvText(buildGridWithHeader(snapshot));
+    });
+
     tableSelectionUi = {
         container,
         wrapper,
         tsvButton,
-        asciiButton,
-        markdownButton,
+        asciiButton: copyMenu.asciiButton,
+        markdownButton: copyMenu.markdownButton,
         dropdown,
     };
 }

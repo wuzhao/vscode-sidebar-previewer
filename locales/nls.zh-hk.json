@@ -26,6 +26,8 @@
   "runtime.tableSelectionMarkdownTable": "複製為 Markdown",
   "runtime.tableSelectionAsciiTable": "複製為 ASCII",
   "runtime.tableSelectionTsv": "複製為 TSV",
+  "runtime.tableSelectionTsvHint": "適用於 Excel、Numbers 同 Sheets",
+  "runtime.tableSelectionCsv": "複製為 CSV",
   "runtime.locatorCopied": "已複製定位表達式: {0}",
   "runtime.locatorUnavailable": "目前沒有可用的高亮資料樹區域"
 }

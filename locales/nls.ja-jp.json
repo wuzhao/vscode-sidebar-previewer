@@ -26,6 +26,8 @@
   "runtime.tableSelectionMarkdownTable": "Markdown としてコピー",
   "runtime.tableSelectionAsciiTable": "ASCII としてコピー",
   "runtime.tableSelectionTsv": "TSV としてコピー",
+  "runtime.tableSelectionTsvHint": "Excel、Numbers、Sheets 向け",
+  "runtime.tableSelectionCsv": "CSV としてコピー",
   "runtime.locatorCopied": "ロケーターをコピーしました: {0}",
   "runtime.locatorUnavailable": "ハイライトされたデータツリー領域がありません"
 }
