@@ -11,6 +11,7 @@
 .copy-btn {
     position: absolute;
     top: 8px;
+    right: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26,10 +27,6 @@
     font-size: 14px;
     white-space: nowrap;
     z-index: 10;
-}
-
-.copy-btn {
-    right: 8px;
 }
 
 .copy-btn:hover,

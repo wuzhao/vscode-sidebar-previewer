@@ -14,7 +14,7 @@ let tableDragState = {
 
 // 可见行探测点向下偏移，避免命中表头边框
 const TABLE_VISIBLE_LINE_PROBE_OFFSET_PX = 1;
-const TABLE_SELECTION_ACTION_MARGIN_PX = 6;
+const TABLE_SELECTION_ACTION_MARGIN_PX = 5;
 // 复制成功状态展示时长（毫秒）
 const TABLE_SELECTION_COPY_SUCCESS_MS = 800;
 // 分体复制菜单离开后延迟关闭的时间（毫秒）
