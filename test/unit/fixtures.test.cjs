@@ -314,6 +314,65 @@ test('MarkdownProvider escapes front matter HTML content', () => {
     assert.equal(result.html.includes('<script>alert(1)</script>'), false);
 });
 
+test('2026-08-13 Task A renders front matter tags and structured JSON values', () => {
+  const source = [
+    '---',
+    'tags:',
+    '  - alpha',
+    '  - "<beta>"',
+    'metadata:',
+    '  owner: Team',
+    '  retries: 2',
+    '  unsafe: "<script>alert(1)</script>"',
+    'pipeline:',
+    '  - name: lint',
+    '    enabled: true',
+    'jsonText: \'{"theme":"dark","features":["outline","copy"]}\'',
+    'jsonArrayText: \'["outline","copy"]\'',
+    'invalidJson: "{not json}"',
+    '---',
+    '# Heading',
+  ].join('\n');
+
+  const result = MarkdownProvider.parse(source);
+
+  assert.ok(result.html.includes(
+    '<ul class="fm-tags"><li class="fm-tag">alpha</li><li class="fm-tag">&lt;beta&gt;</li></ul>'
+  ));
+  assert.ok(result.html.includes(
+    '<div class="fm-json">{\n'
+      + '  &quot;owner&quot;: &quot;Team&quot;,\n'
+      + '  &quot;retries&quot;: 2,\n'
+      + '  &quot;unsafe&quot;: &quot;&lt;script&gt;alert(1)&lt;/script&gt;&quot;\n'
+      + '}</div>'
+  ));
+  assert.ok(result.html.includes(
+    '<div class="fm-json">[\n'
+      + '  {\n'
+      + '    &quot;name&quot;: &quot;lint&quot;,\n'
+      + '    &quot;enabled&quot;: true\n'
+      + '  }\n'
+      + ']</div>'
+  ));
+  assert.ok(result.html.includes(
+    '<div class="fm-json">{\n'
+      + '  &quot;theme&quot;: &quot;dark&quot;,\n'
+      + '  &quot;features&quot;: [\n'
+      + '    &quot;outline&quot;,\n'
+      + '    &quot;copy&quot;\n'
+      + '  ]\n'
+      + '}</div>'
+  ));
+  assert.ok(result.html.includes(
+    '<div class="fm-json">[\n'
+      + '  &quot;outline&quot;,\n'
+      + '  &quot;copy&quot;\n'
+      + ']</div>'
+  ));
+  assert.ok(result.html.includes('<td class="fm-value">{not json}</td>'));
+  assert.equal(result.html.includes('<script>alert(1)</script>'), false);
+});
+
 test('MarkdownProvider heading extraction ignores fenced code headings', () => {
     const source = [
       '# Real Heading',

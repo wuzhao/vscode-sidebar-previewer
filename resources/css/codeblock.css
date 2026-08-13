@@ -18,7 +18,7 @@
     min-width: 28px;
     height: 28px;
     padding: 0 6px;
-    background-color: var(--vscode-button-secondaryBackground);
+    background-color: var(--vscode-button-secondaryHoverBackground);
     color: var(--vscode-button-secondaryForeground);
     cursor: pointer;
     border: none;
@@ -26,12 +26,13 @@
     opacity: 0;
     font-size: 14px;
     white-space: nowrap;
-    z-index: 10;
+    box-shadow: 0 2px 6px color-mix(in srgb, #000 25%, transparent 75%);
+    z-index: 2;
 }
 
 .copy-btn:hover,
 .copy-btn:active {
-    background-color: var(--vscode-notebook-cellStatusBarItemHoverBackground);
+    background-color: var(--vscode-button-secondaryHoverBackground);
 }
 
 .copy-btn.copied {

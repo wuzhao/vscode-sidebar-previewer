@@ -190,15 +190,38 @@ table.frontmatter .fm-key::before {
     vertical-align: middle;
 }
 
-table.frontmatter .fm-value ul {
-    margin: 0;
-    padding-left: 18px;
-    list-style: disc;
-}
-
-table.frontmatter .fm-value li {
+table.frontmatter .fm-tags {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
     margin: 0;
     padding: 0;
+    overflow-x: auto;
+    list-style: none;
+}
+
+table.frontmatter .fm-tag {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0 6px;
+    border-radius: 10px;
+    color: var(--vscode-badge-foreground);
+    background-color: var(--vscode-badge-background);
+    font-size: 11px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+table.frontmatter .fm-json {
+    max-width: 100%;
+    padding: 6px 8px;
+    overflow-x: auto;
+    color: var(--vscode-editor-foreground);
+    background-color: var(--vscode-textCodeBlock-background);
+    font-family: 'Maple Mono Normal NF CN', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre;
 }
 /* Frontmatter END */
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Aligned Markdown code-block copy controls with table copy controls and kept copy feedback below the Skeleton Outline.
+- Rendered Markdown headings with the link color, and enhanced frontmatter lists and compound values with non-wrapping tags and structured JSON.
+
+～～～
+
+- Markdown 代码块复制控件现在与表格复制控件保持一致，并确保复制反馈不会遮挡 Skeleton Outline。
+- Markdown 标题改用链接色，frontmatter 列表与复合值分别优化为不折行标签和结构化 JSON。
+
 ## 0.4.1 - 2026-07-28
 
 - Refined Markdown Skeleton Outline widths based on the heading levels present in the document.

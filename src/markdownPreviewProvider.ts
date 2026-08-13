@@ -485,9 +485,9 @@ export class MarkdownProvider {
     }
 
     /**
-     * 渲染 front matter 的值（支持嵌套对象/数组 → ul > li）
-     * @param value - 待处理的值
-     * @returns 返回渲染后的内容
+     * 按值类型将 front matter 内容渲染为标签、结构化 JSON 或普通文本
+     * @param value - 待展示的 front matter 属性值
+     * @returns 返回适合当前值类型的安全 HTML
      */
     private static renderFrontMatterValue(value: unknown): string {
         if (value === null || value === undefined) {
@@ -497,20 +497,60 @@ export class MarkdownProvider {
             return escapeHtml(value.toISOString().split('T')[0]);
         }
         if (Array.isArray(value)) {
-            const items = value.map(v => `<li>${this.renderFrontMatterValue(v)}</li>`).join('');
-            return `<ul>${items}</ul>`;
+            const isTagList = value.length > 0 && value.every(item => (
+                item !== null && item !== undefined && (typeof item !== 'object' || item instanceof Date)
+            ));
+            if (isTagList) {
+                const items = value.map(item => {
+                    const text = item instanceof Date ? item.toISOString().split('T')[0] : String(item);
+                    return `<li class="fm-tag">${escapeHtml(text)}</li>`;
+                }).join('');
+                return `<ul class="fm-tags">${items}</ul>`;
+            }
+            return this.renderFrontMatterJson(value);
         }
         if (typeof value === 'object') {
-            const entries = Object.entries(value as Record<string, unknown>);
-            if (entries.length === 0) {
-                return escapeHtml(String(value));
+            return this.renderFrontMatterJson(value);
+        }
+        if (typeof value === 'string') {
+            const jsonValue = this.parseFrontMatterJson(value);
+            if (jsonValue !== null) {
+                return this.renderFrontMatterJson(jsonValue);
             }
-            const items = entries
-                .map(([k, v]) => `<li><strong>${escapeHtml(k)}:</strong> ${this.renderFrontMatterValue(v)}</li>`)
-                .join('');
-            return `<ul>${items}</ul>`;
         }
         return escapeHtml(String(value));
+    }
+
+    /**
+     * 解析 front matter 字符串中显式书写的 JSON 容器
+     * @param value - 可能包含 JSON 对象或数组的字符串
+     * @returns 返回解析后的 JSON 容器，非 JSON 容器返回 null
+     */
+    private static parseFrontMatterJson(value: string): Record<string, unknown> | unknown[] | null {
+        const trimmed = value.trim();
+        const isJsonContainer = (trimmed.startsWith('{') && trimmed.endsWith('}'))
+            || (trimmed.startsWith('[') && trimmed.endsWith(']'));
+        if (!isJsonContainer) {
+            return null;
+        }
+
+        try {
+            const parsed: unknown = JSON.parse(trimmed);
+            return parsed !== null && typeof parsed === 'object'
+                ? parsed as Record<string, unknown> | unknown[]
+                : null;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    /**
+     * 将复合 front matter 值格式化为保留缩进的 JSON
+     * @param value - 待格式化的对象或数组
+     * @returns 返回经过 HTML 转义的结构化 JSON
+     */
+    private static renderFrontMatterJson(value: object): string {
+        return `<div class="fm-json">${escapeHtml(JSON.stringify(value, null, 2))}</div>`;
     }
 
     /**
