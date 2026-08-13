@@ -18,6 +18,8 @@
   "runtime.zoomStatus": "預覽縮放: {0}%",
   "runtime.webviewTitle": "檔案預覽",
   "runtime.copyCode": "複製",
+  "runtime.wrapCode": "自動換行",
+  "runtime.unwrapCode": "不換行",
   "runtime.viewCode": "程式碼",
   "runtime.viewPreview": "預覽",
   "runtime.previewError": "預覽失敗",

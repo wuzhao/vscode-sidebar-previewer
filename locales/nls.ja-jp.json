@@ -18,6 +18,8 @@
   "runtime.zoomStatus": "プレビュー拡大率: {0}%",
   "runtime.webviewTitle": "ファイルプレビュー",
   "runtime.copyCode": "コピー",
+  "runtime.wrapCode": "ワードラップ",
+  "runtime.unwrapCode": "折り返しなし",
   "runtime.viewCode": "コード",
   "runtime.viewPreview": "プレビュー",
   "runtime.previewError": "プレビュー失敗",

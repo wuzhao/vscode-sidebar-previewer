@@ -538,6 +538,8 @@ const {
       assert.deepEqual(Object.keys(bundle).sort(), expectedKeys);
       assert.equal(typeof bundle['runtime.tableSelectionCsv'], 'string');
       assert.equal(typeof bundle['runtime.tableSelectionTsvHint'], 'string');
+      assert.equal(typeof bundle['runtime.wrapCode'], 'string');
+      assert.equal(typeof bundle['runtime.unwrapCode'], 'string');
       assert.equal('runtime.copySuccess' in bundle, false);
     });
     assert.equal(baseBundle['runtime.tableSelectionCsv'], 'Copy as CSV');
@@ -777,16 +779,101 @@ const {
     assert.equal(codeblockJs.includes('fade-out'), false);
   });
 
+  test('2026-08-14 code blocks toggle wrapping with icon-only action buttons', () => {
+    const codeblockJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'codeblock.js'), 'utf8');
+    const codeblockCss = fs.readFileSync(path.join(RESOURCES_CSS_DIR, 'codeblock.css'), 'utf8');
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+    const i18n = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'i18n.ts'), 'utf8');
+    const wrapFunctionSource = codeblockJs.slice(
+      codeblockJs.indexOf('function addCodeWrapButton(wrapper)'),
+      codeblockJs.indexOf('function addCopyButton(pre, wrapper)')
+    );
+    const listeners = {};
+    const button = {
+      className: '',
+      title: '',
+      innerHTML: '',
+      attributes: {},
+      setAttribute(name, value) {
+        this.attributes[name] = value;
+      },
+      addEventListener(type, handler) {
+        listeners[type] = handler;
+      },
+    };
+    let isWrapped = false;
+    const wrapper = {
+      appendedButton: null,
+      classList: {
+        toggle(name) {
+          assert.equal(name, 'is-code-wrapped');
+          isWrapped = !isWrapped;
+          return isWrapped;
+        },
+      },
+      appendChild(child) {
+        this.appendedButton = child;
+      },
+    };
+    const context = {
+      document: {
+        createElement(tagName) {
+          assert.equal(tagName, 'button');
+          return button;
+        },
+      },
+      L10N_TEXT: {
+        wrapCode: 'Word Wrap',
+        unwrapCode: 'No Word Wrap',
+      },
+      wrapper,
+    };
+
+    vm.runInNewContext(`${wrapFunctionSource}\naddCodeWrapButton(wrapper);`, context);
+
+    assert.equal(wrapper.appendedButton, button);
+    assert.equal(button.className, 'code-wrap-btn');
+    assert.equal(button.title, 'Word Wrap');
+    assert.equal(button.attributes['aria-label'], 'Word Wrap');
+    assert.equal(button.innerHTML, '<i class="codicon codicon-word-wrap"></i>');
+
+    listeners.click({ stopPropagation() {} });
+    assert.equal(isWrapped, true);
+    assert.equal(button.title, 'No Word Wrap');
+    assert.equal(button.attributes['aria-label'], 'No Word Wrap');
+    assert.equal(button.innerHTML, '<i class="codicon codicon-symbol-text"></i>');
+
+    listeners.click({ stopPropagation() {} });
+    assert.equal(isWrapped, false);
+    assert.equal(button.title, 'Word Wrap');
+    assert.equal(button.attributes['aria-label'], 'Word Wrap');
+    assert.equal(button.innerHTML, '<i class="codicon codicon-word-wrap"></i>');
+
+    assert.ok(codeblockJs.includes("function addCodeBlockButtons(fileType = 'markdown')"));
+    assert.ok(codeblockJs.includes("if (fileType === 'markdown' && !wrapper.querySelector('.code-wrap-btn'))"));
+    assert.ok(codeblockJs.includes('addCodeBlockButtons(fileType);'));
+    assert.ok(/\.copy-btn,\s*\.code-wrap-btn\s*\{[^}]*min-width:\s*28px;[^}]*height:\s*28px;/s.test(codeblockCss));
+    assert.ok(/\.code-wrap-btn\s*\{[^}]*right:\s*40px;[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(codeblockCss));
+    assert.ok(/\.code-block-wrapper\.is-code-wrapped pre\s*\{[^}]*white-space:\s*pre-wrap;[^}]*overflow-wrap:\s*anywhere;/s.test(codeblockCss));
+    assert.ok(commonJs.includes("wrapCode: L10N_SOURCE.wrapCode || 'Word Wrap'"));
+    assert.ok(commonJs.includes("unwrapCode: L10N_SOURCE.unwrapCode || 'No Word Wrap'"));
+    assert.ok(previewProvider.includes('data-wrap-code="${escapeHtml(i18n.wrapCode)}"'));
+    assert.ok(previewProvider.includes('data-unwrap-code="${escapeHtml(i18n.unwrapCode)}"'));
+    assert.ok(i18n.includes("wrapCode: 'runtime.wrapCode'"));
+    assert.ok(i18n.includes("unwrapCode: 'runtime.unwrapCode'"));
+  });
+
   test('2026-08-13 Task A aligns Markdown controls and formats front matter values', () => {
     const commonCss = fs.readFileSync(path.join(RESOURCES_CSS_DIR, 'common.css'), 'utf8');
     const codeblockCss = fs.readFileSync(path.join(RESOURCES_CSS_DIR, 'codeblock.css'), 'utf8');
     const markdownCss = fs.readFileSync(path.join(RESOURCES_CSS_DIR, 'markdown.css'), 'utf8');
     const tableCss = fs.readFileSync(path.join(RESOURCES_CSS_DIR, 'table.css'), 'utf8');
 
-    assert.ok(/\.copy-btn\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryHoverBackground\);/s.test(codeblockCss));
-    assert.ok(/\.copy-btn\s*\{[^}]*box-shadow:\s*0 2px 6px color-mix\(in srgb, #000 25%, transparent 75%\);/s.test(codeblockCss));
-    assert.ok(/\.copy-btn\s*\{[^}]*z-index:\s*2;/s.test(codeblockCss));
-    assert.ok(/\.copy-btn:hover,\s*\.copy-btn:active\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryHoverBackground\);/s.test(codeblockCss));
+    assert.ok(/\.copy-btn,\s*\.code-wrap-btn\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryHoverBackground\);/s.test(codeblockCss));
+    assert.ok(/\.copy-btn,\s*\.code-wrap-btn\s*\{[^}]*box-shadow:\s*0 2px 6px color-mix\(in srgb, #000 25%, transparent 75%\);/s.test(codeblockCss));
+    assert.ok(/\.copy-btn,\s*\.code-wrap-btn\s*\{[^}]*z-index:\s*2;/s.test(codeblockCss));
+    assert.ok(/\.copy-btn:hover,\s*\.copy-btn:active,\s*\.code-wrap-btn:hover,\s*\.code-wrap-btn:active\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryHoverBackground\);/s.test(codeblockCss));
     assert.ok(/\.table-copy-main\s*\{[^}]*box-shadow:\s*0 2px 6px color-mix\(in srgb, #000 25%, transparent 75%\);/s.test(commonCss));
     assert.ok(/\.markdown-table-copy-actions \.table-copy-button,\s*\.markdown-table-copy-actions \.table-copy-trigger\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryHoverBackground\);/s.test(markdownCss));
     assert.ok(/h1, h2, h3, h4, h5, h6\s*\{[^}]*color:\s*var\(--vscode-textLink-foreground\);/s.test(markdownCss));

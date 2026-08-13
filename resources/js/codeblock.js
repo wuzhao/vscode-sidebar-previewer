@@ -1,30 +1,31 @@
-// 代码块复制按钮模块
-// 为所有 <pre> 代码块动态添加复制按钮，支持 clipboard API 写入剪贴板
+// 代码块操作按钮模块
+// 为所有 <pre> 代码块添加复制按钮，并为 Markdown 代码块添加折行按钮
 
 (function() {
 // 代码块复制反馈复原时长（毫秒）
 const CODE_BLOCK_COPY_RESET_MS = 800;
 
 /**
- * 代码块复制按钮
- * 处理代码块按钮相关逻辑并返回结果
+ * 为代码块补充折行与复制操作按钮
+ * @param fileType - 当前预览文件类型
  */
-function addCodeBlockButtons() {
+function addCodeBlockButtons(fileType = 'markdown') {
     const preBlocks = document.querySelectorAll('pre');
     preBlocks.forEach(pre => {
         const wrapper = ensureCodeBlockWrapper(pre);
-        // 避免重复添加
-        if (wrapper.querySelector('.copy-btn')) {
-            return;
+        if (fileType === 'markdown' && !wrapper.querySelector('.code-wrap-btn')) {
+            addCodeWrapButton(wrapper);
         }
-        addCopyButton(pre, wrapper);
+        if (!wrapper.querySelector('.copy-btn')) {
+            addCopyButton(pre, wrapper);
+        }
     });
 }
 
 /**
  * 确保代码块拥有用于固定按钮的容器
  * @param pre - 目标代码块容器
- * @returns 返回承载复制按钮的固定定位容器
+ * @returns 返回承载代码块操作按钮的固定定位容器
  */
 function ensureCodeBlockWrapper(pre) {
     const parent = pre.parentElement;
@@ -39,6 +40,34 @@ function ensureCodeBlockWrapper(pre) {
     }
     wrapper.appendChild(pre);
     return wrapper;
+}
+
+/**
+ * 为代码块添加可切换折行状态的图标按钮
+ * @param wrapper - 承载代码块与操作按钮的固定定位容器
+ */
+function addCodeWrapButton(wrapper) {
+    const wrapBtn = document.createElement('button');
+    wrapBtn.className = 'code-wrap-btn';
+    wrapBtn.title = L10N_TEXT.wrapCode;
+    wrapBtn.setAttribute('aria-label', L10N_TEXT.wrapCode);
+    wrapBtn.innerHTML = '<i class="codicon codicon-word-wrap"></i>';
+
+    /**
+     * 切换代码框折行状态并显示下一次点击对应的操作图标
+     */
+    wrapBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isWrapped = wrapper.classList.toggle('is-code-wrapped');
+        const actionLabel = isWrapped ? L10N_TEXT.unwrapCode : L10N_TEXT.wrapCode;
+        wrapBtn.title = actionLabel;
+        wrapBtn.setAttribute('aria-label', actionLabel);
+        wrapBtn.innerHTML = isWrapped
+            ? '<i class="codicon codicon-symbol-text"></i>'
+            : '<i class="codicon codicon-word-wrap"></i>';
+    });
+
+    wrapper.appendChild(wrapBtn);
 }
 
 /**
@@ -142,8 +171,8 @@ function addCopyButton(pre, wrapper) {
 }
 
     // 向公共注册中心登记：始终激活（适用于所有文件类型）
-    PreviewCommon.registerDomainInit(null, 'codeblock', function() {
-        addCodeBlockButtons();
+    PreviewCommon.registerDomainInit(null, 'codeblock', function(fileType) {
+        addCodeBlockButtons(fileType);
     });
 
     // 暴露公共方法

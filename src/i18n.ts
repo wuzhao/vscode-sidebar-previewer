@@ -11,6 +11,8 @@ interface I18nStrings {
     zoomStatus: string;
     webviewTitle: string;
     copyCode: string;
+    wrapCode: string;
+    unwrapCode: string;
     viewCode: string;
     viewPreview: string;
     previewError: string;
@@ -48,6 +50,8 @@ const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {
     zoomStatus: 'runtime.zoomStatus',
     webviewTitle: 'runtime.webviewTitle',
     copyCode: 'runtime.copyCode',
+    wrapCode: 'runtime.wrapCode',
+    unwrapCode: 'runtime.unwrapCode',
     viewCode: 'runtime.viewCode',
     viewPreview: 'runtime.viewPreview',
     previewError: 'runtime.previewError',
@@ -67,6 +71,8 @@ const FALLBACK_STRINGS: I18nStrings = {
     zoomStatus: 'Sidebar Previewer Zoom: {0}%',
     webviewTitle: 'Sidebar Previewer',
     copyCode: 'Copy',
+    wrapCode: 'Word Wrap',
+    unwrapCode: 'No Word Wrap',
     viewCode: 'Code',
     viewPreview: 'Preview',
     previewError: 'Preview Failed',
@@ -163,6 +169,12 @@ export const i18n = {
     },
     get copyCode(): string {
         return getString('copyCode');
+    },
+    get wrapCode(): string {
+        return getString('wrapCode');
+    },
+    get unwrapCode(): string {
+        return getString('unwrapCode');
     },
     get viewCode(): string {
         return getString('viewCode');

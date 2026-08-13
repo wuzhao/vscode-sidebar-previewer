@@ -18,6 +18,8 @@
   "runtime.zoomStatus": "预览缩放: {0}%",
   "runtime.webviewTitle": "文件预览",
   "runtime.copyCode": "复制",
+  "runtime.wrapCode": "自动折行",
+  "runtime.unwrapCode": "不折行",
   "runtime.viewCode": "代码",
   "runtime.viewPreview": "预览",
   "runtime.previewError": "预览失败",

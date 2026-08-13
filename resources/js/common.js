@@ -5,6 +5,8 @@ const L10N_SOURCE = document.body ? document.body.dataset : {};
 // Webview 内部使用的本地化文案字典
 const L10N_TEXT = {
     copyCode: L10N_SOURCE.copyCode || 'Copy',
+    wrapCode: L10N_SOURCE.wrapCode || 'Word Wrap',
+    unwrapCode: L10N_SOURCE.unwrapCode || 'No Word Wrap',
     viewCode: L10N_SOURCE.viewCode || 'Code',
     viewPreview: L10N_SOURCE.viewPreview || 'Preview',
     tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions',

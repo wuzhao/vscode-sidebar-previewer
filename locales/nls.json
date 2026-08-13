@@ -18,6 +18,8 @@
   "runtime.zoomStatus": "Sidebar Previewer Zoom: {0}%",
   "runtime.webviewTitle": "Sidebar Previewer",
   "runtime.copyCode": "Copy",
+  "runtime.wrapCode": "Word Wrap",
+  "runtime.unwrapCode": "No Word Wrap",
   "runtime.viewCode": "Code",
   "runtime.viewPreview": "Preview",
   "runtime.previewError": "Preview Failed",
