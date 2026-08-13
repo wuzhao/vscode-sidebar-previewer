@@ -238,7 +238,8 @@ const {
     assert.ok(tableJs.includes('function scheduleTableCopySuccessReset(actions)'));
     assert.ok(tableJs.includes('function isPreviewContentFocused()'));
     assert.ok(tableJs.includes('function bindTableSelectionFocusEvents()'));
-    assert.ok(tableJs.includes('L10N_TEXT.copySuccess'));
+    assert.equal(tableJs.includes('L10N_TEXT.copySuccess'), false);
+    assert.equal(commonJs.includes('copySuccess'), false);
     assert.equal(tableJs.includes('TABLE_SELECTION_COPY_FADE_MS'), false);
     assert.equal(tableJs.includes('fade-out'), false);
     assert.ok(tableJs.includes('function bindTableCopyButton(copyButton, buildText)'));
@@ -272,6 +273,8 @@ const {
     assert.ok(previewProvider.includes('data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}"'));
     assert.ok(previewProvider.includes('data-table-selection-tsv-hint="${escapeHtml(i18n.tableSelectionTsvHint)}"'));
     assert.ok(previewProvider.includes('data-table-selection-csv="${escapeHtml(i18n.tableSelectionCsv)}"'));
+    assert.equal(previewProvider.includes('data-copy-success='), false);
+    assert.equal(i18n.includes('copySuccess'), false);
 
     assert.ok(i18n.includes('tableSelectionMore'));
     assert.ok(i18n.includes('tableSelectionMarkdownTable'));
@@ -338,7 +341,8 @@ const {
     assert.ok(selectionActionsSource.includes('return buildCsvText(buildGridWithHeader(snapshot));'));
     assert.ok(/menu\.appendChild\(markdownButton\);\s*menu\.appendChild\(asciiButton\);\s*menu\.appendChild\(tsvButton\);\s*menu\.appendChild\(csvButton\);/s.test(copyMenuSource));
     assert.ok(tableJs.includes("feedback.className = 'table-copy-feedback';"));
-    assert.ok(tableJs.includes('<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>'));
+    assert.ok(tableJs.includes("feedback.innerHTML = '<i class=\"codicon codicon-notebook-state-success\"></i>';"));
+    assert.equal(tableJs.includes('<span>${L10N_TEXT.copySuccess}</span>'), false);
     assert.ok(tableJs.includes("actions.classList.add('copied');"));
     assert.ok(selectionPositionSource.includes('right: Number.NEGATIVE_INFINITY'));
     assert.ok(selectionPositionSource.includes('top: Number.POSITIVE_INFINITY'));
@@ -354,7 +358,8 @@ const {
     assert.ok(/\.table-copy-trigger\s*\{[^}]*width:\s*20px;[^}]*padding:\s*0;/s.test(css));
     assert.ok(/\.table-copy-dropdown\[open\] \.table-copy-menu\s*\{[^}]*display:\s*flex;/s.test(css));
     assert.ok(/\.table-copy-menu-description\s*\{[^}]*color:\s*var\(--vscode-descriptionForeground\);[^}]*font-size:\s*9px;/s.test(css));
-    assert.ok(/\.table-copy-feedback\s*\{[^}]*display:\s*none;[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
+    assert.ok(/\.table-copy-feedback\s*\{[^}]*display:\s*none;[^}]*width:\s*48px;[^}]*height:\s*28px;[^}]*padding:\s*0;[^}]*background-color:\s*var\(--vscode-notebookStatusSuccessIcon-foreground\);/s.test(css));
+    assert.ok(/\.codicon-notebook-state-success::before\s*\{[^}]*content:\s*'\\eab2';/s.test(css));
     assert.ok(/\.table-copy-actions\.copied > \.table-copy-button,[\s\S]*?display:\s*none;/s.test(css));
     assert.ok(/\.table-copy-actions\.copied > \.table-copy-feedback\s*\{[^}]*display:\s*inline-flex;/s.test(css));
   });
@@ -533,6 +538,7 @@ const {
       assert.deepEqual(Object.keys(bundle).sort(), expectedKeys);
       assert.equal(typeof bundle['runtime.tableSelectionCsv'], 'string');
       assert.equal(typeof bundle['runtime.tableSelectionTsvHint'], 'string');
+      assert.equal('runtime.copySuccess' in bundle, false);
     });
     assert.equal(baseBundle['runtime.tableSelectionCsv'], 'Copy as CSV');
     assert.equal(baseBundle['runtime.tableSelectionTsvHint'], 'For Excel, Numbers & Sheets');
@@ -764,6 +770,10 @@ const {
     assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseenter', () => {"));
     assert.ok(codeblockJs.includes("copyBtn.addEventListener('mouseleave', () => {"));
     assert.ok(codeblockJs.includes("updateCopyButtonHoverState(copyBtn.matches(':hover'));"));
+    assert.ok(codeblockJs.includes("copyBtn.innerHTML = '<i class=\"codicon codicon-notebook-state-success\"></i>';"));
+    assert.equal(codeblockJs.includes('L10N_TEXT.copySuccess'), false);
+    assert.ok(/\.copy-btn\.copied\s*\{[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(css));
+    assert.equal(css.includes('.copy-btn.copied .codicon'), false);
     assert.equal(codeblockJs.includes('fade-out'), false);
   });
 

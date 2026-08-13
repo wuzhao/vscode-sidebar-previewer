@@ -649,7 +649,7 @@ function bindTableCopyButton(copyButton, buildText) {
 function bindTableCopyActionGroup(actions, dropdown) {
     const feedback = document.createElement('div');
     feedback.className = 'table-copy-feedback';
-    feedback.innerHTML = `<i class="codicon codicon-pass-filled"></i><span>${L10N_TEXT.copySuccess}</span>`;
+    feedback.innerHTML = '<i class="codicon codicon-notebook-state-success"></i>';
     actions.appendChild(feedback);
 
     let dropdownHideTimer = null;

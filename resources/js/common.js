@@ -4,7 +4,6 @@ const VSCODE_API = acquireVsCodeApi();
 const L10N_SOURCE = document.body ? document.body.dataset : {};
 // Webview 内部使用的本地化文案字典
 const L10N_TEXT = {
-    copySuccess: L10N_SOURCE.copySuccess || 'COPIED!',
     copyCode: L10N_SOURCE.copyCode || 'Copy',
     viewCode: L10N_SOURCE.viewCode || 'Code',
     viewPreview: L10N_SOURCE.viewPreview || 'Preview',

@@ -33,6 +33,10 @@ body {
     outline: none;
 }
 
+.codicon-notebook-state-success::before {
+    content: '\eab2';
+}
+
 .loading-state {
     display: flex;
     flex-direction: column;
@@ -236,8 +240,9 @@ pre.error-detail {
     align-items: center;
     justify-content: center;
     gap: 6px;
+    width: 48px;
     height: 28px;
-    padding: 0 10px;
+    padding: 0;
     border-radius: 4px;
     color: var(--vscode-notebook-selectedCellBackground);
     background-color: var(--vscode-notebookStatusSuccessIcon-foreground);

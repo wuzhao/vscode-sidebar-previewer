@@ -4,11 +4,13 @@
 
 - Aligned Markdown code-block copy controls with table copy controls and kept copy feedback below the Skeleton Outline.
 - Rendered Markdown headings with the link color, and enhanced frontmatter lists and compound values with non-wrapping tags and structured JSON.
+- Unified copy success feedback as icon-only controls that retain the original code-block or split-button dimensions.
 
 ～～～
 
 - Markdown 代码块复制控件现在与表格复制控件保持一致，并确保复制反馈不会遮挡 Skeleton Outline。
 - Markdown 标题改用链接色，frontmatter 列表与复合值分别优化为不折行标签和结构化 JSON。
+- 统一复制成功提示为纯图标，并保持代码块按钮或分体按钮组的原始尺寸。
 
 ## 0.4.1 - 2026-07-28
 

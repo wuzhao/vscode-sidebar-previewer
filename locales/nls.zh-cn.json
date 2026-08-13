@@ -17,7 +17,6 @@
   "runtime.emptyStateText": "当前文件类型不支持预览，仅支持以下格式：<ul>{0}</ul>",
   "runtime.zoomStatus": "预览缩放: {0}%",
   "runtime.webviewTitle": "文件预览",
-  "runtime.copySuccess": "已复制",
   "runtime.copyCode": "复制",
   "runtime.viewCode": "代码",
   "runtime.viewPreview": "预览",

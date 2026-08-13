@@ -17,7 +17,6 @@
   "runtime.emptyStateText": "目前檔案類型不支援預覽，僅支援以下格式：<ul>{0}</ul>",
   "runtime.zoomStatus": "預覽縮放: {0}%",
   "runtime.webviewTitle": "檔案預覽",
-  "runtime.copySuccess": "已複製",
   "runtime.copyCode": "複製",
   "runtime.viewCode": "程式碼",
   "runtime.viewPreview": "預覽",

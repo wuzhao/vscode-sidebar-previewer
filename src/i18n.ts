@@ -10,7 +10,6 @@ interface I18nStrings {
     emptyStateText: string;
     zoomStatus: string;
     webviewTitle: string;
-    copySuccess: string;
     copyCode: string;
     viewCode: string;
     viewPreview: string;
@@ -48,7 +47,6 @@ const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {
     emptyStateText: 'runtime.emptyStateText',
     zoomStatus: 'runtime.zoomStatus',
     webviewTitle: 'runtime.webviewTitle',
-    copySuccess: 'runtime.copySuccess',
     copyCode: 'runtime.copyCode',
     viewCode: 'runtime.viewCode',
     viewPreview: 'runtime.viewPreview',
@@ -68,7 +66,6 @@ const FALLBACK_STRINGS: I18nStrings = {
     emptyStateText: 'Preview not supported for this file type.<br />Supported formats:<ul>{0}</ul>',
     zoomStatus: 'Sidebar Previewer Zoom: {0}%',
     webviewTitle: 'Sidebar Previewer',
-    copySuccess: 'Copied',
     copyCode: 'Copy',
     viewCode: 'Code',
     viewPreview: 'Preview',
@@ -163,9 +160,6 @@ export const i18n = {
     },
     get webviewTitle(): string {
         return getString('webviewTitle');
-    },
-    get copySuccess(): string {
-        return getString('copySuccess');
     },
     get copyCode(): string {
         return getString('copyCode');

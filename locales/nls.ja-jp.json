@@ -17,7 +17,6 @@
   "runtime.emptyStateText": "このファイル形式はプレビューに対応していません。対応形式：<ul>{0}</ul>",
   "runtime.zoomStatus": "プレビュー拡大率: {0}%",
   "runtime.webviewTitle": "ファイルプレビュー",
-  "runtime.copySuccess": "コピー完了",
   "runtime.copyCode": "コピー",
   "runtime.viewCode": "コード",
   "runtime.viewPreview": "プレビュー",

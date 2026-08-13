@@ -17,7 +17,6 @@
   "runtime.emptyStateText": "Preview not supported for this file type.<br />Supported formats:<ul>{0}</ul>",
   "runtime.zoomStatus": "Sidebar Previewer Zoom: {0}%",
   "runtime.webviewTitle": "Sidebar Previewer",
-  "runtime.copySuccess": "Copied",
   "runtime.copyCode": "Copy",
   "runtime.viewCode": "Code",
   "runtime.viewPreview": "Preview",

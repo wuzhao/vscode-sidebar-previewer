@@ -120,7 +120,7 @@ function addCopyButton(pre, wrapper) {
         try {
             await navigator.clipboard.writeText(text);
             copyBtn.classList.add('copied');
-            copyBtn.innerHTML = '<i class="codicon codicon-pass-filled"></i>' + L10N_TEXT.copySuccess;
+            copyBtn.innerHTML = '<i class="codicon codicon-notebook-state-success"></i>';
             updateCopyButtonHoverState(copyBtn.matches(':hover'));
         } catch (err) {
             console.error('Copy failed:', err);

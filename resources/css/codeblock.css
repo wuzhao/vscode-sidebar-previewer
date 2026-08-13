@@ -36,17 +36,12 @@
 }
 
 .copy-btn.copied {
+    width: 28px;
+    padding: 0;
     background-color: var(--vscode-notebookStatusSuccessIcon-foreground);
     color: var(--vscode-notebook-selectedCellBackground);
     cursor: default;
     opacity: 1;
-    font-size: 13px;
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-.copy-btn.copied .codicon {
-    margin-right: 6px;
 }
 
 .copy-btn.copy-failed {
