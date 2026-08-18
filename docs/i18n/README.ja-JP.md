@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.4.1-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.4.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -40,12 +40,12 @@ GitHub: [https://github.com/wuzhao/vscode-sidebar-previewer](https://github.com/
 
 ### Markdown
 
-- フロントマター（Front matter）のテーブル表示
+- タグの1行表示と構造化データの整形表示に対応したフロントマターテーブル
 - GitHub Alert ブロックのレンダリング
 - ホバー目次を備えた Skeleton Outline
 - タスクリストのチェックボックス操作（トグル）とファイルへの書き戻し
 - テーブルセル内の操作可能なタスクリストチェックボックス
-- コードハイライトおよびコピーボタン
+- コードハイライト、コピー、ワードラップ操作
 - Markdown テーブルにホバーして Markdown、または ASCII、TSV、CSV 形式でコピー
 - KaTeX および Mermaid ブロックのレンダリング
 - エディタとプレビュー間の同期スクロールおよび位置特定（双方向スクロール）

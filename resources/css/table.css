@@ -204,11 +204,8 @@ table.frontmatter .fm-tag {
     flex: 0 0 auto;
     margin: 0;
     padding: 0 6px;
-    border-radius: 10px;
-    color: var(--vscode-badge-foreground);
-    background-color: var(--vscode-badge-background);
-    font-size: 11px;
-    line-height: 18px;
+    border-radius: 4px;
+    background-color: color-mix(in srgb, var(--vscode-textCodeBlock-background) 65%, transparent 35%);
     white-space: nowrap;
 }
 
@@ -216,9 +213,8 @@ table.frontmatter .fm-json {
     max-width: 100%;
     padding: 6px 8px;
     overflow-x: auto;
-    color: var(--vscode-editor-foreground);
-    background-color: var(--vscode-textCodeBlock-background);
-    font-family: 'Maple Mono Normal NF CN', monospace;
+    background-color: color-mix(in srgb, var(--vscode-textCodeBlock-background) 35%, transparent 65%);
+    font-family: monospace;
     font-size: 12px;
     line-height: 1.5;
     white-space: pre;

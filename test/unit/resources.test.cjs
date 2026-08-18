@@ -854,7 +854,7 @@ const {
     assert.ok(codeblockJs.includes("if (fileType === 'markdown' && !wrapper.querySelector('.code-wrap-btn'))"));
     assert.ok(codeblockJs.includes('addCodeBlockButtons(fileType);'));
     assert.ok(/\.copy-btn,\s*\.code-wrap-btn\s*\{[^}]*min-width:\s*28px;[^}]*height:\s*28px;/s.test(codeblockCss));
-    assert.ok(/\.code-wrap-btn\s*\{[^}]*right:\s*40px;[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(codeblockCss));
+    assert.ok(/\.code-wrap-btn\s*\{[^}]*right:\s*44px;[^}]*width:\s*28px;[^}]*padding:\s*0;/s.test(codeblockCss));
     assert.ok(/\.code-block-wrapper\.is-code-wrapped pre\s*\{[^}]*white-space:\s*pre-wrap;[^}]*overflow-wrap:\s*anywhere;/s.test(codeblockCss));
     assert.ok(commonJs.includes("wrapCode: L10N_SOURCE.wrapCode || 'Word Wrap'"));
     assert.ok(commonJs.includes("unwrapCode: L10N_SOURCE.unwrapCode || 'No Word Wrap'"));
