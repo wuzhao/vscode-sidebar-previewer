@@ -17,22 +17,27 @@ h2 {
     font-size: 1.5em;
     padding-bottom: 0.3em;
     border-bottom: 1px solid var(--vscode-panel-border);
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 90%, transparent);
 }
 
 h3 {
     font-size: 1.25em;
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 80%, transparent);
 }
 
 h4 {
     font-size: 1em;
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 70%, transparent);
 }
 
 h5 {
     font-size: 0.875em;
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 65%, transparent);
 }
 
 h6 {
     font-size: 0.85em;
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 60%, transparent);
 }
 
 p {
