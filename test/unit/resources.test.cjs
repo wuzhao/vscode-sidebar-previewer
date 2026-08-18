@@ -878,9 +878,10 @@ const {
     assert.ok(/\.markdown-table-copy-actions \.table-copy-button,\s*\.markdown-table-copy-actions \.table-copy-trigger\s*\{[^}]*background-color:\s*var\(--vscode-button-secondaryHoverBackground\);/s.test(markdownCss));
     assert.ok(/h1, h2, h3, h4, h5, h6\s*\{[^}]*color:\s*var\(--vscode-textLink-foreground\);/s.test(markdownCss));
     assert.ok(/\.markdown-skeleton-outline\s*\{[^}]*z-index:\s*3;/s.test(markdownCss));
-    assert.ok(/table\.frontmatter \.fm-tags\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[^}]*overflow-x:\s*auto;/s.test(tableCss));
+    assert.ok(/table\.frontmatter \.fm-value\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*0;/s.test(tableCss));
+    assert.ok(/table\.frontmatter \.fm-tags\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/s.test(tableCss));
     assert.ok(/table\.frontmatter \.fm-tag\s*\{[^}]*flex:\s*0 0 auto;[^}]*white-space:\s*nowrap;/s.test(tableCss));
-    assert.ok(/table\.frontmatter \.fm-json\s*\{[^}]*overflow-x:\s*auto;[^}]*white-space:\s*pre;/s.test(tableCss));
+    assert.ok(/table\.frontmatter \.fm-json\s*\{[^}]*max-width:\s*100%;[^}]*overflow-x:\s*auto;[^}]*white-space:\s*pre;/s.test(tableCss));
   });
 
   test('2026-07-28 Task E keeps table copy success visible for the fixed delay', () => {
