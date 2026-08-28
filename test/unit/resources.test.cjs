@@ -193,6 +193,15 @@ const {
     assert.equal(previewTitleCommands.some(item => item.command === 'sidebarPreviewer.feedback'), false);
   });
 
+  test('Data tree locator copy command uses the symbol-number icon', () => {
+    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8'));
+    const copyLocatorCommand = packageJson.contributes.commands.find(
+      item => item.command === 'sidebarPreviewer.copyDataTreeLocator'
+    );
+
+    assert.equal(copyLocatorCommand.icon, '$(symbol-number)');
+  });
+
   test('Follow scroll state persists across extension activations', () => {
     const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
 
