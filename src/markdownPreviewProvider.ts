@@ -20,6 +20,15 @@ interface MarkdownTableTaskLocation {
 }
 
 /**
+ * Markdown 标题在源文档中的候选位置
+ */
+interface MarkdownHeadingSource {
+    level: number;
+    text: string;
+    line: number;
+}
+
+/**
  * 提供 Markdown 相关预览能力
  */
 export class MarkdownProvider {
@@ -47,37 +56,14 @@ export class MarkdownProvider {
             bodyContent = content.slice(fmMatch[0].length);
         }
 
-        // 先提取标题信息
         const usedIds = new Map<string, number>();
+        if (frontMatterHtml) {
+            usedIds.set('frontmatter', 1);
+        }
         const lines = content.split(/\r?\n/);
-        let headingFenceMarker: string | null = null;
-        lines.forEach((line, index) => {
-            const fenceMatch = line.match(/^\s*([`~]{3,})/);
-            if (fenceMatch) {
-                const marker = fenceMatch[1];
-                if (!headingFenceMarker) {
-                    headingFenceMarker = marker;
-                    return;
-                }
-
-                if (marker[0] === headingFenceMarker[0] && marker.length >= headingFenceMarker.length) {
-                    headingFenceMarker = null;
-                    return;
-                }
-            }
-
-            if (headingFenceMarker) {
-                return;
-            }
-
-            const match = line.match(/^(#{1,6})\s+(.+)$/);
-            if (match) {
-                const level = match[1].length;
-                const text = match[2].trim();
-                const id = this.generateHeadingId(text, usedIds);
-                headings.push({ level, text, line: index, id });
-            }
-        });
+        const bodyStartLine = content.slice(0, content.length - bodyContent.length).split(/\r?\n/).length - 1;
+        const headingSources = this.collectMarkdownHeadingSources(bodyContent, bodyStartLine);
+        let headingSourceIndex = 0;
 
         // 扫描 task list 行号（忽略 fenced code block 内的伪 task）
         const taskLines = this.collectTaskListLineNumbers(lines);
@@ -217,6 +203,31 @@ export class MarkdownProvider {
         // 解析 Markdown（不含 front matter），并保留 GFM 表格源码供复制使用
         const markdownTokens = parser.lexer(bodyContent);
         parser.walkTokens(markdownTokens, token => {
+            if (token.type === 'heading') {
+                const headingToken = token as Tokens.Heading;
+                const matchingSourceIndex = headingSources.findIndex((source, index) => {
+                    return index >= headingSourceIndex
+                        && source.level === headingToken.depth
+                        && source.text === headingToken.text;
+                });
+                const source = matchingSourceIndex >= 0
+                    ? headingSources[matchingSourceIndex]
+                    : headingSources[headingSourceIndex];
+                if (matchingSourceIndex >= 0) {
+                    headingSourceIndex = matchingSourceIndex + 1;
+                } else if (source) {
+                    headingSourceIndex++;
+                }
+                const text = headingToken.text.trim();
+                const id = this.generateHeadingId(text, usedIds);
+                headings.push({
+                    level: headingToken.depth,
+                    text,
+                    line: source?.line ?? bodyStartLine,
+                    id,
+                });
+            }
+
             if (token.type === 'table') {
                 const tableToken = token as Tokens.Table;
                 const tableSourceLines = tableToken.raw.split(/\r?\n/);
@@ -258,6 +269,94 @@ export class MarkdownProvider {
             : headings;
 
         return { html, headings: locateHeadings };
+    }
+
+    /**
+     * 收集 Marked 标题在 Markdown 源码中的候选行号
+     * @param content - 不含 front matter 的 Markdown 正文
+     * @param firstLine - 正文首行在完整文档中的行号
+     * @returns 返回按源码顺序排列的标题候选位置
+     */
+    private static collectMarkdownHeadingSources(content: string, firstLine: number): MarkdownHeadingSource[] {
+        const sources: MarkdownHeadingSource[] = [];
+        const lines = content.split(/\r?\n/);
+        let fenceMarker: string | null = null;
+        let paragraphStartLine: number | null = null;
+        let paragraphLines: string[] = [];
+
+        lines.forEach((sourceLine, index) => {
+            const line = this.stripMarkdownContainerPrefix(sourceLine);
+            const fenceMatch = line.match(/^ {0,3}([`~]{3,})/);
+            if (fenceMatch) {
+                const marker = fenceMatch[1];
+                if (!fenceMarker) {
+                    fenceMarker = marker;
+                } else if (marker[0] === fenceMarker[0] && marker.length >= fenceMarker.length) {
+                    fenceMarker = null;
+                }
+                paragraphStartLine = null;
+                paragraphLines = [];
+                return;
+            }
+
+            if (fenceMarker) {
+                return;
+            }
+
+            const atxMatch = line.match(/^ {0,3}(#{1,6})(?:[\t ]+|$)(.*)$/);
+            if (atxMatch) {
+                const text = atxMatch[2].replace(/[\t ]+#+[\t ]*$/, '').trim();
+                sources.push({
+                    level: atxMatch[1].length,
+                    text,
+                    line: firstLine + index,
+                });
+                paragraphStartLine = null;
+                paragraphLines = [];
+                return;
+            }
+
+            const setextMatch = line.match(/^ {0,3}(=+|-+)[\t ]*$/);
+            if (setextMatch && paragraphStartLine !== null && paragraphLines.length > 0) {
+                sources.push({
+                    level: setextMatch[1][0] === '=' ? 1 : 2,
+                    text: paragraphLines.join('\n'),
+                    line: paragraphStartLine,
+                });
+                paragraphStartLine = null;
+                paragraphLines = [];
+                return;
+            }
+
+            if (line.trim().length === 0 || /^(?: {4}|\t)/.test(line)) {
+                paragraphStartLine = null;
+                paragraphLines = [];
+                return;
+            }
+
+            if (paragraphStartLine === null) {
+                paragraphStartLine = firstLine + index;
+            }
+            paragraphLines.push(line.trim());
+        });
+
+        return sources;
+    }
+
+    /**
+     * 去除引用块与列表容器前缀以还原其中的 Markdown 块级语法
+     * @param sourceLine - Markdown 源码中的单行文本
+     * @returns 返回去除容器标记后的行内容
+     */
+    private static stripMarkdownContainerPrefix(sourceLine: string): string {
+        let line = sourceLine;
+        let previous = '';
+        while (line !== previous) {
+            previous = line;
+            line = line.replace(/^ {0,3}>[\t ]?/, '');
+            line = line.replace(/^ {0,3}(?:[*+-]|\d{1,9}[.)])[\t ]+/, '');
+        }
+        return line;
     }
 
     /**

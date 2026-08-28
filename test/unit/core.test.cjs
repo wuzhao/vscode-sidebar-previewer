@@ -124,6 +124,46 @@ test('Supported LaTeX fixtures parse successfully', () => {
   assert.ok(latexResult.headings.length > 0);
 });
 
+test('LatexPreviewProvider handles nested headings and multiline math boundaries', () => {
+  const source = [
+    '\\section{Intro}',
+    '\\section{Intro}',
+    '\\section{An \\textbf{Important} Title}',
+    '\\begin{equation}a=b\\end{equation}',
+    '$$',
+    'a+b',
+    '$$',
+    'After math',
+  ].join('\n');
+
+  const result = LatexPreviewProvider.parse(source);
+
+  assert.deepEqual(result.headings.map(item => item.id), [
+    'intro',
+    'intro-1',
+    'an-textbf-important-title',
+  ]);
+  assert.equal(result.headings[2]?.text, 'An \\textbf{Important} Title');
+  assert.equal((result.html.match(/class="katex-block"/g) || []).length, 2);
+  assert.ok(result.html.includes('$$\na+b\n$$'));
+  assert.ok(result.html.includes('<p>After math</p>'));
+  assert.equal(result.html.includes('class="error-detail"'), false);
+});
+
+test('Supported Mermaid fixtures pass provider declaration validation', () => {
+  const fixtureDirectory = path.join(__dirname, '..', 'supported-files');
+  const fixtureNames = fs.readdirSync(fixtureDirectory)
+    .filter(name => /\.(?:mmd|mermaid)$/i.test(name) && name !== 'error.mermaid')
+    .sort();
+
+  fixtureNames.forEach(fileName => {
+    assert.doesNotThrow(
+      () => MermaidPreviewProvider.parse(readSupportedFixture(fileName)),
+      `${fileName} should pass Mermaid declaration validation`
+    );
+  });
+});
+
 test('MermaidPreviewProvider supports leading comments before diagram declaration', () => {
   const source = [
     '%% setup comment',

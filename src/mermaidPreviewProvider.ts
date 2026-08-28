@@ -22,7 +22,8 @@ export class MermaidPreviewProvider {
         ];
 
         const firstDirectiveLine = this.findFirstDirectiveLine(content);
-        const isValid = validStarts.some(start => firstDirectiveLine.startsWith(start));
+        const normalizedDirectiveLine = firstDirectiveLine.toLowerCase();
+        const isValid = validStarts.some(start => normalizedDirectiveLine.startsWith(start.toLowerCase()));
         if (!isValid && firstDirectiveLine.length > 0) {
             throw new Error('Invalid Mermaid syntax: unrecognized diagram type');
         }

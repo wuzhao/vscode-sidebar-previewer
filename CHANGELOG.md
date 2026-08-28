@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Fixed Mermaid declaration validation for case variants such as `gitGraph` and enabled strict Mermaid rendering security.
+- Fixed Markdown heading navigation for Setext and nested headings, including duplicate IDs caused by frontmatter anchors.
+- Fixed LaTeX duplicate heading IDs, same-line math environments, multiline `$$` blocks, and nested command arguments.
+- Hardened preview HTML handling by blocking embedded styles, forms, inline style attributes, and insecure HTTP images.
+
+～～～
+
+- 修复 Mermaid 对 `gitGraph` 等大小写变体的声明校验，并启用 Mermaid 严格安全渲染模式。
+- 修复 Markdown Setext 与嵌套标题的定位，并避免 frontmatter 锚点造成重复 ID。
+- 修复 LaTeX 重复标题 ID、同行数学环境、多行 `$$` 数学块与嵌套命令参数解析。
+- 加强预览 HTML 安全处理，阻止嵌入样式、表单、行内样式属性与不安全的 HTTP 图片。
+
 ## 0.4.2 - 2026-08-14
 
 - Aligned Markdown code-block copy controls with table copy controls and kept copy feedback below the Skeleton Outline.

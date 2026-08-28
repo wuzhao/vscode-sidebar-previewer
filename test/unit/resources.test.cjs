@@ -68,6 +68,19 @@ const {
     assert.ok(/function refreshMermaidZoomAfterRender\(\)\s*\{[\s\S]*?applyZoom\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?applyZoom\(\);/s.test(mermaidJs));
   });
 
+  test('Webview rendering uses strict Mermaid mode and blocks active Markdown HTML', () => {
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const mermaidJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'mermaid.js'), 'utf8');
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+
+    assert.ok(mermaidJs.includes("securityLevel: 'strict'"));
+    assert.equal(mermaidJs.includes("securityLevel: 'loose'"), false);
+    assert.ok(commonJs.includes("querySelectorAll('script, style, form, iframe, object, embed, link, meta, base')"));
+    assert.ok(commonJs.includes("if (attrName === 'style')"));
+    assert.ok(previewProvider.includes('img-src ${cspSource} https: data: blob:;'));
+    assert.equal(previewProvider.includes('img-src ${cspSource} https: http:'), false);
+  });
+
   test('Task D preview zoom resets to 100 when switching files', () => {
     const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
 

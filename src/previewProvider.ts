@@ -1182,7 +1182,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'unsafe-eval'; img-src ${cspSource} https: http: data: blob:; font-src ${cspSource};">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'unsafe-eval'; img-src ${cspSource} https: data: blob:; font-src ${cspSource};">
     <title>${i18n.webviewTitle}</title>
     <link rel="stylesheet" href="${codiconUri}">
     <link rel="stylesheet" href="${katexCssUri}">

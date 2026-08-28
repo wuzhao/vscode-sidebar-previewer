@@ -213,7 +213,7 @@ function buildSafeContentFragment(value) {
     const html = typeof value === 'string' ? value : '';
     const parser = new DOMParser();
     const parsedDoc = parser.parseFromString(html, 'text/html');
-    const forbiddenNodes = parsedDoc.body.querySelectorAll('script, iframe, object, embed, link, meta, base');
+    const forbiddenNodes = parsedDoc.body.querySelectorAll('script, style, form, iframe, object, embed, link, meta, base');
     forbiddenNodes.forEach(node => node.remove());
 
     const nodesWithAttrs = parsedDoc.body.querySelectorAll('*');
@@ -223,6 +223,10 @@ function buildSafeContentFragment(value) {
             const attrName = attr.name.toLowerCase();
             const attrValue = attr.value || '';
             if (attrName.startsWith('on')) {
+                node.removeAttribute(attr.name);
+                return;
+            }
+            if (attrName === 'style') {
                 node.removeAttribute(attr.name);
                 return;
             }

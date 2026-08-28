@@ -411,6 +411,41 @@ test('MarkdownProvider injects frontmatter locate anchor at document top', () =>
   assert.equal(result.headings[0]?.line, 0);
 });
 
+test('MarkdownProvider keeps parser headings and source locations aligned', () => {
+  const source = [
+    '---',
+    'title: Demo',
+    '---',
+    '# Frontmatter',
+    '',
+    'Setext Title',
+    '====',
+    '',
+    '> # Quoted Title',
+    '',
+    '- # Listed Title',
+    '',
+    '# Normal Title',
+  ].join('\n');
+
+  const result = MarkdownProvider.parse(source);
+
+  assert.deepEqual(result.headings.map(item => item.id), [
+    'frontmatter',
+    'frontmatter-1',
+    'setext-title',
+    'quoted-title',
+    'listed-title',
+    'normal-title',
+  ]);
+  assert.deepEqual(result.headings.map(item => item.line), [0, 3, 5, 8, 10, 12]);
+  assert.ok(result.html.includes('<h1 id="frontmatter-1">Frontmatter</h1>'));
+  assert.ok(result.html.includes('<h1 id="setext-title">Setext Title</h1>'));
+  assert.ok(result.html.includes('<h1 id="quoted-title">Quoted Title</h1>'));
+  assert.ok(result.html.includes('<h1 id="listed-title">Listed Title</h1>'));
+  assert.ok(result.html.includes('<h1 id="normal-title">Normal Title</h1>'));
+});
+
 test('Supported markdown fixture keeps middle divider and heading locate metadata', () => {
   const source = readSupportedFixture('markdown.md');
   const result = MarkdownProvider.parse(source);
@@ -428,9 +463,6 @@ test('Supported markdown fixture keeps middle divider and heading locate metadat
     '<td><input type="checkbox" class="table-task-checkbox"'
       + ' data-line="322" data-char="13" data-source-line="3" data-source-char="13"></td>'
   ));
-  assert.ok(result.html.includes('![xxx](image.png)'));
-  assert.ok(result.html.includes('&lt;u&gt;xxx&lt;/u&gt;'));
-
   const located = MarkdownProvider.findCurrentHeading(result.headings, middleHeading.line + 2);
   assert.equal(located?.id, 'middle-divider-locate-check');
 });

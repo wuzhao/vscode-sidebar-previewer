@@ -38,7 +38,7 @@ function renderMermaid() {
     mermaid.initialize({
         startOnLoad: false,
         theme: isDark ? 'dark' : 'default',
-        securityLevel: 'loose',
+        securityLevel: 'strict',
     });
 
     // 移除 data-processed 属性（允许重新渲染）
