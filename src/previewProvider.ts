@@ -8,10 +8,26 @@ import { LatexPreviewProvider } from './latexPreviewProvider';
 import { MermaidPreviewProvider } from './mermaidPreviewProvider';
 import { TablePreviewProvider } from './tablePreviewProvider';
 import { i18n } from './i18n';
+import {
+    createWebviewRuntimeConfig,
+    EXTENSION_TO_WEBVIEW_MESSAGE_TYPES,
+    MAX_PREVIEW_INPUT_BYTES,
+    PREVIEW_UPDATE_DEBOUNCE_MS,
+    WEBVIEW_TO_EXTENSION_MESSAGE_TYPES,
+    ZOOM_STEPS,
+} from './previewConfig';
 import { escapeHtml } from './utils';
 
 // 存储编辑器滚动跟随开关状态的全局键
 const FOLLOW_EDITOR_SCROLL_STATE_KEY = 'sidebarPreviewer.followEditorScroll';
+
+/**
+ * 由预览交互回写且不需要整页刷新的文档版本
+ */
+interface IgnoredDocumentVersion {
+    uri: string;
+    version: number;
+}
 
 /**
  * 提供 Preview 相关预览能力
@@ -40,13 +56,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     private _currentFileType: FileType | null = null;
     private _supportsLocate: boolean = false;
     private _followEditorScroll: boolean = true;
-    private _skipNextPreviewUpdate: boolean = false;
+    private _ignoredDocumentVersion: IgnoredDocumentVersion | null = null;
     private _visibleRangesListener?: vscode.Disposable;
+    private _viewDisposables: vscode.Disposable[] = [];
     private _zoomLevel: number = 100;
     private _lastPreviewDocumentUri: string | null = null;
     private _hasDataTreeHighlight: boolean = false;
-    private readonly ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
     private _loadingTimeout: ReturnType<typeof setTimeout> | null = null;
+    private _previewUpdateTimeout: ReturnType<typeof setTimeout> | null = null;
 
     private _codiconCssPath: string;
     private _katexCssPath: string;
@@ -132,6 +149,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         _context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken
     ): void {
+        this._disposeViewListeners();
         this._view = webviewView;
         this._updateZoomContext();
         this._updateFollowScrollContext();
@@ -159,24 +177,27 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this._webviewReady = false;
 
         // 监听来自 webview 的消息
-        this._extensionContext.subscriptions.push(
+        this._viewDisposables.push(
             webviewView.webview.onDidReceiveMessage((message) => {
-                if (message.type === 'zoomChange') {
+                if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.zoomChange) {
+                    if (typeof message.level !== 'number' || !ZOOM_STEPS.includes(message.level)) {
+                        return;
+                    }
                     this._zoomLevel = message.level;
                     vscode.window.setStatusBarMessage(i18n.format(i18n.zoomStatus, String(this._zoomLevel)), 2000);
                     this._updateZoomContext();
-                } else if (message.type === 'webviewReady') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.webviewReady) {
                     this._webviewReady = true;
                     this._refreshPreviewForActiveEditor();
-                } else if (message.type === 'visibleHeading') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.visibleHeading) {
                     this._handleLocateEditor(message.headingId);
-                } else if (message.type === 'visibleLine') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.visibleLine) {
                     this._handleLocateEditorFromLine(message.line, message.char);
-                } else if (message.type === 'toggleCheckbox') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.toggleCheckbox) {
                     this._handleToggleCheckbox(message.line, message.checked, message.char);
-                } else if (message.type === 'navigateToLine') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.navigateToLine) {
                     this._navigateToLine(message.line, message.char);
-                } else if (message.type === 'updateEditorSelection') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.updateEditorSelection) {
                     if (Array.isArray(message.selections)) {
                         this._updateEditorSelection(message.selections);
                     } else {
@@ -187,16 +208,16 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                             endChar: message.endChar
                         }]);
                     }
-                } else if (message.type === 'dataTreeHighlightState') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.dataTreeHighlightState) {
                     this._updateDataTreeHighlightContext(message.hasHighlight === true);
-                } else if (message.type === 'dataTreeLocator') {
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.dataTreeLocator) {
                     this._handleDataTreeLocatorResult(message.locator);
                 }
             })
         );
 
         // 监听 webview 可见性变化（当用户点击侧边栏 tab 时触发）
-        this._extensionContext.subscriptions.push(
+        this._viewDisposables.push(
             webviewView.onDidChangeVisibility(() => {
                 if (webviewView.visible) {
                     this._clearLoadingTimeout();
@@ -207,7 +228,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         );
 
         // 监听活动编辑器变化
-        this._extensionContext.subscriptions.push(
+        this._viewDisposables.push(
             vscode.window.onDidChangeActiveTextEditor((editor) => {
                 if (!this._view || !webviewView.visible) {
                     return;
@@ -233,7 +254,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         );
 
         // 监听文档变化
-        this._extensionContext.subscriptions.push(
+        this._viewDisposables.push(
             vscode.workspace.onDidChangeTextDocument((e) => {
                 try {
                     if (!this._view || !webviewView.visible) {
@@ -245,11 +266,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                         if (e.contentChanges.length === 0) {
                             return;
                         }
-                        if (this._consumeSkipNextPreviewUpdate()) {
+                        if (this._consumeIgnoredDocumentVersion(e.document)) {
                             return;
                         }
                         const editedLine = e.contentChanges[0].range.start.line;
-                        this._updatePreview(e.document, editedLine);
+                        this._schedulePreviewUpdate(e.document, editedLine);
                     }
                 } catch (error) {
                     console.error('Sidebar Previewer: Error in onDidChangeTextDocument', error);
@@ -258,7 +279,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         );
 
         // 监听选区变化：在数据树预览中高亮当前行或选区对应的键
-        this._extensionContext.subscriptions.push(
+        this._viewDisposables.push(
             vscode.window.onDidChangeTextEditorSelection((e) => {
                 if (!this._view || !webviewView.visible) {
                     return;
@@ -269,6 +290,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 this._postDataTreeSelectionRange(e.textEditor);
             })
         );
+
+        // Webview 释放时同步清理本视图注册的工作区与编辑器监听器
+        this._viewDisposables.push(webviewView.onDidDispose(() => {
+            if (this._view === webviewView) {
+                this._disposeViewListeners();
+                this._view = undefined;
+                this._webviewReady = false;
+            }
+        }));
 
         this._refreshPreviewForActiveEditor();
     }
@@ -298,12 +328,49 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
+     * 延迟刷新编辑中的文档并取消尚未执行的旧版本任务
+     * @param document - 发生内容变化的活动文档
+     * @param editedLine - 本轮编辑起始行号
+     */
+    private _schedulePreviewUpdate(document: vscode.TextDocument, editedLine: number): void {
+        this._clearPreviewUpdateTimeout();
+        const documentUri = document.uri.toString();
+        const documentVersion = document.version;
+        this._previewUpdateTimeout = setTimeout(() => {
+            this._previewUpdateTimeout = null;
+            const editor = vscode.window.activeTextEditor;
+            if (
+                !this._view?.visible
+                || !this._webviewReady
+                || !editor
+                || editor.document.uri.toString() !== documentUri
+                || editor.document.version !== documentVersion
+            ) {
+                return;
+            }
+            this._updatePreview(editor.document, editedLine, documentVersion);
+        }, PREVIEW_UPDATE_DEBOUNCE_MS);
+    }
+
+    /**
+     * 取消等待执行的文档预览刷新任务
+     */
+    private _clearPreviewUpdateTimeout(): void {
+        if (!this._previewUpdateTimeout) {
+            return;
+        }
+        clearTimeout(this._previewUpdateTimeout);
+        this._previewUpdateTimeout = null;
+    }
+
+    /**
      * 根据当前活动编辑器刷新侧边栏预览内容
      */
     private _refreshPreviewForActiveEditor(): void {
         if (!this._view || !this._view.visible || !this._webviewReady) {
             return;
         }
+        this._clearPreviewUpdateTimeout();
         this._clearLoadingTimeout();
         this._updateVisibleRangesListener();
         try {
@@ -358,7 +425,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
         if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
             this._view.webview.postMessage({
-                type: 'scrollToLine',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToLine,
                 line: startLine
             });
             return;
@@ -368,7 +435,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
         if (heading) {
             this._view.webview.postMessage({
-                type: 'scrollToHeading',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToHeading,
                 headingId: heading.id
             });
         }
@@ -390,7 +457,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
         if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
             this._view.webview.postMessage({
-                type: 'scrollToLine',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToLine,
                 line: startLine
             });
             return;
@@ -398,7 +465,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
         const heading = this._findCurrentHeading(startLine);
         this._view.webview.postMessage({
-            type: 'scrollToHeading',
+            type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToHeading,
             headingId: heading ? heading.id : null
         });
     }
@@ -453,6 +520,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * 显示空状态
      */
     private _showEmptyState(): void {
+        this._clearPreviewUpdateTimeout();
         this._clearLoadingTimeout();
         this._currentHeadings = [];
         this._currentFileType = null;
@@ -468,7 +536,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 return;
             }
             this._view.webview.postMessage({
-                type: 'update',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update,
                 content: `<div class="empty-state"><i class="codicon codicon-preview empty-icon"></i><div class="empty-text">${i18n.emptyStateText}</div></div>`
             });
         } catch (error) {
@@ -485,7 +553,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             if (!this._view) {
                 return;
             }
-            this._view.webview.postMessage({ type: 'loading' });
+            this._view.webview.postMessage({ type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.loading });
         } catch (error) {
             // 忽略 loading 消息发送异常，避免影响后续刷新流程
         }
@@ -514,11 +582,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * 更新预览内容
      * @param document - 当前文档对象
      * @param editedLine - 触发更新的编辑行号
-     * @param options - 预览更新附加选项
+     * @param expectedDocumentVersion - 调度更新时捕获的文档版本
      */
     private _updatePreview(
         document: vscode.TextDocument,
-        editedLine?: number
+        editedLine?: number,
+        expectedDocumentVersion: number = document.version
     ): void {
         try {
             this._clearLoadingTimeout();
@@ -536,6 +605,13 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
             this._currentFileType = fileType;
             const content = document.getText();
+            if (Buffer.byteLength(content, 'utf8') > MAX_PREVIEW_INPUT_BYTES) {
+                this._showError(i18n.format(
+                    i18n.previewInputTooLarge,
+                    String(MAX_PREVIEW_INPUT_BYTES / 1024 / 1024)
+                ));
+                return;
+            }
             let result: PreviewResult;
 
             switch (fileType) {
@@ -576,6 +652,16 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                     return;
             }
 
+            const activeDocument = vscode.window.activeTextEditor?.document;
+            if (
+                document.version !== expectedDocumentVersion
+                || !activeDocument
+                || activeDocument.uri.toString() !== document.uri.toString()
+                || activeDocument.version !== expectedDocumentVersion
+            ) {
+                return;
+            }
+
             const locateSupported = result.supportsLocate;
             this._supportsLocate = locateSupported;
             const dataTree = isDataTreeType(fileType);
@@ -591,7 +677,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             const scrollTargetLine = isTableType ? this._getScrollTargetLine(document) : undefined;
             const selectionRange = (dataTree || isTableType) ? this._getEditorSelectionRange(document) : null;
             const message: {
-                type: 'update';
+                type: typeof EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update;
                 content: string;
                 headings: HeadingInfo[];
                 fileType: FileType;
@@ -605,7 +691,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 scrollToLine?: number | null;
                 baseUri?: string | null;
             } = {
-                type: 'update',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update,
                 content: result.html,
                 headings: result.headings || [],
                 fileType: result.fileType,
@@ -686,14 +772,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         if (isDataTreeType(fileType)) {
             const selectionRange = this._getEditorSelectionRange(editor.document);
             this._view.webview.postMessage({
-                type: 'highlightDataTreeRange',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.highlightDataTreeRange,
                 startLine: selectionRange ? selectionRange.startLine : null,
                 endLine: selectionRange ? selectionRange.endLine : null,
             });
         } else if (fileType === 'csv' || fileType === 'tsv') {
             const selectionRange = this._getEditorSelectionRange(editor.document);
             this._view.webview.postMessage({
-                type: 'highlightTableRange',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.highlightTableRange,
                 startLine: selectionRange ? selectionRange.startLine : null,
                 startChar: selectionRange ? selectionRange.startChar : null,
                 endLine: selectionRange ? selectionRange.endLine : null,
@@ -707,6 +793,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * @param message - 错误或提示信息
      */
     private _showError(message: string): void {
+        this._clearPreviewUpdateTimeout();
         this._clearLoadingTimeout();
         this._lastPreviewDocumentUri = null;
         this._supportsLocate = false;
@@ -721,7 +808,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             }
             const errorHtml = `<div class="error-state"><i class="codicon codicon-search-stop error-icon"></i><div class="error-text">${i18n.previewError}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`;
             this._view.webview.postMessage({
-                type: 'update',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update,
                 content: errorHtml,
             });
         } catch (err) {
@@ -730,23 +817,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     }
 
     /**
-     * 滚动到指定标题
-     * @param headingId - 目标标题锚点 ID
-     */
-    public scrollToHeading(headingId: string): void {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'scrollToHeading',
-                headingId: headingId
-            });
-        }
-    }
-
-    /**
      * 放大
      */
     public zoomIn(): void {
-        const nextStep = this.ZOOM_STEPS.find(step => step > this._zoomLevel);
+        const nextStep = ZOOM_STEPS.find(step => step > this._zoomLevel);
         if (nextStep !== undefined) {
             this._zoomLevel = nextStep;
             this._applyZoom();
@@ -757,7 +831,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * 缩小
      */
     public zoomOut(): void {
-        const reverseSteps = [...this.ZOOM_STEPS].reverse();
+        const reverseSteps = [...ZOOM_STEPS].reverse();
         const nextStep = reverseSteps.find(step => step < this._zoomLevel);
         if (nextStep !== undefined) {
             this._zoomLevel = nextStep;
@@ -791,7 +865,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 
         if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
             this._view.webview.postMessage({
-                type: 'scrollToLine',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToLine,
                 line: startLine
             });
             return;
@@ -800,7 +874,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         const heading = this._findCurrentHeading(startLine);
 
         this._view.webview.postMessage({
-            type: 'scrollToHeading',
+            type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToHeading,
             headingId: heading ? heading.id : null
         });
     }
@@ -819,12 +893,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
         if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
             this._view.webview.postMessage({
-                type: 'getVisibleLine'
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.getVisibleLine
             });
             return;
         }
         this._view.webview.postMessage({
-            type: 'getVisibleHeading'
+            type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.getVisibleHeading
         });
     }
 
@@ -847,7 +921,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      */
     public expandAll(): void {
         if (this._view) {
-            this._view.webview.postMessage({ type: 'expandAll' });
+            this._view.webview.postMessage({ type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.expandAll });
         }
     }
 
@@ -856,7 +930,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      */
     public collapseAll(): void {
         if (this._view) {
-            this._view.webview.postMessage({ type: 'collapseAll' });
+            this._view.webview.postMessage({ type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.collapseAll });
         }
     }
 
@@ -868,7 +942,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             vscode.window.setStatusBarMessage(i18n.locatorUnavailable, 2000);
             return;
         }
-        this._view.webview.postMessage({ type: 'getHighlightedDataTreeLocator' });
+        this._view.webview.postMessage({ type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.getHighlightedDataTreeLocator });
     }
 
     /**
@@ -1024,21 +1098,35 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             new vscode.Range(line, markerStart, line, markerStart + 3),
             replacement
         );
-        this._skipNextPreviewUpdate = true;
+        this._ignoredDocumentVersion = {
+            uri: document.uri.toString(),
+            version: document.version + 1,
+        };
         const applied = await vscode.workspace.applyEdit(edit);
         if (!applied) {
-            this._skipNextPreviewUpdate = false;
+            this._ignoredDocumentVersion = null;
         }
     }
 
     /**
-     * 读取并清除下一次预览更新跳过标记
-     * @returns 是否跳过由预览 checkbox 回写触发的完整刷新
+     * 判断文档变化是否来自预览 checkbox 回写
+     * @param document - 触发内容变化事件的文档
+     * @returns 返回是否跳过该文档版本的完整刷新
      */
-    private _consumeSkipNextPreviewUpdate(): boolean {
-        const skip = this._skipNextPreviewUpdate;
-        this._skipNextPreviewUpdate = false;
-        return skip;
+    private _consumeIgnoredDocumentVersion(document: vscode.TextDocument): boolean {
+        if (!this._ignoredDocumentVersion) {
+            return false;
+        }
+        const documentUri = document.uri.toString();
+        if (documentUri !== this._ignoredDocumentVersion.uri) {
+            return false;
+        }
+        if (document.version < this._ignoredDocumentVersion.version) {
+            return false;
+        }
+        const shouldIgnore = document.version === this._ignoredDocumentVersion.version;
+        this._ignoredDocumentVersion = null;
+        return shouldIgnore;
     }
 
     /**
@@ -1074,8 +1162,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * 更新缩放相关的上下文
      */
     private _updateZoomContext(): void {
-        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomOut', this._zoomLevel > this.ZOOM_STEPS[0]);
-        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomIn', this._zoomLevel < this.ZOOM_STEPS[this.ZOOM_STEPS.length - 1]);
+        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomOut', this._zoomLevel > ZOOM_STEPS[0]);
+        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomIn', this._zoomLevel < ZOOM_STEPS[ZOOM_STEPS.length - 1]);
         vscode.commands.executeCommand('setContext', 'sidebarPreviewer.canZoomReset', this._zoomLevel !== 100);
     }
 
@@ -1098,7 +1186,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         this._zoomLevel = 100;
         if (this._view) {
             this._view.webview.postMessage({
-                type: 'zoom',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.zoom,
                 level: this._zoomLevel,
             });
         }
@@ -1112,7 +1200,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     private _applyZoom(): void {
         if (this._view) {
             this._view.webview.postMessage({
-                type: 'zoom',
+                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.zoom,
                 level: this._zoomLevel
             });
             // 显示缩放比例提示
@@ -1176,6 +1264,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         const katexCssUri = webview.asWebviewUri(vscode.Uri.file(this._katexCssPath));
         const katexJsUri = webview.asWebviewUri(vscode.Uri.file(this._katexJsPath));
         const mermaidJsUri = webview.asWebviewUri(vscode.Uri.file(this._mermaidJsPath));
+        const runtimeConfig = createWebviewRuntimeConfig();
         const cspSource = webview.cspSource;
         return `<!DOCTYPE html>
 <html lang="en">
@@ -1185,38 +1274,75 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} 'unsafe-eval'; img-src ${cspSource} https: data: blob:; font-src ${cspSource};">
     <title>${i18n.webviewTitle}</title>
     <link rel="stylesheet" href="${codiconUri}">
-    <link rel="stylesheet" href="${katexCssUri}">
     <link rel="stylesheet" href="${previewCommonCssUri}">
 </head>
-<body data-copy-code="${escapeHtml(i18n.copyCode)}" data-wrap-code="${escapeHtml(i18n.wrapCode)}" data-unwrap-code="${escapeHtml(i18n.unwrapCode)}" data-view-code="${escapeHtml(i18n.viewCode)}" data-view-preview="${escapeHtml(i18n.viewPreview)}" data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}" data-table-selection-markdown="${escapeHtml(i18n.tableSelectionMarkdownTable)}" data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}" data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}" data-table-selection-tsv-hint="${escapeHtml(i18n.tableSelectionTsvHint)}" data-table-selection-csv="${escapeHtml(i18n.tableSelectionCsv)}" data-css-markdown="${escapeHtml(previewMarkdownCssUri.toString())}" data-css-mermaid="${escapeHtml(previewMermaidCssUri.toString())}" data-css-latex="${escapeHtml(previewLatexCssUri.toString())}" data-css-table="${escapeHtml(previewTableCssUri.toString())}" data-css-highlight="${escapeHtml(previewHighlightCssUri.toString())}" data-css-codeblock="${escapeHtml(previewCodeblockCssUri.toString())}" data-css-datatree="${escapeHtml(previewDatatreeCssUri.toString())}">
+<body
+    data-preview-config="${escapeHtml(JSON.stringify(runtimeConfig))}"
+    data-copy-code="${escapeHtml(i18n.copyCode)}"
+    data-copy-failed="${escapeHtml(i18n.copyFailed)}"
+    data-unknown-error="${escapeHtml(i18n.unknownError)}"
+    data-mermaid-render-timeout="${escapeHtml(i18n.mermaidRenderTimeout)}"
+    data-mermaid-library-load-failed="${escapeHtml(i18n.mermaidLibraryLoadFailed)}"
+    data-wrap-code="${escapeHtml(i18n.wrapCode)}"
+    data-unwrap-code="${escapeHtml(i18n.unwrapCode)}"
+    data-view-code="${escapeHtml(i18n.viewCode)}"
+    data-view-preview="${escapeHtml(i18n.viewPreview)}"
+    data-table-selection-more="${escapeHtml(i18n.tableSelectionMore)}"
+    data-table-selection-markdown="${escapeHtml(i18n.tableSelectionMarkdownTable)}"
+    data-table-selection-ascii="${escapeHtml(i18n.tableSelectionAsciiTable)}"
+    data-table-selection-tsv="${escapeHtml(i18n.tableSelectionTsv)}"
+    data-table-selection-tsv-hint="${escapeHtml(i18n.tableSelectionTsvHint)}"
+    data-table-selection-csv="${escapeHtml(i18n.tableSelectionCsv)}"
+    data-css-markdown="${escapeHtml(previewMarkdownCssUri.toString())}"
+    data-css-mermaid="${escapeHtml(previewMermaidCssUri.toString())}"
+    data-css-latex="${escapeHtml(previewLatexCssUri.toString())}"
+    data-css-table="${escapeHtml(previewTableCssUri.toString())}"
+    data-css-highlight="${escapeHtml(previewHighlightCssUri.toString())}"
+    data-css-codeblock="${escapeHtml(previewCodeblockCssUri.toString())}"
+    data-css-datatree="${escapeHtml(previewDatatreeCssUri.toString())}"
+    data-css-katex="${escapeHtml(katexCssUri.toString())}"
+    data-js-codeblock="${escapeHtml(previewCodeblockJsUri.toString())}"
+    data-js-katex="${escapeHtml(previewKatexJsUri.toString())}"
+    data-js-katex-vendor="${escapeHtml(katexJsUri.toString())}"
+    data-js-mermaid="${escapeHtml(previewMermaidJsUri.toString())}"
+    data-js-mermaid-vendor="${escapeHtml(mermaidJsUri.toString())}"
+    data-js-markdown="${escapeHtml(previewMarkdownJsUri.toString())}"
+    data-js-comment-tooltip="${escapeHtml(previewCommentTooltipJsUri.toString())}"
+    data-js-datatree="${escapeHtml(previewDatatreeJsUri.toString())}"
+    data-js-table="${escapeHtml(previewTableJsUri.toString())}"
+>
     <div id="sidebar-previewer-container">
         <div class="content" id="content">
             <div class="loading-state"><div class="loading-spinner"></div></div>
         </div>
     </div>
-    <script src="${katexJsUri}"></script>
-    <script src="${mermaidJsUri}"></script>
     <script src="${previewCommonJsUri}"></script>
-    <script src="${previewCodeblockJsUri}"></script>
-    <script src="${previewKatexJsUri}"></script>
-    <script src="${previewMermaidJsUri}"></script>
-    <script src="${previewMarkdownJsUri}"></script>
-    <script src="${previewCommentTooltipJsUri}"></script>
-    <script src="${previewDatatreeJsUri}"></script>
-    <script src="${previewTableJsUri}"></script>
 </body>
 </html>`;
     }
 
     /**
-     * 释放 Webview 状态与编辑器可视范围监听器
+     * 释放当前 Webview 注册的监听器和预览调度任务
      */
-    public dispose(): void {
+    private _disposeViewListeners(): void {
+        this._clearPreviewUpdateTimeout();
         this._clearLoadingTimeout();
         if (this._visibleRangesListener) {
             this._visibleRangesListener.dispose();
             this._visibleRangesListener = undefined;
         }
+        const disposables = this._viewDisposables;
+        this._viewDisposables = [];
+        for (const disposable of disposables) {
+            disposable.dispose();
+        }
+    }
+
+    /**
+     * 释放扩展持有的 Webview 状态与所有监听器
+     */
+    public dispose(): void {
+        this._disposeViewListeners();
         this._view = undefined;
         this._webviewReady = false;
     }

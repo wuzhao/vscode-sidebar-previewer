@@ -67,3 +67,21 @@ export interface CommentMetadata {
     lineComments: CommentLineIndex;
     standaloneGroups: StandaloneCommentGroup[];
 }
+
+/**
+ * 数据树分段渲染预算
+ */
+export interface TreeRenderBudget {
+    renderedNodes: number;
+    maxNodes: number;
+    truncated: boolean;
+}
+
+/**
+ * 数据树首段 HTML 与截断状态
+ */
+export interface TreeRenderResult {
+    html: string;
+    truncated: boolean;
+    renderedNodes: number;
+}

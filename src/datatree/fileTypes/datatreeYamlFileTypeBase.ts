@@ -1,19 +1,17 @@
-import {
-    CommentEntry,
-    CommentMetadata,
-    StandaloneCommentGroup,
-    YamlCloseLineLocator,
-} from '../core/datatreeProviderTypes';
+import { CommentEntry, CommentMetadata, StandaloneCommentGroup, YamlCloseLineLocator } from '../core/datatreeProviderTypes';
 import { DatatreeJsonFileTypeBase } from './datatreeJsonFileTypeBase';
 
 /**
- * 提供 YAML 数据树能力
+ * 将 YAML 的定位与注释策略组合到已有数据树能力
+ * @param Base - 已组合共享渲染和 JSON 策略的构造器
+ * @returns 继续包含 YAML 格式策略的构造器
  */
-export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
-    /**
-         * 创建YAML 结束行定位器并返回可复用实例
+export function withYamlFileType(Base: typeof DatatreeJsonFileTypeBase) {
+    return class DatatreeYamlFileType extends Base {
+        /**
+         * 创建YAML 结束行定位器并返回按调用顺序消费源码位置的游标或定位器
          * @param lines - 按行拆分后的源文本
-         * @returns 返回可复用实例
+         * @returns 返回按调用顺序消费源码位置的游标或定位器
          */
         protected static createYamlCloseLineLocator(lines: string[]): YamlCloseLineLocator {
             const cache = new Map<number, number>();
@@ -70,12 +68,12 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
 
                     cache.set(line, -1);
                     return -1;
-                }
+                },
             };
         }
 
-    /**
-         * 处理YAML 文档数组行集合相关逻辑并返回结果
+        /**
+         * 判断多文档 YAML 是否应使用文档根数组定位
          * @param parsedData - 已解析的结构化数据
          * @param lines - 按行拆分后的源文本
          * @returns 返回是否使用文档级 YAML 数组行索引
@@ -85,14 +83,14 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
                 return false;
             }
 
-            return lines.some(line => /^\s*---(?:\s+#.*)?\s*$/.test(line));
+            return lines.some((line) => /^\s*---(?:\s+#.*)?\s*$/.test(line));
         }
 
-    /**
+        /**
          * 构建YAML数组元素行索引供后续流程复用
          * @param lines - 按行拆分后的源文本
          * @param includeDocumentRootItems - 是否包含文档根数组项
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildYamlArrayItemLineIndex(lines: string[], includeDocumentRootItems: boolean): number[] {
             const result: number[] = [];
@@ -114,10 +112,10 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return [...new Set(result)].sort((a, b) => a - b);
         }
 
-    /**
-         * 查找YAML 文档起始行集合并返回匹配结果
+        /**
+         * 查找YAML 文档起始行集合并返回当前格式语法对应的匹配结果
          * @param lines - 按行拆分后的源文本
-         * @returns 返回匹配结果
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findYamlDocumentStartLines(lines: string[]): number[] {
             const starts: number[] = [];
@@ -125,12 +123,7 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             const pushFirstBindableFrom = (start: number): void => {
                 for (let i = start; i < lines.length; i++) {
                     const trimmed = lines[i].trim();
-                    if (
-                        trimmed.length === 0
-                        || trimmed.startsWith('#')
-                        || trimmed === '---'
-                        || trimmed === '...'
-                    ) {
+                    if (trimmed.length === 0 || trimmed.startsWith('#') || trimmed === '---' || trimmed === '...') {
                         continue;
                     }
 
@@ -149,9 +142,9 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return starts;
         }
 
-    /**
+        /**
          * 提取YAML 键供后续逻辑使用
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 YAML 行中提取到的键名列表
          */
         protected static extractYamlKeys(line: string): string[] {
@@ -164,8 +157,8 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return key ? [key] : [];
         }
 
-    /**
-         * 处理 buildHashCommentMetadata 相关逻辑
+        /**
+         * 将 YAML 和 TOML 的井号注释绑定到对应树节点
          * @param lines - 按行拆分后的源文本
          * @param fileType - 当前文件类型标识
          * @param arrayItemLines - 数组元素对应的行号集合
@@ -174,7 +167,7 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
         protected static buildHashCommentMetadata(
             lines: string[],
             fileType: 'yaml' | 'toml',
-            arrayItemLines: Set<number>
+            arrayItemLines: Set<number>,
         ): CommentMetadata {
             const lineComments = new Map<number, CommentEntry[]>();
             const standaloneGroups: StandaloneCommentGroup[] = [];
@@ -223,9 +216,7 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
                 if (pending.length === 0) {
                     pendingLine = line;
                     pendingIndent = indent;
-                    pendingFromArray = fileType === 'yaml'
-                        ? this.inferYamlPendingFromArray(lines, line, arrayItemLines)
-                        : arrayDepth > 0;
+                    pendingFromArray = fileType === 'yaml' ? this.inferYamlPendingFromArray(lines, line, arrayItemLines) : arrayDepth > 0;
                 }
                 this.pushComment(pending, '#', text);
             };
@@ -253,9 +244,8 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
                             const nextBindableLine = this.findYamlNextBindableLine(lines, i, arrayItemLines);
                             const previousIndent = previousBindableLine >= 0 ? this.getIndentation(lines[previousBindableLine]) : -1;
                             const nextIndent = nextBindableLine >= 0 ? this.getIndentation(lines[nextBindableLine]) : -1;
-                            const previousHasInlineValue = previousBindableLine >= 0
-                                ? this.yamlLineHasInlineValue(lines[previousBindableLine])
-                                : false;
+                            const previousHasInlineValue =
+                                previousBindableLine >= 0 ? this.yamlLineHasInlineValue(lines[previousBindableLine]) : false;
 
                             const shouldFollowPrevious =
                                 nextIndent >= 0 &&
@@ -287,15 +277,13 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
                     }
 
                     if (pending.length > 0 && pendingFromArray && !arrayItemExists) {
-                        const escapedArrayContext = fileType === 'yaml'
-                            ? currentIndent <= pendingIndent
-                            : currentArrayDepth === 0;
+                        const escapedArrayContext = fileType === 'yaml' ? currentIndent <= pendingIndent : currentArrayDepth === 0;
                         if (escapedArrayContext) {
                             flushPendingStandalone();
                         }
                     }
 
-                    const comments = [...pending, ...inlineComments].filter(comment => !!comment.text);
+                    const comments = [...pending, ...inlineComments].filter((comment) => !!comment.text);
                     if (comments.length > 0) {
                         lineComments.set(i, comments);
                     }
@@ -316,9 +304,8 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
                 }
 
                 if (pending.length > 0 && pendingFromArray) {
-                    const escapedArrayContext = fileType === 'yaml'
-                        ? currentIndent <= pendingIndent && trimmed.length > 0
-                        : currentArrayDepth === 0;
+                    const escapedArrayContext =
+                        fileType === 'yaml' ? currentIndent <= pendingIndent && trimmed.length > 0 : currentArrayDepth === 0;
                     if (escapedArrayContext) {
                         flushPendingStandalone();
                     }
@@ -329,9 +316,8 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
                 }
 
                 if (pending.length > 0 && pendingFromArray) {
-                    const stillInsideArrayContext = fileType === 'yaml'
-                        ? currentIndent > pendingIndent || trimmed.length === 0
-                        : currentArrayDepth > 0;
+                    const stillInsideArrayContext =
+                        fileType === 'yaml' ? currentIndent > pendingIndent || trimmed.length === 0 : currentArrayDepth > 0;
                     if (stillInsideArrayContext) {
                         continue;
                     }
@@ -361,10 +347,10 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return { lineComments, standaloneGroups };
         }
 
-    /**
-         * 查找井号行内注释集合并返回匹配结果
-         * @param line - 当前处理的行内容或行号
-         * @returns 返回匹配结果
+        /**
+         * 查找井号行内注释集合并返回当前格式语法对应的匹配结果
+         * @param line - 对应源码行的内容或零基行号
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findHashInlineComments(line: string): CommentEntry[] {
             const codePart = this.stripHashCommentText(line);
@@ -377,7 +363,7 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return text ? [{ marker: '#', text }] : [];
         }
 
-    /**
+        /**
          * 根据上下文推断YAML 待绑定数组
          * @param lines - 按行拆分后的源文本
          * @param lineIndex - 当前处理的行索引
@@ -405,12 +391,12 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return false;
         }
 
-    /**
-         * 查找YAML 前一个可绑定行并返回匹配结果
+        /**
+         * 查找YAML 前一个可绑定行并返回当前格式语法对应的匹配结果
          * @param lines - 按行拆分后的源文本
          * @param lineIndex - 当前处理的行索引
          * @param arrayItemLines - 数组元素对应的行号集合
-         * @returns 返回匹配结果
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findYamlPreviousBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
             for (let i = lineIndex - 1; i >= 0; i--) {
@@ -427,12 +413,12 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return -1;
         }
 
-    /**
-         * 查找YAML 下一个可绑定行并返回匹配结果
+        /**
+         * 查找YAML 下一个可绑定行并返回当前格式语法对应的匹配结果
          * @param lines - 按行拆分后的源文本
          * @param lineIndex - 当前处理的行索引
          * @param arrayItemLines - 数组元素对应的行号集合
-         * @returns 返回匹配结果
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findYamlNextBindableLine(lines: string[], lineIndex: number, arrayItemLines: Set<number>): number {
             for (let i = lineIndex + 1; i < lines.length; i++) {
@@ -449,9 +435,9 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             return -1;
         }
 
-    /**
-         * 处理行内注释标记值相关逻辑并返回结果
-         * @param line - 当前处理的行内容或行号
+        /**
+         * 判断 YAML 键值行的冒号右侧是否包含内联值
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回当前行是否包含行内值
          */
         protected static yamlLineHasInlineValue(line: string): boolean {
@@ -469,4 +455,8 @@ export class DatatreeYamlFileTypeBase extends DatatreeJsonFileTypeBase {
             const rhs = withoutArrayPrefix.slice(colonIndex + 1).trim();
             return rhs.length > 0;
         }
+    };
 }
+
+// YAML 格式策略通过能力组合加入数据树提供器
+export const DatatreeYamlFileTypeBase = withYamlFileType(DatatreeJsonFileTypeBase);

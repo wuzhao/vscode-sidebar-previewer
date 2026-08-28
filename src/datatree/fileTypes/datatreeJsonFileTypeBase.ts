@@ -1,20 +1,17 @@
-import {
-    CommentEntry,
-    CommentMarker,
-    CommentMetadata,
-    JsonCloseLineLocator,
-    StandaloneCommentGroup,
-} from '../core/datatreeProviderTypes';
+import { CommentEntry, CommentMarker, CommentMetadata, JsonCloseLineLocator, StandaloneCommentGroup } from '../core/datatreeProviderTypes';
 import { DatatreeTreeRenderBase } from '../common/datatreeTreeRenderBase';
 
 /**
- * 提供 JSON 数据树能力
+ * 将 JSON 的解析、定位与注释策略组合到数据树能力基座
+ * @param Base - 提供共享数据树渲染能力的构造器
+ * @returns 包含 JSON 格式策略的构造器
  */
-export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
-    /**
-         * 创建JSON 结束行定位器并返回可复用实例
+export function withJsonFileType(Base: typeof DatatreeTreeRenderBase) {
+    return class DatatreeJsonFileType extends Base {
+        /**
+         * 创建JSON 结束行定位器并返回按调用顺序消费源码位置的游标或定位器
          * @param lines - 按行拆分后的源文本
-         * @returns 返回可复用实例
+         * @returns 返回按调用顺序消费源码位置的游标或定位器
          */
         protected static createJsonCloseLineLocator(lines: string[]): JsonCloseLineLocator {
             const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -89,14 +86,14 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
 
                     cache.set(line, -1);
                     return -1;
-                }
+                },
             };
         }
 
-    /**
-         * 查找JSON 复合起始行并返回匹配结果
-         * @param line - 当前处理的行内容或行号
-         * @returns 返回匹配结果
+        /**
+         * 查找JSON 复合起始行并返回当前格式语法对应的匹配结果
+         * @param line - 对应源码行的内容或零基行号
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findJsonCompoundStartInLine(line: string): { char: '{' | '['; column: number } | null {
             let inString = false;
@@ -152,10 +149,10 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return null;
         }
 
-    /**
+        /**
          * 构建JSON数组元素行索引供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildJsonArrayItemLineIndex(lines: string[]): number[] {
             const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -262,10 +259,10 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return result;
         }
 
-    /**
-         * 查找JSON 行首标记并返回匹配结果
-         * @param line - 当前处理的行内容或行号
-         * @returns 返回匹配结果
+        /**
+         * 查找JSON 行首标记并返回当前格式语法对应的匹配结果
+         * @param line - 对应源码行的内容或零基行号
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findJsonLineFirstToken(line: string): string | null {
             for (let i = 0; i < line.length; i++) {
@@ -278,7 +275,7 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return null;
         }
 
-    /**
+        /**
          * 判断JSON 数组值起始是否成立
          * @param token - 解析阶段的 token 对象
          * @returns 返回布尔判断结果
@@ -296,68 +293,66 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
         }
 
         /**
-             * 构建JSONL数组元素行索引供后续流程复用
-             * @param lines - 按行拆分后的源文本
-             * @param parsedData - 已解析的结构化数据
-             * @returns 返回构建后的数据结构
-             */
-            protected static buildJsonlArrayItemLineIndex(lines: string[], parsedData: unknown): number[] {
-                const recordLines = lines.reduce((acc: number[], line, index) => {
-                    if (line.trim().length > 0) {
-                        acc.push(index);
-                    }
-                    return acc;
-                }, []);
+         * 构建JSONL数组元素行索引供后续流程复用
+         * @param lines - 按行拆分后的源文本
+         * @param parsedData - 已解析的结构化数据
+         * @returns 返回供节点定位与注释归属使用的索引数据
+         */
+        protected static buildJsonlArrayItemLineIndex(lines: string[], parsedData: unknown): number[] {
+            const recordLines = lines.reduce((acc: number[], line, index) => {
+                if (line.trim().length > 0) {
+                    acc.push(index);
+                }
+                return acc;
+            }, []);
 
-                const result: number[] = [];
-                const recordCursor = { index: 0 };
-                this.collectJsonlArrayItemLines(parsedData, recordLines, recordCursor, -1, true, result);
-                return result;
-            }
+            const result: number[] = [];
+            const recordCursor = { index: 0 };
+            this.collectJsonlArrayItemLines(parsedData, recordLines, recordCursor, -1, true, result);
+            return result;
+        }
 
         /**
-             * 收集JSONL数组项行号并写入结果
-             * @param value - 待处理的数据对象
-             * @param recordLines - JSONL记录行号集合
-             * @param recordCursor - JSONL根记录游标
-             * @param currentLine - 当前父级上下文行号
-             * @param isRootArray - 当前数组是否为根记录数组
-             * @param result - 数组元素行结果集合
-             */
-            protected static collectJsonlArrayItemLines(
-                value: unknown,
-                recordLines: number[],
-                recordCursor: { index: number },
-                currentLine: number,
-                isRootArray: boolean,
-                result: number[]
-            ): void {
-                if (Array.isArray(value)) {
-                    for (const item of value) {
-                        let itemLine = currentLine;
-                        if (isRootArray) {
-                            itemLine = recordCursor.index < recordLines.length
-                                ? recordLines[recordCursor.index]
-                                : -1;
-                            recordCursor.index += 1;
-                        }
-
-                        result.push(itemLine);
-                        this.collectJsonlArrayItemLines(item, recordLines, recordCursor, itemLine, false, result);
+         * 收集JSONL数组项行号并写入结果
+         * @param value - 待处理的数据对象
+         * @param recordLines - JSONL记录行号集合
+         * @param recordCursor - JSONL根记录游标
+         * @param currentLine - 当前父级上下文行号
+         * @param isRootArray - 当前数组是否为根记录数组
+         * @param result - 数组元素行结果集合
+         */
+        protected static collectJsonlArrayItemLines(
+            value: unknown,
+            recordLines: number[],
+            recordCursor: { index: number },
+            currentLine: number,
+            isRootArray: boolean,
+            result: number[],
+        ): void {
+            if (Array.isArray(value)) {
+                for (const item of value) {
+                    let itemLine = currentLine;
+                    if (isRootArray) {
+                        itemLine = recordCursor.index < recordLines.length ? recordLines[recordCursor.index] : -1;
+                        recordCursor.index += 1;
                     }
-                    return;
-                }
 
-                if (!value || typeof value !== 'object') {
-                    return;
+                    result.push(itemLine);
+                    this.collectJsonlArrayItemLines(item, recordLines, recordCursor, itemLine, false, result);
                 }
-
-                for (const child of Object.values(value as Record<string, unknown>)) {
-                    this.collectJsonlArrayItemLines(child, recordLines, recordCursor, currentLine, false, result);
-                }
+                return;
             }
 
-    /**
+            if (!value || typeof value !== 'object') {
+                return;
+            }
+
+            for (const child of Object.values(value as Record<string, unknown>)) {
+                this.collectJsonlArrayItemLines(child, recordLines, recordCursor, currentLine, false, result);
+            }
+        }
+
+        /**
          * 解析JSON 或 JSONC并返回结构化结果
          * @param content - 待解析的文件内容
          * @returns 返回结构化结果
@@ -371,33 +366,33 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
         }
 
         /**
-             * 解析JSONL并返回结构化结果
-             * @param content - 待解析的文件内容
-             * @returns 返回结构化结果
-             */
-            protected static parseJsonl(content: string): unknown[] {
-                const lines = content.split(/\r?\n/);
-                const records: unknown[] = [];
+         * 解析JSONL并返回结构化结果
+         * @param content - 待解析的文件内容
+         * @returns 返回结构化结果
+         */
+        protected static parseJsonl(content: string): unknown[] {
+            const lines = content.split(/\r?\n/);
+            const records: unknown[] = [];
 
-                for (let i = 0; i < lines.length; i++) {
-                    const rawLine = lines[i].trim();
-                    if (rawLine.length === 0) {
-                        continue;
-                    }
-
-                    try {
-                        records.push(this.parseJsonOrJsonc(rawLine));
-                    } catch (error) {
-                        const message = error instanceof Error ? error.message : String(error);
-                        throw new Error(`Invalid JSONL line ${i + 1}: ${message}`);
-                    }
+            for (let i = 0; i < lines.length; i++) {
+                const rawLine = lines[i].trim();
+                if (rawLine.length === 0) {
+                    continue;
                 }
 
-                return records;
+                try {
+                    records.push(this.parseJsonOrJsonc(rawLine));
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    throw new Error(`Invalid JSONL line ${i + 1}: ${message}`);
+                }
             }
 
-    /**
-         * 处理JSONC相关逻辑并返回结果
+            return records;
+        }
+
+        /**
+         * 移除 JSONC 注释和尾随逗号以供标准 JSON 解析
          * @param content - 待解析的文件内容
          * @returns 返回可被 JSON 解析器处理的标准文本
          */
@@ -406,7 +401,7 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return this.stripJsonTrailingCommas(withoutComments);
         }
 
-    /**
+        /**
          * 去除JSONC注释集合以保留有效信息
          * @param content - 待解析的文件内容
          * @returns 返回移除注释后的 JSON 文本
@@ -476,7 +471,7 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return out;
         }
 
-    /**
+        /**
          * 去除JSON 尾随逗号以保留有效信息
          * @param content - 待解析的文件内容
          * @returns 返回移除尾随逗号后的 JSON 文本
@@ -525,9 +520,9 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return out;
         }
 
-    /**
+        /**
          * 提取JSON 键供后续逻辑使用
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 JSON 行中提取到的键名列表
          */
         protected static extractJsonKeys(line: string): string[] {
@@ -583,7 +578,7 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return keys;
         }
 
-    /**
+        /**
          * 解码JSON 字符串并还原可读数据
          * @param raw - 未解码的原始字符串
          * @returns 返回解码后的字符串内容
@@ -596,11 +591,11 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             }
         }
 
-    /**
+        /**
          * 构建JSON注释元数据供后续流程复用
          * @param lines - 按行拆分后的源文本
          * @param arrayItemLines - 数组元素对应的行号集合
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildJsonCommentMetadata(lines: string[], arrayItemLines: Set<number>): CommentMetadata {
             const lineComments = new Map<number, CommentEntry[]>();
@@ -642,7 +637,7 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
                 text: string,
                 line: number,
                 arrayDepth: number,
-                objectDepth: number
+                objectDepth: number,
             ): void => {
                 if (!text) {
                     return;
@@ -657,10 +652,10 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
                 }
 
                 if (
-                    pending.length > 0
-                    && pendingArrayDepth >= 0
-                    && pendingObjectDepth >= 0
-                    && (pendingArrayDepth !== arrayDepth || pendingObjectDepth !== objectDepth)
+                    pending.length > 0 &&
+                    pendingArrayDepth >= 0 &&
+                    pendingObjectDepth >= 0 &&
+                    (pendingArrayDepth !== arrayDepth || pendingObjectDepth !== objectDepth)
                 ) {
                     flushPendingStandalone();
                 }
@@ -701,7 +696,7 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
 
                         const trailingComments = this.findJsonInlineComments(trailing);
                         if (trailingComments.length > 0) {
-                            trailingComments.forEach(comment => {
+                            trailingComments.forEach((comment) => {
                                 pushCommentForCurrentContext(comment.marker, comment.text, i, currentArrayDepth, currentObjectDepth);
                             });
                             continue;
@@ -762,11 +757,16 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
                                 flushPendingStandalone();
                             }
 
-                            if (pending.length > 0 && pendingArrayDepth > 0 && !trailingArrayItemExists && currentArrayDepth < pendingArrayDepth) {
+                            if (
+                                pending.length > 0 &&
+                                pendingArrayDepth > 0 &&
+                                !trailingArrayItemExists &&
+                                currentArrayDepth < pendingArrayDepth
+                            ) {
                                 flushPendingStandalone();
                             }
 
-                            const comments = [...pending, ...trailingInlineComments].filter(comment => !!comment.text);
+                            const comments = [...pending, ...trailingInlineComments].filter((comment) => !!comment.text);
                             if (comments.length > 0) {
                                 lineComments.set(i, comments);
                             }
@@ -811,7 +811,7 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
                         flushPendingStandalone();
                     }
 
-                    const comments = [...pending, ...inlineComments].filter(comment => !!comment.text);
+                    const comments = [...pending, ...inlineComments].filter((comment) => !!comment.text);
                     if (comments.length > 0) {
                         lineComments.set(i, comments);
                     }
@@ -863,10 +863,10 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return { lineComments, standaloneGroups };
         }
 
-    /**
-         * 查找JSON 行内注释集合并返回匹配结果
-         * @param line - 当前处理的行内容或行号
-         * @returns 返回匹配结果
+        /**
+         * 查找JSON 行内注释集合并返回当前格式语法对应的匹配结果
+         * @param line - 对应源码行的内容或零基行号
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findJsonInlineComments(line: string): CommentEntry[] {
             const comments: CommentEntry[] = [];
@@ -919,10 +919,10 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return comments;
         }
 
-    /**
+        /**
          * 构建JSON 数组起始行深度供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildJsonArrayDepthAtLineStart(lines: string[]): number[] {
             const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -970,10 +970,10 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
             return depthAtLineStart;
         }
 
-    /**
+        /**
          * 构建JSON 对象起始行深度供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildJsonObjectDepthAtLineStart(lines: string[]): number[] {
             const sanitizedLines = this.stripJsoncComments(lines.join('\n')).split('\n');
@@ -1020,4 +1020,8 @@ export class DatatreeJsonFileTypeBase extends DatatreeTreeRenderBase {
 
             return depthAtLineStart;
         }
+    };
 }
+
+// JSON 格式能力与共享数据树渲染能力的组合结果
+export const DatatreeJsonFileTypeBase = withJsonFileType(DatatreeTreeRenderBase);

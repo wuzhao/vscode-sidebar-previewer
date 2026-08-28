@@ -34,7 +34,7 @@ test('DatatreePreviewProvider returns an error state for invalid JSON', () => {
 
     assert.equal(result.fileType, 'json');
     assert.equal(result.supportsLocate, false);
-    assert.ok(result.html.includes('Failed to parse JSON content.'));
+    assert.ok(result.html.includes('Failed to parse JSON content'));
 });
 
 test('Comment icon metadata is rendered for JSON/YAML/TOML/XML keys', () => {
@@ -360,4 +360,3 @@ test('Trailing array comment without next element becomes standalone icon', () =
   assert.ok(payloads.some(payload => payload.length === 1 && payload[0].marker === '/' && payload[0].text === 'tail comment'));
   assert.equal(/<span class="tree-key" data-line="\d+">next<\/span><span class="tree-comment-icon codicon codicon-note"/.test(result.html), false);
 });
-

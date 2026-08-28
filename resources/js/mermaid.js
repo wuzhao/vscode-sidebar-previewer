@@ -25,7 +25,8 @@ function renderMermaid() {
         const els = document.querySelectorAll('.mermaid');
         els.forEach(el => {
             el.innerHTML = '<div class="render-error-block">'
-                + '<i class="codicon codicon-error"></i> Mermaid library failed to load'
+                + '<i class="codicon codicon-error"></i> '
+                + escapeHtml(L10N_TEXT.mermaidLibraryLoadFailed)
                 + '</div>';
         });
         return;
@@ -57,7 +58,7 @@ function renderMermaid() {
             suppressErrors: false,
         }),
         new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Mermaid rendering timeout')), MERMAID_RENDER_TIMEOUT_MS);
+            setTimeout(() => reject(new Error(L10N_TEXT.mermaidRenderTimeout)), MERMAID_RENDER_TIMEOUT_MS);
         })
     ]);
 
@@ -133,7 +134,7 @@ function applyMermaidZoom() {
 
 /**
  * 获取 Mermaid 当前缩放倍率
- * 统一叠加预览缩放与 Mermaid 专属倍率
+ * 使用与其他预览一致的共享缩放档位
  * @returns 返回 Mermaid 实际缩放倍率
  */
 function getMermaidZoomScale() {

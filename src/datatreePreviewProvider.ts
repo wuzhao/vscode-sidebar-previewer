@@ -1,6 +1,8 @@
 import * as yaml from 'js-yaml';
 import * as toml from 'toml';
 import { FileType, PreviewResult } from './fileTypes';
+import { i18n } from './i18n';
+import { MAX_PREVIEW_INPUT_BYTES, MAX_RENDERED_HTML_LENGTH, MAX_RENDERED_TREE_NODES } from './previewConfig';
 import { escapeHtml } from './utils';
 import { DatatreeXmlFileTypeBase } from './datatree/fileTypes/datatreeXmlFileTypeBase';
 
@@ -16,15 +18,22 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
      */
     static parse(content: string, fileType: FileType): PreviewResult {
         try {
+            if (Buffer.byteLength(content, 'utf8') > MAX_PREVIEW_INPUT_BYTES) {
+                return {
+                    html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.previewInputTooLarge, String(MAX_PREVIEW_INPUT_BYTES / 1024 / 1024)))}</div></div>`,
+                    fileType,
+                    supportsLocate: false,
+                };
+            }
             const parsed = this.parseContent(content, fileType);
             const lines = content.split('\n');
             const commentMetadata = this.buildCommentMetadata(lines, fileType);
             const lineLocator = this.createKeyLineLocator(lines, fileType);
             const arrayItemLineLocator = this.createArrayItemLineLocator(lines, fileType, parsed);
-            const jsonCloseLineLocator = (fileType === 'json' || fileType === 'jsonl') ? this.createJsonCloseLineLocator(lines) : null;
+            const jsonCloseLineLocator = fileType === 'json' || fileType === 'jsonl' ? this.createJsonCloseLineLocator(lines) : null;
             const yamlCloseLineLocator = fileType === 'yaml' ? this.createYamlCloseLineLocator(lines) : null;
             const xmlCloseLineLocator = fileType === 'xml' ? this.createXmlCloseLineLocator(lines) : null;
-            const html = this.renderTree(
+            const renderResult = this.renderTree(
                 parsed,
                 lineLocator,
                 arrayItemLineLocator,
@@ -34,13 +43,17 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
                 lines,
                 jsonCloseLineLocator,
                 yamlCloseLineLocator,
-                xmlCloseLineLocator
+                xmlCloseLineLocator,
+                MAX_RENDERED_TREE_NODES,
             );
-            const wrappedHtml = `<div class="data-tree">${html}</div>`;
+            let wrappedHtml = `<div class="data-tree">${renderResult.html}</div>`;
+            if (renderResult.truncated) {
+                wrappedHtml += `<div class="preview-truncated">${escapeHtml(i18n.format(i18n.treeNodesTruncated, String(renderResult.renderedNodes)))}</div>`;
+            }
 
-            if (wrappedHtml.length > this.MAX_HTML_LENGTH) {
+            if (wrappedHtml.length > MAX_RENDERED_HTML_LENGTH) {
                 return {
-                    html: '<div class="error-state"><div class="error-text">Preview content is too large to render safely.</div></div>',
+                    html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.previewContentTooLarge)}</div></div>`,
                     fileType,
                     supportsLocate: false,
                 };
@@ -54,7 +67,7 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             return {
-                html: `<div class="error-state"><div class="error-text">Failed to parse ${fileType.toUpperCase()} content.</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
+                html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.parseContentFailed, fileType.toUpperCase()))}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
                 fileType,
                 supportsLocate: false,
             };
@@ -83,7 +96,7 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
             case 'xml':
                 return this.parseXml(content);
             default:
-                throw new Error(`Unsupported file type: ${fileType}`);
+                throw new Error(i18n.format(i18n.unsupportedFileType, fileType));
         }
     }
 }

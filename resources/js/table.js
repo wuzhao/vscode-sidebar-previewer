@@ -1237,7 +1237,7 @@ function applyTableSelectionToEditor() {
     if (selections.length > 0) {
         isUpdatingSelectionFromWebview = true;
         VSCODE_API.postMessage({
-            type: 'updateEditorSelection',
+            type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.updateEditorSelection,
             selections: selections
         });
         
@@ -1327,7 +1327,7 @@ PreviewCommon.registerDomainInit(['csv', 'tsv'], 'table', function() {
         const char = parseInt(cell.getAttribute('data-start-char'), 10);
         if (!isNaN(line) && line >= 0) {
             VSCODE_API.postMessage({
-                type: 'navigateToLine',
+                type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.navigateToLine,
                 line: line,
                 char: isNaN(char) ? 0 : char
             });
@@ -1416,7 +1416,7 @@ function reportVisibleLine() {
         const line = parseInt(bestCell.getAttribute('data-start-line'), 10);
         const char = parseInt(bestCell.getAttribute('data-start-char'), 10);
         VSCODE_API.postMessage({
-            type: 'visibleLine',
+            type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.visibleLine,
             line: isNaN(line) ? 0 : line,
             char: isNaN(char) ? 0 : char
         });

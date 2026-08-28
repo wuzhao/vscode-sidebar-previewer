@@ -1,6 +1,6 @@
 {
   "displayName": "Sidebar Previewer",
-  "description": "VS Code 嘅側邊欄預覽器，支持實時渲染、滾動同步、樹形視圖、縮放控制等功能，支持包括 Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV 同埋 TSV 喺內嘅多種文件格式。",
+  "description": "VS Code 嘅側邊欄預覽器，支持實時渲染、滾動同步、樹形視圖、縮放控制等功能，支持包括 Markdown、LaTeX、Mermaid、JSON、JSONL、YAML、TOML、XML、CSV 同埋 TSV 喺內嘅多種文件格式。",
   "command.zoomIn.title": "放大",
   "command.zoomOut.title": "縮細",
   "command.zoomReset.title": "100%",
@@ -30,5 +30,18 @@
   "runtime.tableSelectionTsvHint": "適用於 Excel、Numbers 同 Sheets",
   "runtime.tableSelectionCsv": "複製為 CSV",
   "runtime.locatorCopied": "已複製定位表達式: {0}",
-  "runtime.locatorUnavailable": "目前沒有可用的高亮資料樹區域"
+  "runtime.locatorUnavailable": "目前沒有可用的高亮資料樹區域",
+  "runtime.copyFailed": "複製失敗",
+  "runtime.unknownError": "未知錯誤",
+  "runtime.mermaidRenderTimeout": "Mermaid 渲染逾時",
+  "runtime.mermaidLibraryLoadFailed": "Mermaid 渲染程式庫載入失敗",
+  "runtime.previewInputTooLarge": "預覽輸入超過 {0} MB 安全限制",
+  "runtime.previewContentTooLarge": "預覽內容過大，無法安全渲染",
+  "runtime.noTabularRows": "冇可預覽嘅表格行",
+  "runtime.parseContentFailed": "無法解析 {0} 內容",
+  "runtime.unsupportedFileType": "唔支援嘅檔案類型：{0}",
+  "runtime.unterminatedQuotedField": "帶引號嘅欄位未閉合",
+  "runtime.tableRowsTruncated": "只顯示頭 {0} 行表格資料",
+  "runtime.treeNodesTruncated": "只顯示頭 {0} 個資料樹節點",
+  "runtime.invalidMermaidSyntax": "Mermaid 語法無效：無法識別圖表類型"
 }

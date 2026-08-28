@@ -31,6 +31,7 @@ export interface PreviewResult {
  * 支持的文件扩展名映射
  */
 interface FileTypeCapabilities {
+    label: string;
     extensions: readonly string[];
     supportsLocate: boolean;
     isDataTree: boolean;
@@ -39,51 +40,61 @@ interface FileTypeCapabilities {
 // 定义各文件类型的扩展名和预览能力映射
 const FILE_TYPE_CAPABILITIES: Record<FileType, FileTypeCapabilities> = {
     markdown: {
+        label: 'Markdown',
         extensions: ['.md', '.markdown'],
         supportsLocate: true,
         isDataTree: false,
     },
     latex: {
+        label: 'LaTeX',
         extensions: ['.tex', '.katex', '.latex'],
         supportsLocate: true,
         isDataTree: false,
     },
     mermaid: {
+        label: 'Mermaid',
         extensions: ['.mmd', '.mermaid'],
         supportsLocate: false,
         isDataTree: false,
     },
     json: {
+        label: 'JSON',
         extensions: ['.json', '.jsonc'],
         supportsLocate: false,
         isDataTree: true,
     },
     jsonl: {
+        label: 'JSONL',
         extensions: ['.jsonl'],
         supportsLocate: false,
         isDataTree: true,
     },
     yaml: {
+        label: 'YAML',
         extensions: ['.yaml', '.yml'],
         supportsLocate: false,
         isDataTree: true,
     },
     toml: {
+        label: 'TOML',
         extensions: ['.toml'],
         supportsLocate: false,
         isDataTree: true,
     },
     xml: {
+        label: 'XML',
         extensions: ['.xml'],
         supportsLocate: false,
         isDataTree: true,
     },
     csv: {
+        label: 'CSV',
         extensions: ['.csv'],
         supportsLocate: true,
         isDataTree: false,
     },
     tsv: {
+        label: 'TSV',
         extensions: ['.tsv'],
         supportsLocate: true,
         isDataTree: false,
@@ -96,7 +107,11 @@ const EXTENSION_TO_TYPE_MAP: Map<string, FileType> = new Map(
         .flatMap(([type, capabilities]) => capabilities.extensions.map(ext => [ext, type] as const))
 );
 
-// 根据文件名获取文件类型
+/**
+ * 根据文件名后缀识别对应的预览类型
+ * @param fileName - 待识别的文件名或完整路径
+ * @returns 返回匹配的文件类型，不支持时返回 null
+ */
 export function getFileType(fileName: string): FileType | null {
     if (!fileName) {
         return null;
@@ -110,12 +125,38 @@ export function getFileType(fileName: string): FileType | null {
     return null;
 }
 
-// 判断文件类型是否支持跟随定位
+/**
+ * 判断文件类型是否支持编辑器与预览之间的定位
+ * @param fileType - 当前文件类型
+ * @returns 返回该类型是否支持定位
+ */
 export function supportsLocate(fileType: FileType): boolean {
     return FILE_TYPE_CAPABILITIES[fileType].supportsLocate;
 }
 
-// 判断文件类型是否为数据树形类型
+/**
+ * 判断文件类型是否使用数据树预览
+ * @param fileType - 当前文件类型
+ * @returns 返回该类型是否属于数据树
+ */
 export function isDataTreeType(fileType: FileType): boolean {
     return FILE_TYPE_CAPABILITIES[fileType].isDataTree;
+}
+
+/**
+ * 获取全部数据树文件类型供宿主端与 Webview 共享
+ * @returns 返回按配置顺序排列的数据树文件类型
+ */
+export function getDataTreeFileTypes(): FileType[] {
+    return (Object.keys(FILE_TYPE_CAPABILITIES) as FileType[])
+        .filter(fileType => FILE_TYPE_CAPABILITIES[fileType].isDataTree);
+}
+
+/**
+ * 获取空状态中展示的受支持格式标签
+ * @returns 返回包含格式名称与扩展名的展示文本
+ */
+export function getSupportedExtensionLabels(): string[] {
+    return (Object.values(FILE_TYPE_CAPABILITIES) as FileTypeCapabilities[])
+        .map(capabilities => `${capabilities.label} (${capabilities.extensions.join(' / ')})`);
 }

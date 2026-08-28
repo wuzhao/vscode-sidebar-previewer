@@ -524,3 +524,33 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
     assert.equal(csvResult.html.includes('Failed to parse CSV content.'), false);
     assert.equal(tsvResult.html.includes('Failed to parse TSV content.'), false);
   });
+
+  test('Large table and data-tree previews render only the configured first segment', () => {
+    const csvSource = [
+      'name,value',
+      ...Array.from({ length: 2100 }, (_, index) => `row${index},${index}`),
+    ].join('\n');
+    const tableResult = TablePreviewProvider.parse(csvSource, 'csv');
+
+    assert.ok(tableResult.html.includes('preview-truncated'));
+    assert.ok(tableResult.html.includes('row1999'));
+    assert.equal(tableResult.html.includes('row2099'), false);
+
+    const treeSource = JSON.stringify(Object.fromEntries(
+      Array.from({ length: 4100 }, (_, index) => [`key${index}`, index])
+    ));
+    const treeResult = DatatreePreviewProvider.parse(treeSource, 'json');
+
+    assert.ok(treeResult.html.includes('preview-truncated'));
+    assert.ok(treeResult.html.includes('>key3999<'));
+    assert.equal(treeResult.html.includes('>key4099<'), false);
+  });
+
+  test('Table and data-tree providers reject input above the shared size limit before parsing', () => {
+    const oversizedSource = 'x'.repeat(5 * 1024 * 1024 + 1);
+    const tableResult = TablePreviewProvider.parse(oversizedSource, 'csv');
+    const treeResult = DatatreePreviewProvider.parse(oversizedSource, 'json');
+
+    assert.ok(tableResult.html.includes('5 MB safety limit'));
+    assert.ok(treeResult.html.includes('5 MB safety limit'));
+  });

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.3 - 2026-08-28
 
 - Fixed Mermaid declaration validation for case variants such as `gitGraph` and enabled strict Mermaid rendering security.
 - Fixed Markdown heading navigation for Setext and nested headings, including duplicate IDs caused by frontmatter anchors.

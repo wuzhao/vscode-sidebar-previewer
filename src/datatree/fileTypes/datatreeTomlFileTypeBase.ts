@@ -6,13 +6,16 @@ type TomlCursor = {
 };
 
 /**
- * 提供 TOML 数据树能力
+ * 将 TOML 的定位与注释策略组合到已有数据树能力
+ * @param Base - 已组合共享渲染和 JSON/YAML 策略的构造器
+ * @returns 继续包含 TOML 格式策略的构造器
  */
-export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
-    /**
+export function withTomlFileType(Base: typeof DatatreeYamlFileTypeBase) {
+    return class DatatreeTomlFileType extends Base {
+        /**
          * 构建TOML路径行索引供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildTomlPathLineIndex(lines: string[]): Map<string, number[]> {
             const explicitIndex = new Map<string, number[]>();
@@ -84,16 +87,13 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 }
 
                 const basePath = [...currentTablePath, ...relativePath];
-                inlineTableKeys.forEach(inlineKey => {
+                inlineTableKeys.forEach((inlineKey) => {
                     pushPath([...basePath, inlineKey], i, true);
                 });
             }
 
             const index = new Map<string, number[]>();
-            const allKeys = new Set<string>([
-                ...explicitIndex.keys(),
-                ...implicitIndex.keys(),
-            ]);
+            const allKeys = new Set<string>([...explicitIndex.keys(), ...implicitIndex.keys()]);
 
             for (const key of allKeys) {
                 const explicitLines = explicitIndex.get(key) ?? [];
@@ -104,7 +104,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return index;
         }
 
-    /**
+        /**
          * 提取TOML 内联表顶层键集合供路径定位复用
          * @param valueExpr - 赋值右侧原始表达式
          * @returns 返回内联表顶层键集合
@@ -288,14 +288,14 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return keys;
         }
 
-    /**
+        /**
          * 构建TOML数组元素行索引供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildTomlArrayItemLineIndex(lines: string[]): number[] {
             const result: number[] = [];
-            const codeLines = lines.map(line => this.stripHashCommentText(line));
+            const codeLines = lines.map((line) => this.stripHashCommentText(line));
 
             for (let i = 0; i < codeLines.length; i++) {
                 const codeLine = codeLines[i];
@@ -331,10 +331,10 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return result;
         }
 
-    /**
+        /**
          * 构建TOML 数组起始行深度供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildTomlArrayDepthAtLineStart(lines: string[]): number[] {
             const depthAtLineStart: number[] = [];
@@ -377,10 +377,10 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return depthAtLineStart;
         }
 
-    /**
-         * 查找TOML 赋值语句等号位置并返回匹配结果
-         * @param line - 当前处理的行内容或行号
-         * @returns 返回匹配结果
+        /**
+         * 查找TOML 赋值语句等号位置并返回当前格式语法对应的匹配结果
+         * @param line - 对应源码行的内容或零基行号
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findTomlAssignmentEqualIndex(line: string): number {
             let inSingle = false;
@@ -408,7 +408,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 }
 
                 if (inSingle) {
-                    if (ch === '\'') {
+                    if (ch === "'") {
                         inSingle = false;
                     }
                     continue;
@@ -418,7 +418,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     inDouble = true;
                     continue;
                 }
-                if (ch === '\'') {
+                if (ch === "'") {
                     inSingle = true;
                     continue;
                 }
@@ -446,17 +446,13 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return -1;
         }
 
-    /**
+        /**
          * 递归提取 TOML 值中的数组元素行并写入结果
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
          * @param result - 数组元素行结果集合
          */
-        protected static collectTomlArrayItemLinesFromValue(
-            lines: string[],
-            cursor: TomlCursor,
-            result: number[]
-        ): void {
+        protected static collectTomlArrayItemLinesFromValue(lines: string[], cursor: TomlCursor, result: number[]): void {
             this.skipTomlCursorWhitespace(lines, cursor, true);
             const ch = this.peekTomlCursorChar(lines, cursor);
             if (!ch) {
@@ -473,7 +469,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 return;
             }
 
-            if (ch === '"' || ch === '\'') {
+            if (ch === '"' || ch === "'") {
                 this.consumeTomlQuotedString(lines, cursor, ch);
                 return;
             }
@@ -481,17 +477,13 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             this.consumeTomlBareValue(lines, cursor);
         }
 
-    /**
+        /**
          * 递归提取 TOML 数组值中的元素行并写入结果
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
          * @param result - 数组元素行结果集合
          */
-        protected static collectTomlArrayItemLinesFromArray(
-            lines: string[],
-            cursor: TomlCursor,
-            result: number[]
-        ): void {
+        protected static collectTomlArrayItemLinesFromArray(lines: string[], cursor: TomlCursor, result: number[]): void {
             if (this.peekTomlCursorChar(lines, cursor) !== '[') {
                 return;
             }
@@ -538,17 +530,13 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
         }
 
-    /**
+        /**
          * 递归提取 TOML 内联表中的数组元素行并写入结果
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
          * @param result - 数组元素行结果集合
          */
-        protected static collectTomlArrayItemLinesFromInlineTable(
-            lines: string[],
-            cursor: TomlCursor,
-            result: number[]
-        ): void {
+        protected static collectTomlArrayItemLinesFromInlineTable(lines: string[], cursor: TomlCursor, result: number[]): void {
             if (this.peekTomlCursorChar(lines, cursor) !== '{') {
                 return;
             }
@@ -598,7 +586,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
         }
 
-    /**
+        /**
          * 处理 TOML 内联表键消费逻辑
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
@@ -610,7 +598,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 return;
             }
 
-            if (ch === '"' || ch === '\'') {
+            if (ch === '"' || ch === "'") {
                 this.consumeTomlQuotedString(lines, cursor, ch);
                 return;
             }
@@ -624,13 +612,13 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
         }
 
-    /**
+        /**
          * 处理 TOML 引号字符串消费逻辑
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
          * @param quote - 引号类型
          */
-        protected static consumeTomlQuotedString(lines: string[], cursor: TomlCursor, quote: '"' | '\''): void {
+        protected static consumeTomlQuotedString(lines: string[], cursor: TomlCursor, quote: '"' | "'"): void {
             if (this.peekTomlCursorChar(lines, cursor) !== quote) {
                 return;
             }
@@ -663,7 +651,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
         }
 
-    /**
+        /**
          * 处理 TOML 裸值消费逻辑
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
@@ -678,7 +666,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
         }
 
-    /**
+        /**
          * 处理 TOML 游标空白跳过逻辑
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
@@ -700,7 +688,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
         }
 
-    /**
+        /**
          * 读取 TOML 游标当前字符并返回结果
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
@@ -719,7 +707,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return cursor.line + 1 < lines.length ? '\n' : null;
         }
 
-    /**
+        /**
          * 推进 TOML 游标并返回下一位置
          * @param lines - 去注释后的源码行集合
          * @param cursor - 当前游标
@@ -739,10 +727,10 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             cursor.column = 0;
         }
 
-    /**
-         * 查找TOML 数组元素首个标记并返回匹配结果
-         * @param line - 当前处理的行内容或行号
-         * @returns 返回匹配结果
+        /**
+         * 查找TOML 数组元素首个标记并返回当前格式语法对应的匹配结果
+         * @param line - 对应源码行的内容或零基行号
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findTomlArrayItemFirstToken(line: string): string | null {
             for (let i = 0; i < line.length; i++) {
@@ -755,10 +743,10 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return null;
         }
 
-    /**
-         * 查找TOML 数组起始并返回匹配结果
+        /**
+         * 查找TOML 数组起始并返回当前格式语法对应的匹配结果
          * @param text - 待处理的文本内容
-         * @returns 返回匹配结果
+         * @returns 返回当前格式语法对应的匹配结果
          */
         protected static findTomlArrayStart(text: string): number {
             let inSingle = false;
@@ -784,7 +772,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 }
 
                 if (inSingle) {
-                    if (ch === '\'') {
+                    if (ch === "'") {
                         inSingle = false;
                     }
                     continue;
@@ -794,7 +782,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     inDouble = true;
                     continue;
                 }
-                if (ch === '\'') {
+                if (ch === "'") {
                     inSingle = true;
                     continue;
                 }
@@ -806,7 +794,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return -1;
         }
 
-    /**
+        /**
          * 统计 TOML 顶层数组项数量并返回结果
          * @param arraySegment - 以 `[` 开始的数组片段
          * @returns 返回数组项数量
@@ -839,7 +827,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 }
 
                 if (inSingle) {
-                    if (ch === '\'') {
+                    if (ch === "'") {
                         inSingle = false;
                     }
                     continue;
@@ -853,7 +841,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     continue;
                 }
 
-                if (ch === '\'') {
+                if (ch === "'") {
                     inSingle = true;
                     if (squareDepth > 0) {
                         itemStarted = true;
@@ -923,9 +911,9 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return count;
         }
 
-    /**
+        /**
          * 统计方括号深度增量用于流程判断
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回布尔判断结果
          */
         protected static countSquareBracketDelta(line: string): number {
@@ -953,7 +941,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                 }
 
                 if (inSingle) {
-                    if (ch === '\'') {
+                    if (ch === "'") {
                         inSingle = false;
                     }
                     continue;
@@ -963,7 +951,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
                     inDouble = true;
                     continue;
                 }
-                if (ch === '\'') {
+                if (ch === "'") {
                     inSingle = true;
                     continue;
                 }
@@ -979,9 +967,9 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return delta;
         }
 
-    /**
+        /**
          * 提取TOML 键供后续逻辑使用
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 TOML 行中提取到的键名列表
          */
         protected static extractTomlKeys(line: string): string[] {
@@ -998,9 +986,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             }
 
             const assignMatch =
-                line.match(/^\s*([A-Za-z0-9_.-]+)\s*=/) ||
-                line.match(/^\s*"([^"]+)"\s*=/) ||
-                line.match(/^\s*'([^']+)'\s*=/);
+                line.match(/^\s*([A-Za-z0-9_.-]+)\s*=/) || line.match(/^\s*"([^"]+)"\s*=/) || line.match(/^\s*'([^']+)'\s*=/);
             if (assignMatch) {
                 keys.push(...this.splitTomlPath(assignMatch[1]));
             }
@@ -1008,7 +994,7 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
             return keys;
         }
 
-    /**
+        /**
          * 拆分TOML路径并返回片段集合
          * @param pathExpr - TOML 路径表达式
          * @returns 返回片段集合
@@ -1016,7 +1002,11 @@ export class DatatreeTomlFileTypeBase extends DatatreeYamlFileTypeBase {
         protected static splitTomlPath(pathExpr: string): string[] {
             return pathExpr
                 .split('.')
-                .map(segment => segment.trim().replace(/^["']|["']$/g, ''))
+                .map((segment) => segment.trim().replace(/^["']|["']$/g, ''))
                 .filter(Boolean);
         }
+    };
 }
+
+// TOML 格式策略通过能力组合加入数据树提供器
+export const DatatreeTomlFileTypeBase = withTomlFileType(DatatreeYamlFileTypeBase);

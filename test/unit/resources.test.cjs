@@ -54,7 +54,7 @@ const {
     assert.ok(/function showCommentTooltip\(target\)\s*\{[\s\S]*?applyCommentTooltipZoom\(\);[\s\S]*?tooltip\.classList\.add\('is-visible'\);/s.test(commentTooltipJs));
   });
 
-  test('Task A mermaid zoom uses x2 multiplier and keeps rerender zoom sync', () => {
+  test('Task A mermaid zoom uses the shared preview scale and keeps rerender sync', () => {
     const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
     const mermaidJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'mermaid.js'), 'utf8');
 
@@ -87,7 +87,7 @@ const {
     assert.ok(previewProvider.includes('private _lastPreviewDocumentUri: string | null = null;'));
     assert.ok(previewProvider.includes('this._resetZoomForDocumentSwitch(document);'));
     assert.ok(previewProvider.includes('private _resetZoomForDocumentSwitch(document: vscode.TextDocument): void'));
-    assert.ok(/private _resetZoomForDocumentSwitch\(document: vscode\.TextDocument\): void \{[\s\S]*?const nextDocumentUri = document\.uri\.toString\(\);[\s\S]*?if \(this\._lastPreviewDocumentUri === nextDocumentUri\) \{[\s\S]*?return;[\s\S]*?\}[\s\S]*?this\._lastPreviewDocumentUri = nextDocumentUri;[\s\S]*?this\._zoomLevel = 100;[\s\S]*?type: 'zoom',[\s\S]*?level: this\._zoomLevel,/s.test(previewProvider));
+    assert.ok(/private _resetZoomForDocumentSwitch\(document: vscode\.TextDocument\): void \{[\s\S]*?const nextDocumentUri = document\.uri\.toString\(\);[\s\S]*?if \(this\._lastPreviewDocumentUri === nextDocumentUri\) \{[\s\S]*?return;[\s\S]*?\}[\s\S]*?this\._lastPreviewDocumentUri = nextDocumentUri;[\s\S]*?this\._zoomLevel = 100;[\s\S]*?type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES\.zoom,[\s\S]*?level: this\._zoomLevel,/s.test(previewProvider));
     assert.ok(/private _showEmptyState\(\): void \{[\s\S]*?this\._lastPreviewDocumentUri = null;/s.test(previewProvider));
     assert.ok(/private _showError\(message: string\): void \{[\s\S]*?this\._lastPreviewDocumentUri = null;/s.test(previewProvider));
   });
@@ -279,7 +279,7 @@ const {
 
     assert.ok(commonJs.includes('function focusPreviewContent()'));
     assert.ok(commonJs.includes("content.classList.toggle('preview-focused', !!focused);"));
-    assert.ok(commonJs.includes("const DATA_TREE_FILE_TYPES = new Set(['json', 'jsonl', 'yaml', 'toml', 'xml']);"));
+    assert.ok(commonJs.includes('const DATA_TREE_FILE_TYPES = new Set(Array.isArray(RUNTIME_CONFIG.dataTreeFileTypes)'));
     assert.ok(commonJs.includes("const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', ...DATA_TREE_FILE_TYPES]);"));
     assert.ok(/document\.addEventListener\('keydown', \(e\) => \{[\s\S]*?e\.key\.toLowerCase\(\) !== 'a'[\s\S]*?NO_SELECT_ALL_FILE_TYPES\.has\(currentFileType\)[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?\}, true\);/s.test(commonJs));
     assert.ok(commonJs.includes("tableSelectionMore: L10N_SOURCE.tableSelectionMore || 'Actions'"));
@@ -709,6 +709,11 @@ const {
       VSCODE_API: {
         postMessage() {},
       },
+      WEBVIEW_TO_EXTENSION_MESSAGE_TYPES: {
+        dataTreeHighlightState: 'dataTreeHighlightState',
+        dataTreeLocator: 'dataTreeLocator',
+        navigateToLine: 'navigateToLine',
+      },
     };
 
     vm.runInNewContext(datatreeJs, context);
@@ -1134,12 +1139,27 @@ const {
 
   test('Task F comment and global constant conventions are enforced', () => {
     const srcDir = path.join(__dirname, '..', '..', 'src');
-    const tsFiles = fs.readdirSync(srcDir).filter(name => name.endsWith('.ts'));
+    const collectTsFiles = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        return collectTsFiles(entryPath);
+      }
+      return entry.isFile() && entry.name.endsWith('.ts') ? [entryPath] : [];
+    });
+    const rootTsFiles = fs.readdirSync(srcDir)
+      .filter(name => name.endsWith('.ts'))
+      .map(name => path.join(srcDir, name));
+    const datatreeTsFiles = collectTsFiles(path.join(srcDir, 'datatree'));
 
     const placeholderPattern = /@param\s+input\s+-\s+无输入参数|@returns\s+返回处理结果|@returns\s+无返回值|@throws\s+\{Error\}\s+处理失败时抛出异常|@returns\s+返回结果|@param\s+\w+\s+-\s+\w+\s+参数/;
-    for (const fileName of tsFiles) {
-      const fileContent = fs.readFileSync(path.join(srcDir, fileName), 'utf8');
-      assert.equal(placeholderPattern.test(fileContent), false, `${fileName} should not contain placeholder JSDoc tags`);
+    for (const filePath of [...rootTsFiles, ...datatreeTsFiles]) {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      assert.equal(placeholderPattern.test(fileContent), false, `${path.relative(srcDir, filePath)} should not contain placeholder comments`);
+    }
+    const datatreeSemanticPattern = /处理.*相关逻辑|返回构建后的数据结构|返回可复用实例|当前处理的行内容或行号/;
+    for (const filePath of datatreeTsFiles) {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      assert.equal(datatreeSemanticPattern.test(fileContent), false, `${path.relative(srcDir, filePath)} should use business-semantic comments`);
     }
 
     const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
@@ -1150,7 +1170,7 @@ const {
 
     assert.ok(commonJs.includes('const VSCODE_API = acquireVsCodeApi();'));
     assert.ok(commonJs.includes('const L10N_TEXT = {'));
-    assert.ok(commonJs.includes('const VALID_MESSAGE_TYPES = new Set(['));
+    assert.ok(commonJs.includes('const VALID_MESSAGE_TYPES = new Set(Object.values(EXTENSION_TO_WEBVIEW_MESSAGE_TYPES));'));
     assert.ok(mermaidJs.includes('const MERMAID_DRAG_STATE = {'));
     assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+escapeHtml\(/.test(commonJs));
     assert.ok(/\/\*\*[\s\S]*?\*\/\s*function\s+updateContent\(/.test(commonJs));
@@ -1162,9 +1182,9 @@ const {
     assert.ok(fileTypes.includes('const FILE_TYPE_CAPABILITIES: Record<FileType, FileTypeCapabilities> = {'));
     assert.ok(fileTypes.includes('const EXTENSION_TO_TYPE_MAP: Map<string, FileType> = new Map('));
 
-    assert.ok(i18n.includes('const SUPPORTED_EXTENSIONS = ['));
+    assert.ok(i18n.includes('const SUPPORTED_EXTENSIONS = getSupportedExtensionLabels();'));
     assert.ok(i18n.includes('const SUPPORTED_LIST_HTML = SUPPORTED_EXTENSIONS.map('));
-    assert.ok(i18n.includes("'JSONL (.jsonl)'"));
+    assert.ok(fileTypes.includes("label: 'JSONL (.jsonl)'"));
     assert.ok(i18n.includes('const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {'));
     assert.ok(i18n.includes('const FALLBACK_STRINGS: I18nStrings = {'));
   });
@@ -1221,6 +1241,9 @@ const {
         postMessage(message) {
           context.postedMessage = message;
         },
+      },
+      WEBVIEW_TO_EXTENSION_MESSAGE_TYPES: {
+        toggleCheckbox: 'toggleCheckbox',
       },
     };
 
@@ -1292,9 +1315,9 @@ const {
     vm.runInNewContext(`${updateSource}\nupdateMarkdownTableCheckboxSource(checkbox);`, context);
 
     assert.equal(JSON.parse(tableDataAttribute).source.includes('| Login | - [x] |'), true);
-    assert.ok(previewProvider.includes('private _skipNextPreviewUpdate: boolean = false;'));
-    assert.ok(previewProvider.includes('if (this._consumeSkipNextPreviewUpdate()) {'));
-    assert.ok(previewProvider.includes('this._skipNextPreviewUpdate = true;'));
+    assert.ok(previewProvider.includes('private _ignoredDocumentVersion: IgnoredDocumentVersion | null = null;'));
+    assert.ok(previewProvider.includes('if (this._consumeIgnoredDocumentVersion(e.document)) {'));
+    assert.ok(previewProvider.includes('version: document.version + 1,'));
     assert.equal(previewProvider.includes('preserveScrollPosition'), false);
     assert.equal(commonJs.includes('messageData.preserveScrollPosition'), false);
   });

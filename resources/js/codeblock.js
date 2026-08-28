@@ -154,7 +154,7 @@ function addCopyButton(pre, wrapper) {
         } catch (err) {
             console.error('Copy failed:', err);
             copyBtn.classList.add('copy-failed');
-            copyBtn.textContent = 'FAILED';
+            copyBtn.textContent = L10N_TEXT.copyFailed;
             updateCopyButtonHoverState(copyBtn.matches(':hover'));
         }
     });

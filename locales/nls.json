@@ -1,6 +1,6 @@
 {
   "displayName": "Sidebar Previewer",
-  "description": "Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, YAML, TOML, XML, CSV, and TSV.",
+  "description": "Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoom controls. Supports a wide range of formats covering Markdown, LaTeX, Mermaid, JSON, JSONL, YAML, TOML, XML, CSV, and TSV.",
   "command.zoomIn.title": "Zoom In",
   "command.zoomOut.title": "Zoom Out",
   "command.zoomReset.title": "100%",
@@ -30,5 +30,18 @@
   "runtime.tableSelectionTsvHint": "For Excel, Numbers & Sheets",
   "runtime.tableSelectionCsv": "Copy as CSV",
   "runtime.locatorCopied": "Copied Locator: {0}",
-  "runtime.locatorUnavailable": "No highlighted data tree region available"
+  "runtime.locatorUnavailable": "No highlighted data tree region available",
+  "runtime.copyFailed": "Copy failed",
+  "runtime.unknownError": "Unknown error",
+  "runtime.mermaidRenderTimeout": "Mermaid rendering timed out",
+  "runtime.mermaidLibraryLoadFailed": "Mermaid library failed to load",
+  "runtime.previewInputTooLarge": "Preview input exceeds the {0} MB safety limit",
+  "runtime.previewContentTooLarge": "Preview content is too large to render safely",
+  "runtime.noTabularRows": "No tabular rows to preview",
+  "runtime.parseContentFailed": "Failed to parse {0} content",
+  "runtime.unsupportedFileType": "Unsupported file type: {0}",
+  "runtime.unterminatedQuotedField": "Unterminated quoted field",
+  "runtime.tableRowsTruncated": "Showing the first {0} table rows",
+  "runtime.treeNodesTruncated": "Showing the first {0} data-tree nodes",
+  "runtime.invalidMermaidSyntax": "Invalid Mermaid syntax: unrecognized diagram type"
 }

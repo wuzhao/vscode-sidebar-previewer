@@ -1,4 +1,10 @@
 import { PreviewResult } from './fileTypes';
+import { i18n } from './i18n';
+import {
+    MAX_PREVIEW_INPUT_BYTES,
+    MAX_RENDERED_HTML_LENGTH,
+    MAX_RENDERED_TABLE_ROWS,
+} from './previewConfig';
 import { escapeHtml } from './utils';
 
 type TabularFileType = 'csv' | 'tsv';
@@ -12,11 +18,17 @@ interface CellData {
 }
 
 /**
+ * CSV 或 TSV 分段解析结果
+ */
+interface ParsedTableRows {
+    rows: CellData[][];
+    truncated: boolean;
+}
+
+/**
  * 提供 TablePreview 相关预览能力
  */
 export class TablePreviewProvider {
-    private static readonly MAX_HTML_LENGTH = 10 * 1024 * 1024;
-
     /**
      * 解析输入内容并返回结构化结果
      * @param content - 待解析的文件内容
@@ -25,25 +37,26 @@ export class TablePreviewProvider {
      */
     static parse(content: string, fileType: TabularFileType): PreviewResult {
         try {
+            if (Buffer.byteLength(content, 'utf8') > MAX_PREVIEW_INPUT_BYTES) {
+                return {
+                    html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.previewInputTooLarge, String(MAX_PREVIEW_INPUT_BYTES / 1024 / 1024)))}</div></div>`,
+                    fileType,
+                    supportsLocate: true,
+                };
+            }
             const delimiter = fileType === 'csv' ? ',' : '\t';
-            const rows = this.parseRows(content, delimiter);
+            const parsedRows = this.parseRows(content, delimiter);
+            const rows = parsedRows.rows;
 
             if (rows.length === 0) {
                 return {
-                    html: '<div class="empty-state"><div class="empty-text">No tabular rows to preview.</div></div>',
+                    html: `<div class="empty-state"><div class="empty-text">${escapeHtml(i18n.noTabularRows)}</div></div>`,
                     fileType,
                     supportsLocate: true,
                 };
             }
 
-            const html = this.renderTable(rows);
-            if (html.length > this.MAX_HTML_LENGTH) {
-                return {
-                    html: '<div class="error-state"><div class="error-text">Preview content is too large to render safely.</div></div>',
-                    fileType,
-                    supportsLocate: true,
-                };
-            }
+            const html = this.renderTable(rows, parsedRows.truncated);
 
             return {
                 html,
@@ -53,7 +66,7 @@ export class TablePreviewProvider {
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             return {
-                html: `<div class="error-state"><div class="error-text">Failed to parse ${fileType.toUpperCase()} content.</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
+                html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.parseContentFailed, fileType.toUpperCase()))}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
                 fileType,
                 supportsLocate: true,
             };
@@ -64,18 +77,19 @@ export class TablePreviewProvider {
      * 解析行数据并返回结构化结果
      * @param content - 待解析的文件内容
      * @param delimiter - CSV/TSV 字段分隔符
-     * @returns 返回按行解析后的表格数据
+     * @returns 返回首段表格数据与是否截断的状态
      * @throws 当 CSV/TSV 引号字段未闭合时抛出异常
      */
-    private static parseRows(content: string, delimiter: string): CellData[][] {
+    private static parseRows(content: string, delimiter: string): ParsedTableRows {
         if (content.length === 0 || (content.length === 1 && content.charCodeAt(0) === 0xFEFF)) {
-            return [];
+            return { rows: [], truncated: false };
         }
 
         const rows: CellData[][] = [];
         let row: CellData[] = [];
         let cell = '';
         let inQuotes = false;
+        let truncated = false;
 
         let currentLine = 0;
         let currentChar = 0;
@@ -161,6 +175,10 @@ export class TablePreviewProvider {
                 i += 1;
                 cellStartLine = currentLine;
                 cellStartChar = currentChar;
+                if (rows.length >= MAX_RENDERED_TABLE_ROWS + 1 && i < content.length) {
+                    truncated = true;
+                    break;
+                }
                 continue;
             }
 
@@ -187,6 +205,10 @@ export class TablePreviewProvider {
                 }
                 cellStartLine = currentLine;
                 cellStartChar = currentChar;
+                if (rows.length >= MAX_RENDERED_TABLE_ROWS + 1 && i < content.length) {
+                    truncated = true;
+                    break;
+                }
                 continue;
             }
 
@@ -196,22 +218,24 @@ export class TablePreviewProvider {
         }
 
         if (inQuotes) {
-            throw new Error('Unterminated quoted field.');
+            throw new Error(i18n.unterminatedQuotedField);
         }
 
-        row.push({
-            value: cell,
-            startLine: cellStartLine,
-            startChar: cellStartChar,
-            endLine: currentLine,
-            endChar: currentChar
-        });
-        
-        if (row.length > 1 || row[0].value.length > 0 || !this.endsWithNewline(content)) {
-            rows.push(row);
+        if (!truncated) {
+            row.push({
+                value: cell,
+                startLine: cellStartLine,
+                startChar: cellStartChar,
+                endLine: currentLine,
+                endChar: currentChar
+            });
+
+            if (row.length > 1 || row[0].value.length > 0 || !this.endsWithNewline(content)) {
+                rows.push(row);
+            }
         }
 
-        return rows;
+        return { rows, truncated };
     }
 
     /**
@@ -225,13 +249,14 @@ export class TablePreviewProvider {
 
     /**
      * 渲染表格并返回可展示内容
-     * @param rows - 表格行数据集合
+     * @param rows - 首段表格行数据集合
+     * @param sourceTruncated - 源文件是否因行数限制被截断
      * @returns 返回可渲染的表格 HTML
      */
-    private static renderTable(rows: CellData[][]): string {
+    private static renderTable(rows: CellData[][], sourceTruncated: boolean): string {
         const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
         if (columnCount === 0) {
-            return '<div class="empty-state"><div class="empty-text">No tabular rows to preview.</div></div>';
+            return `<div class="empty-state"><div class="empty-text">${escapeHtml(i18n.noTabularRows)}</div></div>`;
         }
 
         const normalizedRows = rows.map(row => {
@@ -259,17 +284,28 @@ export class TablePreviewProvider {
             html += `<th data-start-line="${cell.startLine}" data-start-char="${cell.startChar}" data-end-line="${cell.endLine}" data-end-char="${cell.endChar}">${escapeHtml(title)}</th>`;
         }
         html += '</tr></thead><tbody>';
+        let renderedBodyRows = 0;
+        let truncated = sourceTruncated;
 
         for (let rowIndex = 0; rowIndex < body.length; rowIndex++) {
             const row = body[rowIndex];
-            html += `<tr><td class="table-index-column">${rowIndex + 1}</td>`;
+            let rowHtml = `<tr><td class="table-index-column">${rowIndex + 1}</td>`;
             for (const cell of row) {
-                html += `<td data-start-line="${cell.startLine}" data-start-char="${cell.startChar}" data-end-line="${cell.endLine}" data-end-char="${cell.endChar}">${this.renderCell(cell.value)}</td>`;
+                rowHtml += `<td data-start-line="${cell.startLine}" data-start-char="${cell.startChar}" data-end-line="${cell.endLine}" data-end-char="${cell.endChar}">${this.renderCell(cell.value)}</td>`;
             }
-            html += '</tr>';
+            rowHtml += '</tr>';
+            if (html.length + rowHtml.length > MAX_RENDERED_HTML_LENGTH) {
+                truncated = true;
+                break;
+            }
+            html += rowHtml;
+            renderedBodyRows++;
         }
 
         html += '</tbody></table></div></div>';
+        if (truncated) {
+            html += `<div class="preview-truncated">${escapeHtml(i18n.format(i18n.tableRowsTruncated, String(renderedBodyRows)))}</div>`;
+        }
         return html;
     }
 

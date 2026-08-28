@@ -1,4 +1,5 @@
 import { PreviewResult } from './fileTypes';
+import { i18n } from './i18n';
 import { escapeHtml } from './utils';
 
 /**
@@ -25,7 +26,7 @@ export class MermaidPreviewProvider {
         const normalizedDirectiveLine = firstDirectiveLine.toLowerCase();
         const isValid = validStarts.some(start => normalizedDirectiveLine.startsWith(start.toLowerCase()));
         if (!isValid && firstDirectiveLine.length > 0) {
-            throw new Error('Invalid Mermaid syntax: unrecognized diagram type');
+            throw new Error(i18n.invalidMermaidSyntax);
         }
 
         // 将 mermaid 源码包装在特殊容器中，由客户端渲染

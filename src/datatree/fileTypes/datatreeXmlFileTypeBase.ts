@@ -14,22 +14,25 @@ import {
 import { DatatreeTomlFileTypeBase } from './datatreeTomlFileTypeBase';
 
 /**
- * 提供 XML 数据树能力
+ * 将 XML 的解析、定位与注释策略组合到已有数据树能力
+ * @param Base - 已组合共享渲染和 JSON/YAML/TOML 策略的构造器
+ * @returns 包含全部数据树格式策略的构造器
  */
-export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
-    // 标准化 XML 文本节点键
-    protected static readonly XML_TEXT_KEY = '#TEXT';
+export function withXmlFileType(Base: typeof DatatreeTomlFileTypeBase) {
+    return class DatatreeXmlFileType extends Base {
+        // 标准化 XML 文本节点键
+        protected static readonly XML_TEXT_KEY = '#TEXT';
 
-    // 标准化 XML CDATA 节点键
-    protected static readonly XML_CDATA_KEY = '#CDATA';
+        // 标准化 XML CDATA 节点键
+        protected static readonly XML_CDATA_KEY = '#CDATA';
 
-    // 标准化 XML DOCTYPE 声明键
-    protected static readonly XML_DECLARATION_KEY = '#DECLARATION';
+        // 标准化 XML DOCTYPE 声明键
+        protected static readonly XML_DECLARATION_KEY = '#DECLARATION';
 
-    /**
-         * 创建XML 结束行定位器并返回可复用实例
+        /**
+         * 创建XML 结束行定位器并返回按调用顺序消费源码位置的游标或定位器
          * @param lines - 按行拆分后的源文本
-         * @returns 返回可复用实例
+         * @returns 返回按调用顺序消费源码位置的游标或定位器
          */
         protected static createXmlCloseLineLocator(lines: string[]): XmlCloseLineLocator {
             const closeLineMap = new Map<number, number>();
@@ -86,11 +89,11 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             };
         }
 
-    /**
+        /**
          * 构建XML数组元素行索引供后续流程复用
          * @param lines - 按行拆分后的源文本
          * @param parsedData - 已解析的结构化数据
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildXmlArrayItemLineIndex(lines: string[], parsedData: unknown): number[] {
             if (!parsedData || typeof parsedData !== 'object') {
@@ -104,10 +107,10 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return result;
         }
 
-    /**
+        /**
          * 构建XML 元素路径行索引供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildXmlElementPathLineIndex(lines: string[]): Map<string, number[]> {
             const index = new Map<string, number[]>();
@@ -154,7 +157,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return index;
         }
 
-    /**
+        /**
          * 递归提取XML数组元素行并写入结果
          * @param value - 待处理的数据对象
          * @param parentPath - 父级路径片段集合
@@ -167,7 +170,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             parentPath: string[],
             pathLineIndex: Map<string, number[]>,
             pathCursor: Map<string, number>,
-            result: number[]
+            result: number[],
         ): void {
             if (Array.isArray(value)) {
                 const path = parentPath.join('.');
@@ -187,7 +190,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             }
         }
 
-    /**
+        /**
          * 解析XML并返回结构化结果
          * @param content - 待解析的文件内容
          * @returns 返回结构化结果
@@ -215,7 +218,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return this.attachXmlDtdDirectives(normalized, topLevelPiKeys, dtdBlock);
         }
 
-    /**
+        /**
          * 提取XML 文档顶层处理指令键并保持源顺序
          * @param content - 待解析的文件内容
          * @returns 返回处理指令键列表
@@ -265,7 +268,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return keys;
         }
 
-    /**
+        /**
          * 去除XML DTD 声明文本以避免解析器产出伪元素
          * @param content - 待解析的文件内容
          * @returns 返回移除 DTD 后的 XML 文本
@@ -298,7 +301,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return keptLines.join('\n');
         }
 
-    /**
+        /**
          * 提取XML DTD 指令集合供后续流程复用
          * @param content - 待解析的文件内容
          * @returns 返回提取到的 DTD 指令集合
@@ -346,21 +349,16 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return block;
         }
 
-    /**
-         * 提取单行XML DTD 指令并返回匹配结果
-         * @param line - 当前处理的行内容或行号
+        /**
+         * 提取单行XML DTD 指令并返回当前格式语法对应的匹配结果
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回提取到的 DTD 指令
          */
         protected static extractXmlDtdDirectiveFromLine(line: string): XmlDtdDirective | null {
             const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
             const trimmed = lineWithoutComments.trim();
 
-            if (
-                trimmed.length === 0
-                || trimmed.startsWith('<!--')
-                || trimmed.startsWith('<![CDATA[')
-                || !trimmed.startsWith('<!')
-            ) {
+            if (trimmed.length === 0 || trimmed.startsWith('<!--') || trimmed.startsWith('<![CDATA[') || !trimmed.startsWith('<!')) {
                 return null;
             }
 
@@ -368,7 +366,10 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             if (conditionalMatch) {
                 return {
                     key: `!${conditionalMatch[1].toUpperCase()}`,
-                    value: conditionalMatch[2].trim().replace(/\]\]>\s*$/, '').trim(),
+                    value: conditionalMatch[2]
+                        .trim()
+                        .replace(/\]\]>\s*$/, '')
+                        .trim(),
                 };
             }
 
@@ -385,7 +386,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             };
         }
 
-    /**
+        /**
          * 合并XML DTD 指令到解析结果供后续流程复用
          * @param value - 解析后的 XML 数据
          * @param topLevelPiKeys - 顶层处理指令键列表
@@ -479,16 +480,14 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             };
         }
 
-    /**
+        /**
          * 归一化XML值以统一后续处理
          * @param value - 待处理的值
          * @returns 返回归一化后的 XML 数据
          */
         protected static normalizeXmlValue(value: unknown): unknown {
             if (Array.isArray(value)) {
-                const normalizedItems = value
-                    .map(item => this.normalizeXmlValue(item))
-                    .filter(item => item !== undefined);
+                const normalizedItems = value.map((item) => this.normalizeXmlValue(item)).filter((item) => item !== undefined);
                 return normalizedItems;
             }
 
@@ -547,7 +546,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return normalized;
         }
 
-    /**
+        /**
          * 归一化XML 元素节点值以统一后续处理
          * @param key - 当前处理的键名
          * @param value - 待处理的值
@@ -559,13 +558,13 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             }
 
             if (Array.isArray(value)) {
-                return value.map(item => this.wrapXmlTextNodeIfPrimitive(item));
+                return value.map((item) => this.wrapXmlTextNodeIfPrimitive(item));
             }
 
             return this.wrapXmlTextNodeIfPrimitive(value);
         }
 
-    /**
+        /**
          * 判断XML 元数据键是否成立
          * @param key - 当前处理的键名
          * @returns 返回布尔判断结果
@@ -574,7 +573,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return key.startsWith('!') || key.startsWith('?') || key.startsWith('#');
         }
 
-    /**
+        /**
          * 将XML 元素原始值包装为文本节点对象
          * @param value - 待处理的值
          * @returns 返回包装后的值
@@ -598,7 +597,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             };
         }
 
-    /**
+        /**
          * 判断XML 类文本键是否成立
          * @param key - 当前处理的键名
          * @returns 返回布尔判断结果
@@ -608,7 +607,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return normalizedKey === this.XML_TEXT_KEY || normalizedKey === this.XML_CDATA_KEY;
         }
 
-    /**
+        /**
          * 判断XML 属性键是否成立
          * @param key - 当前处理的键名
          * @returns 返回布尔判断结果
@@ -617,9 +616,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return key.startsWith('@');
         }
 
-    /**
+        /**
          * 提取XML 键供后续逻辑使用
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 XML 行中提取到的键名列表
          */
         protected static extractXmlKeys(line: string): string[] {
@@ -640,9 +639,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return keys;
         }
 
-    /**
+        /**
          * 提取XML 处理指令键供后续逻辑使用
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 XML 行中提取到的处理指令键列表
          */
         protected static extractXmlProcessingInstructionKeys(line: string): string[] {
@@ -658,19 +657,15 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return keys;
         }
 
-    /**
+        /**
          * 提取XML DTD 指令键供后续逻辑使用
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 XML 行中提取到的 DTD 指令键列表
          */
         protected static extractXmlDtdDirectiveKeys(line: string): string[] {
             const lineWithoutComments = line.replace(/<!--.*?-->/g, ' ');
             const trimmed = lineWithoutComments.trim();
-            if (
-                trimmed.length === 0
-                || trimmed.startsWith('<!--')
-                || trimmed.startsWith('<![CDATA[')
-            ) {
+            if (trimmed.length === 0 || trimmed.startsWith('<!--') || trimmed.startsWith('<![CDATA[')) {
                 return [];
             }
 
@@ -692,9 +687,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return [directiveKey];
         }
 
-    /**
+        /**
          * 提取XML 标签匹配供后续逻辑使用
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 XML 标签匹配结果集合
          */
         protected static extractXmlTagMatches(line: string): XmlTagMatch[] {
@@ -718,7 +713,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return tagMatches;
         }
 
-    /**
+        /**
          * 提取XML 属性键供后续逻辑使用
          * @param attributesSource - XML 标签中的属性原始文本
          * @returns 返回 XML 属性键名列表
@@ -735,9 +730,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return keys;
         }
 
-    /**
+        /**
          * 提取XML 多行起始标签延续行中的属性键
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回 XML 行中提取到的属性键列表
          */
         protected static extractXmlMultilineAttributeKeys(line: string): string[] {
@@ -750,25 +745,20 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return this.extractXmlAttributeKeys(trimmed);
         }
 
-    /**
+        /**
          * 判断行是否为 XML 多行起始标签的属性延续行
          * @param trimmedLine - 去除首尾空白后的行文本
          * @returns 返回布尔判断结果
          */
         protected static isXmlAttributeContinuationLine(trimmedLine: string): boolean {
-            if (
-                trimmedLine.length === 0
-                || trimmedLine.startsWith('<')
-                || trimmedLine.startsWith('<?')
-                || trimmedLine.startsWith('<!')
-            ) {
+            if (trimmedLine.length === 0 || trimmedLine.startsWith('<') || trimmedLine.startsWith('<?') || trimmedLine.startsWith('<!')) {
                 return false;
             }
 
             return /([A-Za-z_:][\w:.-]*)\s*=\s*("[^"]*"|'[^']*')/.test(trimmedLine);
         }
 
-    /**
+        /**
          * 构建XML 文本类键行集合供后续流程复用
          * @param key - 当前处理的键名
          * @param lines - 按行拆分后的源文本
@@ -816,9 +806,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return matches;
         }
 
-    /**
+        /**
          * 判断行内是否包含可绑定的 XML 文本内容
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回布尔判断结果
          */
         protected static lineContainsXmlTextContent(line: string): boolean {
@@ -834,10 +824,10 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return withoutTags.trim().length > 0;
         }
 
-    /**
+        /**
          * 构建XML注释元数据供后续流程复用
          * @param lines - 按行拆分后的源文本
-         * @returns 返回构建后的数据结构
+         * @returns 返回供节点定位与注释归属使用的索引数据
          */
         protected static buildXmlCommentMetadata(lines: string[]): CommentMetadata {
             const lineComments = new Map<number, CommentEntry[]>();
@@ -907,7 +897,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                 const commentOnlyLine = scan.comments.length > 0 && !hasCode;
 
                 if (commentOnlyLine) {
-                    scan.comments.forEach(text => pushCommentForCurrentContext(text, i, currentDepth));
+                    scan.comments.forEach((text) => pushCommentForCurrentContext(text, i, currentDepth));
                     xmlDepth = nextDepth;
                     continue;
                 }
@@ -925,8 +915,8 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                         flushPendingStandalone();
                     }
 
-                    const inlineComments = scan.comments.map(text => ({ marker: '-' as CommentMarker, text }));
-                    const comments = [...pending, ...inlineComments].filter(comment => !!comment.text);
+                    const inlineComments = scan.comments.map((text) => ({ marker: '-' as CommentMarker, text }));
+                    const comments = [...pending, ...inlineComments].filter((comment) => !!comment.text);
                     if (comments.length > 0) {
                         lineComments.set(i, comments);
                     }
@@ -939,7 +929,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
                 }
 
                 if (scan.comments.length > 0) {
-                    scan.comments.forEach(text => pushCommentForCurrentContext(text, i, currentDepth));
+                    scan.comments.forEach((text) => pushCommentForCurrentContext(text, i, currentDepth));
                 }
 
                 if (pending.length > 0 && pendingDepth >= 0 && currentDepth < pendingDepth) {
@@ -975,9 +965,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return { lineComments, standaloneGroups };
         }
 
-    /**
+        /**
          * 判断 XML 行是否可绑定注释
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @returns 返回布尔判断结果
          */
         protected static hasXmlBindableKeysForComments(line: string): boolean {
@@ -988,9 +978,9 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return this.extractXmlMultilineAttributeKeys(line).length > 0;
         }
 
-    /**
+        /**
          * 扫描XML行注释集合并提取片段
-         * @param line - 当前处理的行内容或行号
+         * @param line - 对应源码行的内容或零基行号
          * @param state - XML 注释扫描状态
          * @returns 返回 XML 行注释扫描结果
          */
@@ -1050,7 +1040,7 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             };
         }
 
-    /**
+        /**
          * 统计XML 元素深度增量用于流程判断
          * @param nonCommentText - 剔除注释后的 XML 文本
          * @returns 返回布尔判断结果
@@ -1078,16 +1068,20 @@ export class DatatreeXmlFileTypeBase extends DatatreeTomlFileTypeBase {
             return delta;
         }
 
-    /**
-     * 处理XML注释文本相关逻辑并返回结果
-     * @param text - 待处理的文本内容
-     * @returns 返回清洗后的 XML 注释文本
-     */
-    protected static cleanXmlCommentText(text: string): string {
-        return text
-            .split('\n')
-            .map(line => line.replace(/\r/g, '').trim())
-            .join('\n')
-            .trim();
-    }
+        /**
+         * 清洗 XML 注释中的换行与外围空白
+         * @param text - 待处理的文本内容
+         * @returns 返回清洗后的 XML 注释文本
+         */
+        protected static cleanXmlCommentText(text: string): string {
+            return text
+                .split('\n')
+                .map((line) => line.replace(/\r/g, '').trim())
+                .join('\n')
+                .trim();
+        }
+    };
 }
+
+// XML 格式策略通过能力组合完成数据树提供器的格式能力集合
+export const DatatreeXmlFileTypeBase = withXmlFileType(DatatreeTomlFileTypeBase);

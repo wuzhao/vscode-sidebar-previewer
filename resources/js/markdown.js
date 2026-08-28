@@ -52,7 +52,7 @@ function reportVisibleHeading() {
     }
 
     VSCODE_API.postMessage({
-        type: 'visibleHeading',
+        type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.visibleHeading,
         headingId: visibleHeadingId
     });
 }
@@ -350,7 +350,7 @@ function bindCheckboxEvents() {
                     updateMarkdownTableCheckboxSource(e.target);
                 }
                 VSCODE_API.postMessage({
-                    type: 'toggleCheckbox',
+                    type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.toggleCheckbox,
                     line: line,
                     char: isNaN(char) ? null : char,
                     checked: e.target.checked

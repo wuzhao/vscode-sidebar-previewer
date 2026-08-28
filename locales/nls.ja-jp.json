@@ -1,6 +1,6 @@
 {
   "displayName": "Sidebar Previewer",
-  "description": "VS Code のサイドバー向けプレビュー拡張。リアルタイム描画、スクロール同期、ツリービュー、ズーム操作をサポートし、Markdown、LaTeX、Mermaid、JSON、YAML、TOML、XML、CSV、TSV に対応します。",
+  "description": "VS Code のサイドバー向けプレビュー拡張。リアルタイム描画、スクロール同期、ツリービュー、ズーム操作をサポートし、Markdown、LaTeX、Mermaid、JSON、JSONL、YAML、TOML、XML、CSV、TSV に対応します。",
   "command.zoomIn.title": "拡大",
   "command.zoomOut.title": "縮小",
   "command.zoomReset.title": "100%",
@@ -30,5 +30,18 @@
   "runtime.tableSelectionTsvHint": "Excel、Numbers、Sheets 向け",
   "runtime.tableSelectionCsv": "CSV としてコピー",
   "runtime.locatorCopied": "ロケーターをコピーしました: {0}",
-  "runtime.locatorUnavailable": "ハイライトされたデータツリー領域がありません"
+  "runtime.locatorUnavailable": "ハイライトされたデータツリー領域がありません",
+  "runtime.copyFailed": "コピーに失敗しました",
+  "runtime.unknownError": "不明なエラー",
+  "runtime.mermaidRenderTimeout": "Mermaid のレンダリングがタイムアウトしました",
+  "runtime.mermaidLibraryLoadFailed": "Mermaid ライブラリの読み込みに失敗しました",
+  "runtime.previewInputTooLarge": "プレビュー入力が {0} MB の安全上限を超えています",
+  "runtime.previewContentTooLarge": "プレビュー内容が大きすぎるため安全にレンダリングできません",
+  "runtime.noTabularRows": "プレビューできる表の行がありません",
+  "runtime.parseContentFailed": "{0} の内容を解析できませんでした",
+  "runtime.unsupportedFileType": "未対応のファイル形式：{0}",
+  "runtime.unterminatedQuotedField": "引用符で囲まれたフィールドが閉じられていません",
+  "runtime.tableRowsTruncated": "表の先頭 {0} 行のみを表示しています",
+  "runtime.treeNodesTruncated": "データツリーの先頭 {0} ノードのみを表示しています",
+  "runtime.invalidMermaidSyntax": "Mermaid 構文が無効です：図の種類を認識できません"
 }

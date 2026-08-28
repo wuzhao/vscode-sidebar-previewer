@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import * as vscode from 'vscode';
+import { getSupportedExtensionLabels } from './fileTypes';
 
 /**
- * 描述 I18nStrings 接口结构
+ * 定义扩展宿主与 Webview 共用的运行时文案
  */
 interface I18nStrings {
     emptyStateTitle: string;
@@ -24,21 +24,23 @@ interface I18nStrings {
     tableSelectionCsv: string;
     locatorCopied: string;
     locatorUnavailable: string;
+    copyFailed: string;
+    unknownError: string;
+    mermaidRenderTimeout: string;
+    mermaidLibraryLoadFailed: string;
+    previewInputTooLarge: string;
+    previewContentTooLarge: string;
+    noTabularRows: string;
+    parseContentFailed: string;
+    unsupportedFileType: string;
+    unterminatedQuotedField: string;
+    tableRowsTruncated: string;
+    treeNodesTruncated: string;
+    invalidMermaidSyntax: string;
 }
 
 // 定义空状态提示中展示的受支持文件格式列表
-const SUPPORTED_EXTENSIONS = [
-    'Markdown (.md)',
-    'LaTeX (.tex / .latex / .katex)',
-    'Mermaid (.mmd / .mermaid)',
-    'JSON (.json / .jsonc)',
-    'JSONL (.jsonl)',
-    'YAML (.yml / .yaml)',
-    'TOML (.toml)',
-    'XML (.xml)',
-    'CSV (.csv)',
-    'TSV (.tsv)'
-];
+const SUPPORTED_EXTENSIONS = getSupportedExtensionLabels();
 
 // 预先渲染受支持格式列表，复用于各语言文案模板
 const SUPPORTED_LIST_HTML = SUPPORTED_EXTENSIONS.map(ext => `<li>${ext}</li>`).join('');
@@ -62,7 +64,20 @@ const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {
     tableSelectionTsvHint: 'runtime.tableSelectionTsvHint',
     tableSelectionCsv: 'runtime.tableSelectionCsv',
     locatorCopied: 'runtime.locatorCopied',
-    locatorUnavailable: 'runtime.locatorUnavailable'
+    locatorUnavailable: 'runtime.locatorUnavailable',
+    copyFailed: 'runtime.copyFailed',
+    unknownError: 'runtime.unknownError',
+    mermaidRenderTimeout: 'runtime.mermaidRenderTimeout',
+    mermaidLibraryLoadFailed: 'runtime.mermaidLibraryLoadFailed',
+    previewInputTooLarge: 'runtime.previewInputTooLarge',
+    previewContentTooLarge: 'runtime.previewContentTooLarge',
+    noTabularRows: 'runtime.noTabularRows',
+    parseContentFailed: 'runtime.parseContentFailed',
+    unsupportedFileType: 'runtime.unsupportedFileType',
+    unterminatedQuotedField: 'runtime.unterminatedQuotedField',
+    tableRowsTruncated: 'runtime.tableRowsTruncated',
+    treeNodesTruncated: 'runtime.treeNodesTruncated',
+    invalidMermaidSyntax: 'runtime.invalidMermaidSyntax'
 };
 
 const FALLBACK_STRINGS: I18nStrings = {
@@ -83,21 +98,49 @@ const FALLBACK_STRINGS: I18nStrings = {
     tableSelectionTsvHint: 'For Excel, Numbers & Sheets',
     tableSelectionCsv: 'Copy as CSV',
     locatorCopied: 'Copied Locator: {0}',
-    locatorUnavailable: 'No highlighted data tree region available'
+    locatorUnavailable: 'No highlighted data tree region available',
+    copyFailed: 'Copy failed',
+    unknownError: 'Unknown error',
+    mermaidRenderTimeout: 'Mermaid rendering timed out',
+    mermaidLibraryLoadFailed: 'Mermaid library failed to load',
+    previewInputTooLarge: 'Preview input exceeds the {0} MB safety limit',
+    previewContentTooLarge: 'Preview content is too large to render safely',
+    noTabularRows: 'No tabular rows to preview',
+    parseContentFailed: 'Failed to parse {0} content',
+    unsupportedFileType: 'Unsupported file type: {0}',
+    unterminatedQuotedField: 'Unterminated quoted field',
+    tableRowsTruncated: 'Showing the first {0} table rows',
+    treeNodesTruncated: 'Showing the first {0} data-tree nodes',
+    invalidMermaidSyntax: 'Invalid Mermaid syntax: unrecognized diagram type'
 };
 
 type NlsBundle = Record<string, string>;
 let currentBundle: NlsBundle = {};
 
+/**
+ * 将运行时文案模板中的位置参数替换为展示值
+ * @param template - 包含数字占位符的本地化文案
+ * @param args - 按占位符顺序传入的展示值
+ * @returns 返回完成参数替换的文案
+ */
 function formatTemplate(template: string, ...args: string[]): string {
     return template.replace(/{(\d+)}/g, (match, index) => args[index] ?? match);
 }
 
-// 归一化语言标识，用于匹配 nls.* 文件
+/**
+ * 归一化 VS Code 语言标识以匹配语言包文件名
+ * @param locale - VS Code 当前语言标识
+ * @returns 返回使用短横线和小写字符的语言标识
+ */
 function normalizeLocale(locale: string): string {
     return locale.replace(/_/g, '-').toLowerCase();
 }
 
+/**
+ * 根据 VS Code 语言标识选择运行时语言包
+ * @param locale - VS Code 当前语言标识
+ * @returns 返回对应的语言包文件名
+ */
 function resolveNlsFileName(locale: string): string {
     const normalized = normalizeLocale(locale);
 
@@ -117,6 +160,11 @@ function resolveNlsFileName(locale: string): string {
     return 'nls.json';
 }
 
+/**
+ * 从扩展安装目录读取指定运行时语言包
+ * @param fileName - locales 目录下的语言包文件名
+ * @returns 返回解析后的语言键值映射，读取失败时返回空对象
+ */
 function loadNlsBundle(fileName: string): NlsBundle {
     try {
         const rootPath = path.resolve(__dirname, '..');
@@ -134,15 +182,23 @@ function loadNlsBundle(fileName: string): NlsBundle {
     return {};
 }
 
-// 从 locales/nls*.json 初始化当前语言包
-export function initI18n(): void {
-    const localeFile = resolveNlsFileName(vscode.env.language);
+/**
+ * 按 VS Code 当前语言初始化运行时文案并保留英文回退
+ * @param locale - 扩展激活时读取的 VS Code 语言标识
+ */
+export function initI18n(locale: string): void {
+    const localeFile = resolveNlsFileName(locale);
     const fallbackBundle = loadNlsBundle('nls.json');
     const localeBundle = localeFile === 'nls.json' ? {} : loadNlsBundle(localeFile);
 
     currentBundle = { ...fallbackBundle, ...localeBundle };
 }
 
+/**
+ * 读取当前语言的运行时文案并在缺失时回退英文
+ * @param key - I18nStrings 中的业务文案键
+ * @returns 返回可直接展示的本地化文案
+ */
 function getString(key: keyof I18nStrings): string {
     const nlsKey = RUNTIME_NLS_KEYS[key];
     const localized = currentBundle[nlsKey];
@@ -208,6 +264,45 @@ export const i18n = {
     },
     get locatorUnavailable(): string {
         return getString('locatorUnavailable');
+    },
+    get copyFailed(): string {
+        return getString('copyFailed');
+    },
+    get unknownError(): string {
+        return getString('unknownError');
+    },
+    get mermaidRenderTimeout(): string {
+        return getString('mermaidRenderTimeout');
+    },
+    get mermaidLibraryLoadFailed(): string {
+        return getString('mermaidLibraryLoadFailed');
+    },
+    get previewInputTooLarge(): string {
+        return getString('previewInputTooLarge');
+    },
+    get previewContentTooLarge(): string {
+        return getString('previewContentTooLarge');
+    },
+    get noTabularRows(): string {
+        return getString('noTabularRows');
+    },
+    get parseContentFailed(): string {
+        return getString('parseContentFailed');
+    },
+    get unsupportedFileType(): string {
+        return getString('unsupportedFileType');
+    },
+    get unterminatedQuotedField(): string {
+        return getString('unterminatedQuotedField');
+    },
+    get tableRowsTruncated(): string {
+        return getString('tableRowsTruncated');
+    },
+    get treeNodesTruncated(): string {
+        return getString('treeNodesTruncated');
+    },
+    get invalidMermaidSyntax(): string {
+        return getString('invalidMermaidSyntax');
     },
 
     // 将运行时文案模板中的占位符替换为具体值

@@ -429,7 +429,7 @@ function resolveSingleRangeHighlightTarget(matchedItems) {
  */
 function notifyDataTreeHighlightState(hasHighlight) {
     VSCODE_API.postMessage({
-        type: 'dataTreeHighlightState',
+        type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.dataTreeHighlightState,
         hasHighlight: !!hasHighlight
     });
 }
@@ -538,7 +538,7 @@ function reportHighlightedLocator() {
     const highlightedItem = document.querySelector('.data-tree .tree-item.is-highlight');
     if (!highlightedItem) {
         VSCODE_API.postMessage({
-            type: 'dataTreeLocator',
+            type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.dataTreeLocator,
             locator: null
         });
         return;
@@ -548,13 +548,13 @@ function reportHighlightedLocator() {
     const locator = normalizeLocatorExpression(toJqYqPathExpression(segments));
     if (!locator) {
         VSCODE_API.postMessage({
-            type: 'dataTreeLocator',
+            type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.dataTreeLocator,
             locator: null
         });
         return;
     }
     VSCODE_API.postMessage({
-        type: 'dataTreeLocator',
+        type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.dataTreeLocator,
         locator: locator
     });
 }
@@ -645,7 +645,7 @@ function bindTreeKeyClicks() {
             const line = parseInt(anchor.getAttribute('data-line'), 10);
             if (!isNaN(line) && line >= 0) {
                 VSCODE_API.postMessage({
-                    type: 'navigateToLine',
+                    type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.navigateToLine,
                     line: line
                 });
             }
@@ -673,7 +673,7 @@ function collapseAllNodes() {
 
 // 向公共注册中心登记：仅在数据树类型（JSON/JSONL/YAML/TOML/XML）文件时激活
 PreviewCommon.registerDomainInit(
-    ['json', 'jsonl', 'yaml', 'toml', 'xml'],
+    Array.from(DATA_TREE_FILE_TYPES),
     'datatree',
     function(fileType, messageData) {
         currentDataTreeFileType = fileType;

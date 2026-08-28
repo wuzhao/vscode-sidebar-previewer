@@ -15,28 +15,43 @@ const L10N_TEXT = {
     tableSelectionTsv: L10N_SOURCE.tableSelectionTsv || 'Copy as TSV',
     tableSelectionTsvHint: L10N_SOURCE.tableSelectionTsvHint || 'For Excel, Numbers & Sheets',
     tableSelectionCsv: L10N_SOURCE.tableSelectionCsv || 'Copy as CSV',
+    copyFailed: L10N_SOURCE.copyFailed || 'FAILED',
+    unknownError: L10N_SOURCE.unknownError || 'Unknown error',
+    mermaidRenderTimeout: L10N_SOURCE.mermaidRenderTimeout || 'Mermaid rendering timeout',
+    mermaidLibraryLoadFailed: L10N_SOURCE.mermaidLibraryLoadFailed || 'Mermaid library failed to load',
 };
+
+/**
+ * 解析扩展端注入的 Webview 共享配置
+ * @param value - HTML data-* 属性携带的 JSON 配置
+ * @returns 可供客户端读取的配置对象
+ */
+function parseRuntimeConfig(value) {
+    if (typeof value !== 'string' || value.length === 0) {
+        return {};
+    }
+    try {
+        const config = JSON.parse(value);
+        return config && typeof config === 'object' ? config : {};
+    } catch (_) {
+        return {};
+    }
+}
+
+// 扩展端与 Webview 共用的格式、缩放和消息协议配置
+const RUNTIME_CONFIG = parseRuntimeConfig(L10N_SOURCE.previewConfig);
+const EXTENSION_TO_WEBVIEW_MESSAGE_TYPES = Object.freeze(RUNTIME_CONFIG.extensionToWebviewMessageTypes || {});
+const WEBVIEW_TO_EXTENSION_MESSAGE_TYPES = Object.freeze(RUNTIME_CONFIG.webviewToExtensionMessageTypes || {});
 // 允许接收的消息类型枚举，避免无效消息触发渲染流程
-const VALID_MESSAGE_TYPES = new Set([
-    'update',
-    'loading',
-    'scrollToHeading',
-    'getVisibleHeading',
-    'scrollToLine',
-    'getVisibleLine',
-    'zoom',
-    'expandAll',
-    'collapseAll',
-    'highlightDataTreeRange',
-    'highlightTableRange',
-    'getHighlightedDataTreeLocator'
-]);
+const VALID_MESSAGE_TYPES = new Set(Object.values(EXTENSION_TO_WEBVIEW_MESSAGE_TYPES));
 // 需要启用数据树交互能力的文件类型枚举
-const DATA_TREE_FILE_TYPES = new Set(['json', 'jsonl', 'yaml', 'toml', 'xml']);
+const DATA_TREE_FILE_TYPES = new Set(Array.isArray(RUNTIME_CONFIG.dataTreeFileTypes) ? RUNTIME_CONFIG.dataTreeFileTypes : []);
 // 需要禁用全选快捷键的文件类型枚举
 const NO_SELECT_ALL_FILE_TYPES = new Set(['csv', 'tsv', ...DATA_TREE_FILE_TYPES]);
 // 预览缩放可选档位配置
-const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400];
+const ZOOM_STEPS = Array.isArray(RUNTIME_CONFIG.zoomSteps) && RUNTIME_CONFIG.zoomSteps.length > 0
+    ? RUNTIME_CONFIG.zoomSteps
+    : [100];
 // Mermaid 渲染超时时间（毫秒）
 const MERMAID_RENDER_TIMEOUT_MS = 5000;
 // 注释提示框离开后延迟隐藏时间（毫秒）
@@ -55,15 +70,30 @@ const CSS_SCOPE_DATASET_KEY = {
     table: 'cssTable',
     highlight: 'cssHighlight',
     codeblock: 'cssCodeblock',
-    datatree: 'cssDatatree'
+    datatree: 'cssDatatree',
+    katex: 'cssKatex'
 };
+// 按功能域映射到脚本 data-* 属性，供预览类型按需加载资源
+const SCRIPT_SCOPE_DATASET_KEY = {
+    codeblock: 'jsCodeblock',
+    katexVendor: 'jsKatexVendor',
+    katex: 'jsKatex',
+    mermaidVendor: 'jsMermaidVendor',
+    mermaid: 'jsMermaid',
+    markdown: 'jsMarkdown',
+    commentTooltip: 'jsCommentTooltip',
+    datatree: 'jsDatatree',
+    table: 'jsTable'
+};
+// 复用已发起的资源加载任务，避免切换文件时重复执行脚本
+const SCRIPT_LOAD_PROMISES = new Map();
 
 let currentHeadings = [];
-let isScrollingFromEditor = false;
 let isUpdatingSelectionFromWebview = false;
 let zoomLevel = 100;
 let wheelTimeout = null;
 let currentFileType = null;
+let latestUpdateSequence = 0;
 
 /**
  * 获取预览内容容器
@@ -132,7 +162,7 @@ function getErrorMessage(error) {
     if (error && typeof error === 'object' && 'message' in error) {
         return String(error.message);
     }
-    return String(error || 'Unknown error');
+    return String(error || L10N_TEXT.unknownError);
 }
 
 /**
@@ -205,6 +235,68 @@ function sanitizeResourceUri(value) {
 }
 
 /**
+ * 加载指定功能域的客户端脚本并复用同一加载任务
+ * @param scope - SCRIPT_SCOPE_DATASET_KEY 中声明的功能域
+ * @returns 脚本完成执行后的 Promise
+ */
+function loadPreviewScript(scope) {
+    if (SCRIPT_LOAD_PROMISES.has(scope)) {
+        return SCRIPT_LOAD_PROMISES.get(scope);
+    }
+    const datasetKey = SCRIPT_SCOPE_DATASET_KEY[scope];
+    const src = document.body && datasetKey ? sanitizeResourceUri(document.body.dataset[datasetKey] || '') : null;
+    if (!src) {
+        return Promise.reject(new Error(L10N_TEXT.unknownError));
+    }
+
+    const loadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.dataset.previewScriptScope = scope;
+        script.addEventListener('load', () => resolve(), { once: true });
+        script.addEventListener('error', () => reject(new Error(L10N_TEXT.unknownError)), { once: true });
+        document.body.appendChild(script);
+    });
+    SCRIPT_LOAD_PROMISES.set(scope, loadPromise);
+    return loadPromise;
+}
+
+/**
+ * 按预览类型加载渲染和交互所需的最小脚本集合
+ * @param fileType - 当前预览文件类型
+ * @returns 所有依赖按顺序执行完成后的 Promise
+ */
+async function ensurePreviewScripts(fileType) {
+    if (fileType === 'csv' || fileType === 'tsv') {
+        await loadPreviewScript('table');
+        return;
+    }
+    if (DATA_TREE_FILE_TYPES.has(fileType)) {
+        await loadPreviewScript('commentTooltip');
+        await loadPreviewScript('datatree');
+        return;
+    }
+    if (fileType === 'latex') {
+        await loadPreviewScript('katexVendor');
+        await loadPreviewScript('katex');
+        return;
+    }
+    if (fileType === 'mermaid') {
+        await loadPreviewScript('mermaidVendor');
+        await loadPreviewScript('mermaid');
+        return;
+    }
+
+    await loadPreviewScript('codeblock');
+    await loadPreviewScript('katexVendor');
+    await loadPreviewScript('katex');
+    await loadPreviewScript('mermaidVendor');
+    await loadPreviewScript('mermaid');
+    await loadPreviewScript('markdown');
+    await loadPreviewScript('table');
+}
+
+/**
  * 将输入 HTML 清洗为安全的文档片段
  * @param value - 待渲染 HTML 文本
  * @returns 返回可插入 DOM 的安全片段
@@ -252,7 +344,7 @@ function buildSafeContentFragment(value) {
  * @returns 返回需要加载的样式域集合
  */
 function resolveCssScopes(fileType) {
-    const scopes = new Set(['codeblock']);
+    const scopes = new Set();
     if (fileType === 'csv' || fileType === 'tsv') {
         scopes.add('table');
         return scopes;
@@ -267,12 +359,15 @@ function resolveCssScopes(fileType) {
     }
     if (fileType === 'latex') {
         scopes.add('latex');
+        scopes.add('katex');
         return scopes;
     }
+    scopes.add('codeblock');
     scopes.add('markdown');
     scopes.add('table');
     scopes.add('highlight');
     scopes.add('latex');
+    scopes.add('katex');
     scopes.add('mermaid');
     return scopes;
 }
@@ -320,23 +415,23 @@ window.addEventListener('message', event => {
     }
 
     switch (message.type) {
-        case 'update':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update:
             updateContent(message);
             break;
-        case 'loading':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.loading:
             showLoading();
             break;
-        case 'scrollToHeading':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToHeading:
             if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.scrollToHeading) {
                 PreviewMarkdown.scrollToHeading(normalizeOptionalString(message.headingId));
             }
             break;
-        case 'getVisibleHeading':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.getVisibleHeading:
             if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.reportVisibleHeading) {
                 PreviewMarkdown.reportVisibleHeading();
             }
             break;
-        case 'scrollToLine':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToLine:
             {
                 const line = normalizeLineValue(message.line);
                 if (line !== null && typeof PreviewTable !== 'undefined' && PreviewTable.scrollToLine) {
@@ -344,12 +439,12 @@ window.addEventListener('message', event => {
                 }
             }
             break;
-        case 'getVisibleLine':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.getVisibleLine:
             if (typeof PreviewTable !== 'undefined' && PreviewTable.reportVisibleLine) {
                 PreviewTable.reportVisibleLine();
             }
             break;
-        case 'zoom':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.zoom:
             {
                 const nextZoom = normalizeZoomLevel(message.level);
                 if (nextZoom === null) {
@@ -359,7 +454,7 @@ window.addEventListener('message', event => {
             }
             applyZoom();
             break;
-        case 'expandAll':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.expandAll:
             if (typeof PreviewDatatree !== 'undefined') {
                 PreviewDatatree.expandAllNodes();
             }
@@ -367,7 +462,7 @@ window.addEventListener('message', event => {
                 PreviewCommentTooltip.hideCommentTooltip(true);
             }
             break;
-        case 'collapseAll':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.collapseAll:
             if (typeof PreviewDatatree !== 'undefined') {
                 PreviewDatatree.collapseAllNodes();
             }
@@ -375,17 +470,17 @@ window.addEventListener('message', event => {
                 PreviewCommentTooltip.hideCommentTooltip(true);
             }
             break;
-        case 'highlightDataTreeRange':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.highlightDataTreeRange:
             if (typeof PreviewDatatree !== 'undefined') {
                 PreviewDatatree.highlightTreeRange(message.startLine, message.endLine);
             }
             break;
-        case 'getHighlightedDataTreeLocator':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.getHighlightedDataTreeLocator:
             if (typeof PreviewDatatree !== 'undefined' && PreviewDatatree.reportHighlightedLocator) {
                 PreviewDatatree.reportHighlightedLocator();
             }
             break;
-        case 'highlightTableRange':
+        case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.highlightTableRange:
             {
                 const startLine = normalizeLineValue(message.startLine);
                 const startChar = normalizeLineValue(message.startChar);
@@ -401,7 +496,7 @@ window.addEventListener('message', event => {
     }
 });
 
-VSCODE_API.postMessage({ type: 'webviewReady' });
+VSCODE_API.postMessage({ type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.webviewReady });
 
 // 监听滚轮事件，支持 cmd/ctrl + 轮缩放
 document.addEventListener('wheel', (e) => {
@@ -465,7 +560,7 @@ document.addEventListener('keydown', (e) => {
  */
 function notifyZoomChange() {
     VSCODE_API.postMessage({
-        type: 'zoomChange',
+        type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.zoomChange,
         level: zoomLevel
     });
 }
@@ -531,12 +626,40 @@ window.addEventListener('blur', () => {
  * @param data - 来自扩展端的渲染消息
  */
 function updateContent(data) {
+    const messageData = (data && typeof data === 'object') ? data : {};
+    const fileType = typeof messageData.fileType === 'string' ? messageData.fileType : 'markdown';
+    const updateSequence = ++latestUpdateSequence;
+    void updateContentAfterLoading(messageData, fileType, updateSequence);
+}
+
+/**
+ * 等待当前格式资源就绪后提交最新一次预览更新
+ * @param messageData - 来自扩展端的渲染消息
+ * @param fileType - 当前预览文件类型
+ * @param updateSequence - 用于淘汰过时异步结果的递增序号
+ */
+async function updateContentAfterLoading(messageData, fileType, updateSequence) {
     const content = document.getElementById('content');
     if (!content) {
         return;
     }
 
-    const messageData = (data && typeof data === 'object') ? data : {};
+    try {
+        await ensurePreviewScripts(fileType);
+    } catch (error) {
+        if (updateSequence !== latestUpdateSequence) {
+            return;
+        }
+        content.classList.remove('is-loading');
+        content.replaceChildren(buildSafeContentFragment(
+            `<div class="error-state"><i class="codicon codicon-error"></i><div>${escapeHtml(getErrorMessage(error))}</div></div>`
+        ));
+        return;
+    }
+    if (updateSequence !== latestUpdateSequence) {
+        return;
+    }
+
     if (typeof PreviewCommentTooltip !== 'undefined') PreviewCommentTooltip.hideCommentTooltip(true);
     if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.cleanupMarkdownSkeletonOutline) {
         PreviewMarkdown.cleanupMarkdownSkeletonOutline();
@@ -569,8 +692,8 @@ function updateContent(data) {
         });
     }
     currentHeadings = Array.isArray(messageData.headings) ? messageData.headings : [];
-    currentFileType = typeof messageData.fileType === 'string' ? messageData.fileType : null;
-    applyCssScopes(currentFileType || 'markdown');
+    currentFileType = fileType;
+    applyCssScopes(fileType);
 
     // 客户端渲染专用路径：KaTeX / Mermaid 独立渲染模式
     if (messageData.clientRender === 'katex') {
@@ -622,15 +745,11 @@ function scrollToHeading(headingId) {
 
     const element = document.getElementById(headingId);
     if (element) {
-        isScrollingFromEditor = true;
         // 仅在预览内容滚动区域内定位标题，避免末项带动 webview 外层滚动
         const targetScrollTop = content.scrollTop + element.getBoundingClientRect().top - content.getBoundingClientRect().top;
         const maxScrollTop = Math.max(0, content.scrollHeight - content.clientHeight);
         const clampedScrollTop = Math.min(maxScrollTop, Math.max(0, targetScrollTop));
         content.scrollTo({ top: clampedScrollTop, behavior: 'instant' });
-        setTimeout(() => {
-            isScrollingFromEditor = false;
-        }, 300);
     }
 }
 
