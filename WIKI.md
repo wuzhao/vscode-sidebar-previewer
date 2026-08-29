@@ -2,7 +2,7 @@
 
 **Sidebar Previewer** 是一个 VS Code 侧边栏扩展，能在侧边栏 Webview 面板中实时预览当前活动编辑器的文件内容。支持十种文件格式：Markdown、LaTeX、Mermaid、JSON、JSONL、YAML、TOML、XML、CSV、TSV。
 
-核心设计思路是：**TypeScript 宿主进程（Extension Host）负责解析、状态管理和编辑器联动，Webview 负责 DOM 渲染、二次渲染和交互**，两者通过 `postMessage` 协议通信。文件格式通过独立的 Provider 类分别处理，统一由 `PreviewProvider` 协调调度。
+核心设计思路是：**TypeScript 宿主进程（Extension Host）负责解析、状态管理和编辑器联动，Webview 负责 DOM 渲染、二次渲染和交互**，两者通过 `postMessage` 协议通信。文件格式通过独立的 Provider 分层处理，数据树由共享渲染基座组合各格式策略，统一由 `PreviewProvider` 协调调度。
 
 ---
 
@@ -24,11 +24,13 @@
 │   ┌─────────────────────▼───────────────────────────────────────────────┐   │
 │   │  PreviewProvider (WebviewViewProvider)                              │   │
 │   │  · 监听编辑器切换 / 文档变更 / 可视区域滚动                         │   │
+│   │  · 防抖文档更新并丢弃过期版本的渲染结果                            │   │
 │   │  · 识别文件类型（fileTypes.ts）                                     │   │
 │   │  · 调用对应 Format Provider 解析内容                                │   │
-│   │  · 构建 Webview HTML（注入 CSS/JS 资源）                            │   │
+│   │  · 构建 Webview HTML（注入共享配置和按需资源地址）                  │   │
 │   │  · 与 Webview 双向 postMessage 通信                                 │   │
 │   │  · 暴露命令接口（zoom / locate / follow / expand...）               │   │
+│   │  · 按单个 Webview 生命周期统一释放监听器                            │   │
 │   └─────────────────────┬───────────────────────────────────────────────┘   │
 │                         │ parse(content, fileType)                          │
 │                         │                                                   │
@@ -45,7 +47,8 @@
 │   └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │   fileTypes.ts   — 文件扩展名 → FileType 映射 + 能力描述                    │
-│   i18n.ts        — 多语言字符串（en/zh-CN/zh-TW/zh-HK/ja-JP）               │
+│   previewConfig.ts — 缩放、大小限制与消息协议的共享配置                     │
+│   i18n.ts        — 从 locales/nls*.json 加载运行时多语言字符串              │
 └─────────────────────────┬───────────────────────────────────────────────────┘
                           │ postMessage / onDidReceiveMessage
                           │
@@ -55,6 +58,7 @@
 │   resources/js/*.js                                                         │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
 │   │  · 接收 update 消息，将 HTML 注入 DOM                               │   │
+│   │  · 根据当前格式按需加载渲染与交互脚本                              │   │
 │   │  · 触发 KaTeX 渲染（数学公式）                                      │   │
 │   │  · 触发 Mermaid 渲染（图表）                                        │   │
 │   │  · 处理缩放（滚轮 + 命令）                                          │   │
@@ -84,9 +88,9 @@ Webview → Host : webviewReady | zoomChange | visibleHeading | visibleLine |
 
 ## 数据流说明
 
-1. **文件打开/切换**：VS Code 触发 `onDidChangeActiveTextEditor`，`PreviewProvider` 读取文档内容并识别文件类型。
-2. **解析**：调用对应 Format Provider 的静态 `parse()` 方法，返回包含渲染好的 HTML 字符串及元数据的 `PreviewResult`。
-3. **渲染**：将 HTML 通过 `postMessage({ type: 'update', ... })` 发送至 Webview；Webview 注入 DOM 后执行二次渲染（KaTeX、Mermaid）。
+1. **文件打开/切换**：VS Code 触发 `onDidChangeActiveTextEditor`，`PreviewProvider` 读取文档内容并识别文件类型；连续编辑使用防抖调度，并以 URI 与文档版本淘汰过期结果。
+2. **解析**：输入先经过 5 MB 大小预检，再调用对应 Format Provider 的静态 `parse()` 方法；CSV/TSV 和数据树只构建有上限的首段 HTML，并在截断时返回提示。
+3. **渲染**：将 HTML 通过共享消息协议发送至 Webview；Webview 先按文件类型加载所需 CSS/JS，再注入 DOM 并执行 KaTeX、Mermaid 等二次渲染。
 4. **定位与高亮联动**：Markdown/LaTeX 通过标题信息做 `scrollToHeading` / `visibleHeading` 双向定位；CSV/TSV 通过 `scrollToLine` / `visibleLine` 和 `updateEditorSelection` 做行列联动；JSON/JSONL/YAML/TOML/XML 不启用通用 locate 命令，改由编辑器选区触发 `highlightDataTreeRange`，点击树节点时发送 `navigateToLine` 跳回源文件。
 5. **命令**：用户点击工具栏按钮，VS Code 命令触发 `PreviewProvider` 公开方法（如 `zoomIn()`），再通过 `postMessage` 通知 Webview 更新 UI 状态。
 
@@ -98,18 +102,19 @@ Webview → Host : webviewReady | zoomChange | visibleHeading | visibleLine |
 | --- | --- |
 | Datatree 入口与总调度 | `src/datatreePreviewProvider.ts` |
 | 通用能力（定位与注释绑定） | `src/datatree/common/datatreeLocatorAndCommentBase.ts` |
-| 通用能力（树渲染与边界处理） | `src/datatree/common/datatreeTreeRenderBase.ts` |
-| JSON 相关实现 | `src/datatree/fileTypes/datatreeJsonFileTypeBase.ts` |
-| YAML 相关实现 | `src/datatree/fileTypes/datatreeYamlFileTypeBase.ts` |
-| TOML 相关实现 | `src/datatree/fileTypes/datatreeTomlFileTypeBase.ts` |
-| XML 相关实现 | `src/datatree/fileTypes/datatreeXmlFileTypeBase.ts` |
+| 通用能力（树渲染、分段预算与边界处理） | `src/datatree/common/datatreeTreeRenderBase.ts` |
+| JSON 能力组合函数 | `src/datatree/fileTypes/datatreeJsonFileTypeBase.ts` |
+| YAML 能力组合函数 | `src/datatree/fileTypes/datatreeYamlFileTypeBase.ts` |
+| TOML 能力组合函数 | `src/datatree/fileTypes/datatreeTomlFileTypeBase.ts` |
+| XML 能力组合函数 | `src/datatree/fileTypes/datatreeXmlFileTypeBase.ts` |
 | Datatree 共享类型定义 | `src/datatree/core/datatreeProviderTypes.ts` |
+| 预览大小、缩放和消息协议配置 | `src/previewConfig.ts` |
 
 ### 前端交互职责映射
 
 | 交互能力 | 主要文件 |
 | --- | --- |
-| Host / Webview 消息分发、内容注入、缩放和按类型初始化 | `resources/js/common.js` |
+| Host / Webview 消息分发、按类型加载资源、内容注入、缩放和初始化 | `resources/js/common.js` |
 | Markdown 任务列表回写、Skeleton Outline 与标题定位 | `resources/js/markdown.js` |
 | 点击 data-tree key 跳转编辑器（`navigateToLine`），并根据编辑器选区高亮树节点（`highlightTreeRange`） | `resources/js/datatree.js` |
 | 读取 data-tree 当前高亮节点并回传定位路径和高亮状态（`dataTreeLocator` / `dataTreeHighlightState`） | `resources/js/datatree.js` |

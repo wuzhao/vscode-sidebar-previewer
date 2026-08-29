@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.4.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.4.3-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -76,6 +76,7 @@ JSON / JSONL / YAML / TOML / XML
 - ツールバーから現在のハイライト項目のロケータを jq/yq 形式でコピー可能
 - コメント付きキーにはアイコンを表示し、ホバーで内容を確認可能
 - 選択項目のハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
+- 大規模なデータツリーは先頭 4,000 ノードのみを描画し、打ち切り通知を表示して応答性を維持
 
 ### CSV / TSV
 
@@ -85,6 +86,7 @@ JSON / JSONL / YAML / TOML / XML
 - 選択セルのハイライトはフォーカス連動（フォーカス時は青、非フォーカス時はグレー）
 - 複数セル選択時に選択範囲の右上へ分割コピーボタンを表示し、メインボタンは TSV、ドロップダウンは Markdown、ASCII、TSV、CSV 形式を提供
 - `Cmd/Ctrl+C`：単一セルはセル文字列をコピー、複数セルはTSV形式でコピー
+- 大規模な CSV/TSV は先頭 2,000 行の本文データのみを描画し、打ち切り通知を表示
 
 ## インストール
 

@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.4.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.4.3-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/README.md) | [简体中文](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-CN.md) | [繁體中文-台灣](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-TW.md) | [繁體中文-香港](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.zh-HK.md) | [日本語](https://github.com/wuzhao/vscode-sidebar-previewer/blob/main/docs/i18n/README.ja-JP.md)
 
@@ -76,6 +76,7 @@ JSON / JSONL / YAML / TOML / XML
 - Copy highlighted data-tree locator as jq/yq-style path from toolbar
 - Comment icon on keys with hover tooltip
 - Focus-aware selection highlight (blue when focused, gray when unfocused)
+- Large data trees render the first 4,000 nodes with a truncation notice to keep the preview responsive
 
 ### CSV / TSV
 
@@ -85,6 +86,7 @@ JSON / JSONL / YAML / TOML / XML
 - Focus-aware selected-cell highlight (blue when focused, gray when unfocused)
 - Multi-cell split copy action at the selection's upper-right: the main button copies TSV, while the dropdown offers Markdown, ASCII, TSV, and CSV formats
 - `Cmd/Ctrl+C`: copy single selected cell text, or copy multi-cell selection as TSV
+- Large CSV/TSV files render the first 2,000 body rows with a truncation notice
 
 ## Installation
 

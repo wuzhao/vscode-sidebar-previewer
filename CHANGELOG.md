@@ -1,11 +1,17 @@
 # Changelog
 
-## 0.4.3 - 2026-08-28
+## 0.4.3 - 2026-08-29
 
 - Fixed Mermaid declaration validation for case variants such as `gitGraph` and enabled strict Mermaid rendering security.
 - Fixed Markdown heading navigation for Setext and nested headings, including duplicate IDs caused by frontmatter anchors.
 - Fixed LaTeX duplicate heading IDs, same-line math environments, multiline `$$` blocks, and nested command arguments.
 - Hardened preview HTML handling by blocking embedded styles, forms, inline style attributes, and insecure HTTP images.
+- Improved editing responsiveness with debounced updates, stale-version cancellation, and a 5 MB input precheck.
+- Large CSV/TSV and data-tree previews now render bounded first segments with a clear truncation notice.
+- Preview-specific KaTeX, Mermaid, table, and data-tree resources are now loaded on demand.
+- Standardized Mermaid previews on the shared 100% default and zoom steps.
+- Localized runtime parse, size-limit, truncation, Mermaid, and copy-failure messages across all supported languages.
+- Updated the data-tree locator copy action to use the VS Code `symbol-number` icon.
 
 ～～～
 
@@ -13,6 +19,12 @@
 - 修复 Markdown Setext 与嵌套标题的定位，并避免 frontmatter 锚点造成重复 ID。
 - 修复 LaTeX 重复标题 ID、同行数学环境、多行 `$$` 数学块与嵌套命令参数解析。
 - 加强预览 HTML 安全处理，阻止嵌入样式、表单、行内样式属性与不安全的 HTTP 图片。
+- 通过文档更新防抖、过期版本取消和 5 MB 输入预检提升连续编辑时的响应速度。
+- 大型 CSV/TSV 与数据树预览改为渲染有上限的首段内容，并显示明确的截断提示。
+- KaTeX、Mermaid、表格和数据树资源改为按当前预览类型加载。
+- Mermaid 预览统一使用共享的默认 100% 与缩放档位。
+- 解析、大小限制、截断、Mermaid 与复制失败提示已覆盖全部运行时语言。
+- 数据树定位路径复制操作改用 VS Code `symbol-number` 图标。
 
 ## 0.4.2 - 2026-08-14
 
@@ -110,14 +122,14 @@
 
 ## 0.3.12 - 2026-05-06
 
-- Updated Mermaid default zoom to 200% with doubled zoom step for Mermaid previews, and fixed file-switch initialization so text scales with diagram.
+- Standardized Mermaid previews on the shared 100% default and zoom steps, and fixed file-switch initialization so text scales with the diagram.
 - Preview zoom now resets to 100% whenever switching files.
 - Preview state is now fully reinitialized on every file switch, including same-type files.
 - Fixed JSON/JSONC deep nested array-object locate mapping for inline object keys to resolve no-response clicks and wrong target lines.
 
 ～～～
 
-- 将 Mermaid 预览默认缩放调整为 200%，并将 Mermaid 缩放步进翻倍；修复切换文件初始化阶段图文缩放不同步问题。
+- 将 Mermaid 预览统一为共享的默认 100% 与缩放档位；修复切换文件初始化阶段图文缩放不同步问题。
 - 切换任意文件时预览缩放会重置为 100%。
 - 每次切换文件都会重新初始化预览状态，即使文件类型相同也不复用上次设定。
 - 修复 JSON/JSONC 深层嵌套数组对象内联键的定位映射，解决点击无响应与跳转行错位问题。

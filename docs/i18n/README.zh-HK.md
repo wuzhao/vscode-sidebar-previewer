@@ -1,6 +1,6 @@
 # Sidebar Previewer
 
-![Version](https://img.shields.io/badge/version-0.4.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Version](https://img.shields.io/badge/version-0.4.3-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Language: [English](../../README.md) | [简体中文](./README.zh-CN.md) | [繁體中文-台灣](./README.zh-TW.md) | [繁體中文-香港](./README.zh-HK.md) | [日本語](./README.ja-JP.md)
 
@@ -76,6 +76,7 @@ JSON / JSONL / YAML / TOML / XML
 - 支持喺工具欄複製當前高亮節點嘅定位路徑（jq/yq 風格）
 - 有註解嘅鍵會顯示註解圖示，滑鼠停留可以睇到註解內容
 - 選中條目高亮支援焦點狀態（有焦點藍色，失焦灰色）
+- 大型數據樹只渲染前 4,000 個節點並顯示截斷提示，避免預覽失去回應
 
 ### CSV / TSV
 
@@ -85,6 +86,7 @@ JSON / JSONL / YAML / TOML / XML
 - 選中儲存格高亮支援焦點狀態（有焦點藍色，失焦灰色）
 - 多儲存格選中時喺選區右上方提供分體複製操作：主按鈕複製為 TSV，下拉選單提供 Markdown、ASCII、TSV 同 CSV 格式
 - `Cmd/Ctrl+C`：單儲存格複製文字，多儲存格按 TSV 複製
+- 大型 CSV/TSV 只渲染前 2,000 行正文數據並顯示截斷提示
 
 ## 安裝方法
 

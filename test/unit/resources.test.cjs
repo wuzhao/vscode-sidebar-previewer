@@ -81,6 +81,90 @@ const {
     assert.equal(previewProvider.includes('img-src ${cspSource} https: http:'), false);
   });
 
+  test('2026-08-28 preview updates are debounced and stale document versions are discarded', () => {
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+    const previewConfig = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewConfig.ts'), 'utf8');
+
+    assert.ok(previewConfig.includes('export const PREVIEW_UPDATE_DEBOUNCE_MS = 150;'));
+    assert.ok(previewConfig.includes('export const MAX_PREVIEW_INPUT_BYTES = 5 * 1024 * 1024;'));
+    assert.ok(previewProvider.includes('private _schedulePreviewUpdate(document: vscode.TextDocument, editedLine: number): void'));
+    assert.ok(previewProvider.includes('}, PREVIEW_UPDATE_DEBOUNCE_MS);'));
+    assert.ok(previewProvider.includes('editor.document.version !== documentVersion'));
+    assert.ok(previewProvider.includes('document.version !== expectedDocumentVersion'));
+    assert.ok(previewProvider.includes("Buffer.byteLength(content, 'utf8') > MAX_PREVIEW_INPUT_BYTES"));
+    assert.ok(previewProvider.includes('private _viewDisposables: vscode.Disposable[] = [];'));
+    assert.ok(previewProvider.includes('this._viewDisposables.push(webviewView.onDidDispose(() => {'));
+    assert.ok(previewProvider.includes('private _disposeViewListeners(): void'));
+  });
+
+  test('2026-08-28 webview loads format resources on demand from shared runtime configuration', () => {
+    const commonJs = fs.readFileSync(path.join(RESOURCES_JS_DIR, 'common.js'), 'utf8');
+    const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
+    const previewConfig = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewConfig.ts'), 'utf8');
+
+    assert.ok(previewConfig.includes('export const ZOOM_STEPS = [50, 75, 100, 125, 150, 200, 300, 400] as const;'));
+    assert.ok(previewConfig.includes('extensionToWebviewMessageTypes: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES'));
+    assert.ok(previewConfig.includes('dataTreeFileTypes: getDataTreeFileTypes()'));
+    assert.ok(previewProvider.includes('data-preview-config="${escapeHtml(JSON.stringify(runtimeConfig))}"'));
+    assert.equal((previewProvider.match(/<script src=/g) || []).length, 1);
+    assert.ok(previewProvider.includes('<script src="${previewCommonJsUri}"></script>'));
+    assert.ok(previewProvider.includes('data-js-katex-vendor='));
+    assert.ok(previewProvider.includes('data-js-mermaid-vendor='));
+    assert.ok(commonJs.includes('async function ensurePreviewScripts(fileType)'));
+    assert.ok(commonJs.includes("await loadPreviewScript('katexVendor');"));
+    assert.ok(commonJs.includes("await loadPreviewScript('mermaidVendor');"));
+    assert.ok(commonJs.includes("await loadPreviewScript('commentTooltip');"));
+    assert.ok(commonJs.includes('if (updateSequence !== latestUpdateSequence)'));
+  });
+
+  test('2026-08-28 data-tree format capabilities use composition instead of cross-format inheritance', () => {
+    const datatreeRoot = path.join(__dirname, '..', '..', 'src', 'datatree');
+    const jsonSource = fs.readFileSync(path.join(datatreeRoot, 'fileTypes', 'datatreeJsonFileTypeBase.ts'), 'utf8');
+    const yamlSource = fs.readFileSync(path.join(datatreeRoot, 'fileTypes', 'datatreeYamlFileTypeBase.ts'), 'utf8');
+    const tomlSource = fs.readFileSync(path.join(datatreeRoot, 'fileTypes', 'datatreeTomlFileTypeBase.ts'), 'utf8');
+    const xmlSource = fs.readFileSync(path.join(datatreeRoot, 'fileTypes', 'datatreeXmlFileTypeBase.ts'), 'utf8');
+
+    assert.ok(jsonSource.includes('export function withJsonFileType('));
+    assert.ok(yamlSource.includes('export function withYamlFileType('));
+    assert.ok(tomlSource.includes('export function withTomlFileType('));
+    assert.ok(xmlSource.includes('export function withXmlFileType('));
+    assert.equal(/class\s+\w+\s+extends\s+Datatree(?:Json|Yaml|Toml|Xml)FileTypeBase/.test(
+      [jsonSource, yamlSource, tomlSource, xmlSource].join('\n')
+    ), false);
+  });
+
+  test('2026-08-28 runtime targets and type packages match the declared minimum platform', () => {
+    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8'));
+
+    assert.equal(packageJson.engines.vscode, '^1.85.0');
+    assert.equal(packageJson.devDependencies['@types/vscode'], '1.85.0');
+    assert.equal(packageJson.devDependencies['@types/node'], '18.19.130');
+    assert.ok(packageJson.scripts.bundle.includes('--target=node18'));
+  });
+
+  test('0.4.3 release metadata and multilingual README badges stay synchronized', () => {
+    const repositoryRoot = path.join(__dirname, '..', '..');
+    const packageJson = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
+    const packageLock = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package-lock.json'), 'utf8'));
+    const readmePaths = [
+      'README.md',
+      'docs/i18n/README.zh-CN.md',
+      'docs/i18n/README.zh-TW.md',
+      'docs/i18n/README.zh-HK.md',
+      'docs/i18n/README.ja-JP.md',
+    ];
+
+    assert.equal(packageJson.version, '0.4.3');
+    assert.equal(packageLock.version, packageJson.version);
+    assert.equal(packageLock.packages[''].version, packageJson.version);
+    readmePaths.forEach(readmePath => {
+      const readme = fs.readFileSync(path.join(repositoryRoot, readmePath), 'utf8');
+      assert.ok(readme.includes('version-0.4.3-blue.svg'), `${readmePath} should use the 0.4.3 badge`);
+    });
+    const changelog = fs.readFileSync(path.join(repositoryRoot, 'CHANGELOG.md'), 'utf8');
+    assert.ok(changelog.includes('## 0.4.3 - 2026-08-29'));
+  });
+
   test('Task D preview zoom resets to 100 when switching files', () => {
     const previewProvider = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'previewProvider.ts'), 'utf8');
 
@@ -562,6 +646,11 @@ const {
       assert.equal(typeof bundle['runtime.tableSelectionTsvHint'], 'string');
       assert.equal(typeof bundle['runtime.wrapCode'], 'string');
       assert.equal(typeof bundle['runtime.unwrapCode'], 'string');
+      assert.equal(typeof bundle['runtime.copyFailed'], 'string');
+      assert.equal(typeof bundle['runtime.mermaidRenderTimeout'], 'string');
+      assert.equal(typeof bundle['runtime.mermaidLibraryLoadFailed'], 'string');
+      assert.equal(typeof bundle['runtime.tableRowsTruncated'], 'string');
+      assert.equal(typeof bundle['runtime.treeNodesTruncated'], 'string');
       assert.equal('runtime.copySuccess' in bundle, false);
     });
     assert.equal(baseBundle['runtime.tableSelectionCsv'], 'Copy as CSV');
@@ -714,6 +803,7 @@ const {
         dataTreeLocator: 'dataTreeLocator',
         navigateToLine: 'navigateToLine',
       },
+      DATA_TREE_FILE_TYPES: new Set(['json', 'jsonl', 'yaml', 'toml', 'xml']),
     };
 
     vm.runInNewContext(datatreeJs, context);
@@ -1184,7 +1274,8 @@ const {
 
     assert.ok(i18n.includes('const SUPPORTED_EXTENSIONS = getSupportedExtensionLabels();'));
     assert.ok(i18n.includes('const SUPPORTED_LIST_HTML = SUPPORTED_EXTENSIONS.map('));
-    assert.ok(fileTypes.includes("label: 'JSONL (.jsonl)'"));
+    assert.ok(fileTypes.includes("label: 'JSONL'"));
+    assert.ok(fileTypes.includes("extensions: ['.jsonl']"));
     assert.ok(i18n.includes('const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {'));
     assert.ok(i18n.includes('const FALLBACK_STRINGS: I18nStrings = {'));
   });
