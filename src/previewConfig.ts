@@ -33,6 +33,7 @@ export const EXTENSION_TO_WEBVIEW_MESSAGE_TYPES = {
 export const WEBVIEW_TO_EXTENSION_MESSAGE_TYPES = {
     zoomChange: 'zoomChange',
     webviewReady: 'webviewReady',
+    mermaidRenderFailed: 'mermaidRenderFailed',
     visibleHeading: 'visibleHeading',
     visibleLine: 'visibleLine',
     toggleCheckbox: 'toggleCheckbox',

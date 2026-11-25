@@ -1,5 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import {
+    ArrayItemLineLocator,
+    KeyLineLocator,
     CommentEntry,
     CommentMarker,
     CommentMetadata,
@@ -90,21 +92,28 @@ export function withXmlFileType(Base: typeof DatatreeTomlFileTypeBase) {
         }
 
         /**
-         * 构建XML数组元素行索引供后续流程复用
-         * @param lines - 按行拆分后的源文本
-         * @param parsedData - 已解析的结构化数据
-         * @returns 返回供节点定位与注释归属使用的索引数据
+         * 共用 XML 元素路径索引定位元素名和重复元素数组项
+         * @param lines - 原始 XML 源码行
+         * @param parsedData - 已归一化的 XML 数据树
+         * @returns 元素键与数组项各自独立的源码定位游标
          */
-        protected static buildXmlArrayItemLineIndex(lines: string[], parsedData: unknown): number[] {
-            if (!parsedData || typeof parsedData !== 'object') {
-                return [];
-            }
-
-            const pathLineIndex = this.buildXmlElementPathLineIndex(lines);
-            const pathCursor = new Map<string, number>();
-            const result: number[] = [];
-            this.collectXmlArrayItemLines(parsedData, [], pathLineIndex, pathCursor, result);
-            return result;
+        protected static createXmlLocators(lines: string[], parsedData: unknown): {
+            lineLocator: KeyLineLocator; arrayItemLineLocator: ArrayItemLineLocator;
+        } {
+            const paths = this.buildXmlElementPathLineIndex(lines);
+            const itemLines: number[] = [];
+            this.collectXmlArrayItemLines(parsedData, [], paths, new Map(), itemLines);
+            const cursors = new Map<string, number>();
+            const fallback = this.createKeyLineLocator(lines, 'xml');
+            return {
+                lineLocator: {
+                    next: (key, parent = [], parentLine) => {
+                        const line = this.consumeIndexedLine(paths, cursors, JSON.stringify([...parent, key]), parentLine ?? -1);
+                        return line >= 0 ? line : fallback.next(key, parent);
+                    },
+                },
+                arrayItemLineLocator: this.createArrayItemLineLocator(itemLines),
+            };
         }
 
         /**
@@ -146,7 +155,7 @@ export function withXmlFileType(Base: typeof DatatreeTomlFileTypeBase) {
                         continue;
                     }
 
-                    this.pushIndexedLine(index, [...stack, tagName].join('.'), i);
+                    this.pushIndexedLine(index, JSON.stringify([...stack, tagName]), i);
                     const isSelfClosing = /\/\s*>$/.test(raw);
                     if (!isSelfClosing) {
                         stack.push(tagName);
@@ -173,7 +182,7 @@ export function withXmlFileType(Base: typeof DatatreeTomlFileTypeBase) {
             result: number[],
         ): void {
             if (Array.isArray(value)) {
-                const path = parentPath.join('.');
+                const path = JSON.stringify(parentPath);
                 for (const item of value) {
                     result.push(this.consumeIndexedLine(pathLineIndex, pathCursor, path));
                     this.collectXmlArrayItemLines(item, parentPath, pathLineIndex, pathCursor, result);

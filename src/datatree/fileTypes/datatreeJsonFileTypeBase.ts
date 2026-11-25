@@ -1,4 +1,5 @@
-import { CommentEntry, CommentMarker, CommentMetadata, JsonCloseLineLocator, StandaloneCommentGroup } from '../core/datatreeProviderTypes';
+import { visit } from 'jsonc-parser';
+import { CommentEntry, CommentMarker, CommentMetadata, JsonCloseLineLocator, KeyLineLocator, StandaloneCommentGroup } from '../core/datatreeProviderTypes';
 import { DatatreeTreeRenderBase } from '../common/datatreeTreeRenderBase';
 
 /**
@@ -8,6 +9,33 @@ import { DatatreeTreeRenderBase } from '../common/datatreeTreeRenderBase';
  */
 export function withJsonFileType(Base: typeof DatatreeTreeRenderBase) {
     return class DatatreeJsonFileType extends Base {
+        /**
+         * 将 JSON 对象属性的完整路径映射到原文行，JSONL 记录使用数组下标
+         * @param content - 已通过解析的 JSON、JSONC 或 JSONL 源文档
+         * @param jsonLines - 是否逐行处理相互独立的 JSONL 记录
+         * @returns 支持点号键、嵌套数组和同对象重复键的源码定位器
+         */
+        protected static createJsonKeyLocator(content: string, jsonLines: boolean): KeyLineLocator {
+            const locations = new Map<string, number>();
+            const indexRecord = (source: string, startLine: number, prefix: string[]) => {
+                visit(source, {
+                    onObjectProperty(key, _offset, _length, line, _column, parentPath) {
+                        const path = [...prefix, ...parentPath().map(String), key];
+                        locations.set(JSON.stringify(path), startLine + line);
+                    },
+                }, { allowTrailingComma: true });
+            };
+            if (jsonLines) {
+                let record = 0;
+                content.split('\n').forEach((line, index) => {
+                    if (line.trim()) indexRecord(line, index, [String(record++)]);
+                });
+            } else {
+                indexRecord(content, 0, []);
+            }
+            return { next: (key, parent = []) => locations.get(JSON.stringify([...parent, key])) ?? -1 };
+        }
+
         /**
          * 创建JSON 结束行定位器并返回按调用顺序消费源码位置的游标或定位器
          * @param lines - 按行拆分后的源文本

@@ -61,16 +61,6 @@ export class DatatreeLocatorAndCommentBase {
     }
 
     /**
-     * 声明 XML 重复元素源码行索引能力供格式策略覆盖
-     * @param _lines - 按行拆分后的 XML 源文本
-     * @param _parsedData - 已解析的 XML 数据树
-     * @returns 按渲染顺序排列的重复元素行号
-     */
-    protected static buildXmlArrayItemLineIndex(_lines: string[], _parsedData: unknown): number[] {
-        throw new Error('buildXmlArrayItemLineIndex must be implemented by file type base');
-    }
-
-    /**
      * 声明 JSON 注释归属分析能力供格式策略覆盖
      * @param _lines - 按行拆分后的 JSON 源文本
      * @param _arrayItemLines - JSON 数组元素对应的源码行集合
@@ -238,14 +228,11 @@ export class DatatreeLocatorAndCommentBase {
     }
 
     /**
-     * 创建数组元素行定位器并返回按调用顺序消费源码位置的游标或定位器
-     * @param lines - 按行拆分后的源文本
-     * @param fileType - 当前文件类型标识
-     * @param parsedData - 已解析的结构化数据
-     * @returns 返回按调用顺序消费源码位置的游标或定位器
+     * 将数组项源码行索引转换为渲染顺序游标
+     * @param itemLines - 按预览遍历顺序排列的数组项行号
+     * @returns 顺序读取下一数组项源码行的定位器
      */
-    protected static createArrayItemLineLocator(lines: string[], fileType: FileType, parsedData: unknown): ArrayItemLineLocator {
-        const itemLines = this.buildArrayItemLineIndex(lines, fileType, parsedData);
+    protected static createArrayItemLineLocator(itemLines: number[]): ArrayItemLineLocator {
         let cursor = 0;
 
         return {
@@ -279,8 +266,6 @@ export class DatatreeLocatorAndCommentBase {
                 return this.buildYamlArrayItemLineIndex(lines, false);
             case 'toml':
                 return this.buildTomlArrayItemLineIndex(lines);
-            case 'xml':
-                return this.buildXmlArrayItemLineIndex(lines, parsedData);
             default:
                 return [];
         }
@@ -291,15 +276,17 @@ export class DatatreeLocatorAndCommentBase {
      * @param index - 索引映射对象
      * @param cursor - 独立注释组遍历游标
      * @param key - 当前处理的键名
+     * @param minLine - 所属容器起始行，用于跳过更早容器中的同名节点
      * @returns 返回当前键对应的下一条行号
      */
-    protected static consumeIndexedLine(index: Map<string, number[]>, cursor: Map<string, number>, key: string): number {
+    protected static consumeIndexedLine(index: Map<string, number[]>, cursor: Map<string, number>, key: string, minLine = -1): number {
         const candidates = index.get(key);
         if (!candidates || candidates.length === 0) {
             return -1;
         }
 
-        const current = cursor.get(key) ?? 0;
+        let current = cursor.get(key) ?? 0;
+        while (current < candidates.length && candidates[current] < minLine) current++;
         if (current >= candidates.length) {
             return -1;
         }

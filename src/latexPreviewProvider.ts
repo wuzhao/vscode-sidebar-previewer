@@ -1,5 +1,5 @@
 import { HeadingInfo, PreviewResult } from './fileTypes';
-import { escapeHtml, escapeRegex } from './utils';
+import { escapeHtml, escapeRegex, generateHeadingId } from './utils';
 
 /**
  * 提供 LatexPreview 相关预览能力
@@ -32,7 +32,7 @@ export class LatexPreviewProvider {
      */
     private static convertLatexToHtml(content: string, headings: HeadingInfo[]): string {
         const lines = content.split('\n');
-        const parts: string[] = [];
+        const parts: Array<string | string[]> = [];
         let inMathEnv = false;
         let mathBuffer: string[] = [];
         let mathEnvName = '';
@@ -118,7 +118,7 @@ export class LatexPreviewProvider {
                 const openingBraceIndex = sectionMatch.index + sectionMatch[0].lastIndexOf('{');
                 const text = this.extractBalancedBraceContent(trimmed, openingBraceIndex);
                 if (text !== null) {
-                    const id = this.slugify(text, usedHeadingIds);
+                    const id = generateHeadingId(text, usedHeadingIds);
                     headings.push({ level, text, line: i, id });
                     parts.push(`<h${level} id="${id}">${escapeHtml(text)}</h${level}>`);
                     continue;
@@ -131,7 +131,7 @@ export class LatexPreviewProvider {
                 const openingBraceIndex = titleMatch.index + titleMatch[0].lastIndexOf('{');
                 const text = this.extractBalancedBraceContent(trimmed, openingBraceIndex);
                 if (text !== null) {
-                    const id = this.slugify(text, usedHeadingIds);
+                    const id = generateHeadingId(text, usedHeadingIds);
                     headings.push({ level: 1, text, line: i, id });
                     parts.push(`<h1 id="${id}">${escapeHtml(text)}</h1>`);
                     continue;
@@ -160,12 +160,13 @@ export class LatexPreviewProvider {
                 continue;
             }
 
-            // 包含行内数学公式的普通文本
-            let processedLine = escapeHtml(trimmed);
-            // 替换行内 $...$ 公式为 KaTeX 标记
-            processedLine = processedLine.replace(/\$([^$]+?)\$/g, '<span class="katex-inline" data-katex-display="false">$1</span>');
-
-            parts.push(`<p>${processedLine}</p>`);
+            // 同一段普通文本的行内公式可以跨行，遇到空行或结构命令后另起一段
+            const previous = parts[parts.length - 1];
+            if (Array.isArray(previous)) {
+                previous.push(trimmed);
+            } else {
+                parts.push([trimmed]);
+            }
         }
 
         if (inMathEnv && mathBuffer.length > 0) {
@@ -175,7 +176,34 @@ export class LatexPreviewProvider {
             parts.push(`<pre class="error-detail">${escapeHtml(displayMathBuffer.join('\n'))}</pre>`);
         }
 
-        return parts.join('\n');
+        return parts.map(part => typeof part === 'string' ? part : this.renderInlineParagraph(part)).join('\n');
+    }
+
+    /**
+     * 在连续正文行中排版行内公式并保留公式之外的原有段落
+     * @param lines - 同一正文段内的 LaTeX 源码行
+     * @returns 包含行内公式占位符和普通文本的段落
+     */
+    private static renderInlineParagraph(lines: string[]): string {
+        const source = lines.join('\n');
+        const text = (value: string) => escapeHtml(value).replace(/\n/g, '</p>\n<p>');
+        const delimiters = /(?:\\[\s\S])|\$/g;
+        let html = '<p>';
+        let start = 0;
+        let open = -1;
+        for (const match of source.matchAll(delimiters)) {
+            if (match[0] !== '$') continue;
+            const index = match.index!;
+            if (open < 0) {
+                open = index;
+            } else {
+                html += text(source.slice(start, open))
+                    + `<span class="katex-inline" data-katex-display="false">${escapeHtml(source.slice(open + 1, index))}</span>`;
+                start = index + 1;
+                open = -1;
+            }
+        }
+        return html + text(source.slice(start)) + '</p>';
     }
 
     /**
@@ -204,21 +232,5 @@ export class LatexPreviewProvider {
             }
         }
         return null;
-    }
-
-    /**
-     * 生成 LaTeX 标题对应的 HTML 锚点 ID
-     * @param text - 待处理的文本内容
-     * @param usedIds - 已占用标题 ID 计数映射
-     * @returns 返回唯一且可用于锚点的标题 ID
-     */
-    private static slugify(text: string, usedIds: Map<string, number>): string {
-        const slug = text
-            .toLowerCase()
-            .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
-            .replace(/^-|-$/g, '') || 'heading';
-        const count = usedIds.get(slug) ?? 0;
-        usedIds.set(slug, count + 1);
-        return count === 0 ? slug : `${slug}-${count.toString(16)}`;
     }
 }

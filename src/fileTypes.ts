@@ -23,6 +23,8 @@ export interface PreviewResult {
     supportsLocate: boolean;
     // 标题/节点信息（用于定位）
     headings?: HeadingInfo[];
+    // 空状态和错误提示只使用公共样式与宿主工具栏状态
+    statusOnly?: boolean;
     // 是否需要客户端渲染（如 KaTeX、Mermaid）
     clientRender?: 'katex' | 'mermaid';
 }

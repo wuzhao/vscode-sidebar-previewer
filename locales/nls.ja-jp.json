@@ -42,6 +42,5 @@
   "runtime.unsupportedFileType": "未対応のファイル形式：{0}",
   "runtime.unterminatedQuotedField": "引用符で囲まれたフィールドが閉じられていません",
   "runtime.tableRowsTruncated": "表の先頭 {0} 行のみを表示しています",
-  "runtime.treeNodesTruncated": "データツリーの先頭 {0} ノードのみを表示しています",
-  "runtime.invalidMermaidSyntax": "Mermaid 構文が無効です：図の種類を認識できません"
+  "runtime.treeNodesTruncated": "データツリーの先頭 {0} ノードのみを表示しています"
 }

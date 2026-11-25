@@ -36,7 +36,6 @@ interface I18nStrings {
     unterminatedQuotedField: string;
     tableRowsTruncated: string;
     treeNodesTruncated: string;
-    invalidMermaidSyntax: string;
 }
 
 // 定义空状态提示中展示的受支持文件格式列表
@@ -77,7 +76,6 @@ const RUNTIME_NLS_KEYS: { [K in keyof I18nStrings]: string } = {
     unterminatedQuotedField: 'runtime.unterminatedQuotedField',
     tableRowsTruncated: 'runtime.tableRowsTruncated',
     treeNodesTruncated: 'runtime.treeNodesTruncated',
-    invalidMermaidSyntax: 'runtime.invalidMermaidSyntax'
 };
 
 const FALLBACK_STRINGS: I18nStrings = {
@@ -111,7 +109,6 @@ const FALLBACK_STRINGS: I18nStrings = {
     unterminatedQuotedField: 'Unterminated quoted field',
     tableRowsTruncated: 'Showing the first {0} table rows',
     treeNodesTruncated: 'Showing the first {0} data-tree nodes',
-    invalidMermaidSyntax: 'Invalid Mermaid syntax: unrecognized diagram type'
 };
 
 type NlsBundle = Record<string, string>;
@@ -300,9 +297,6 @@ export const i18n = {
     },
     get treeNodesTruncated(): string {
         return getString('treeNodesTruncated');
-    },
-    get invalidMermaidSyntax(): string {
-        return getString('invalidMermaidSyntax');
     },
 
     // 将运行时文案模板中的占位符替换为具体值

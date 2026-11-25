@@ -4,6 +4,7 @@ const VSCODE_API = acquireVsCodeApi();
 const L10N_SOURCE = document.body ? document.body.dataset : {};
 // Webview 内部使用的本地化文案字典
 const L10N_TEXT = {
+    previewError: L10N_SOURCE.previewError || 'Preview error',
     copyCode: L10N_SOURCE.copyCode || 'Copy',
     wrapCode: L10N_SOURCE.wrapCode || 'Word Wrap',
     unwrapCode: L10N_SOURCE.unwrapCode || 'No Word Wrap',
@@ -254,7 +255,14 @@ function loadPreviewScript(scope) {
         script.src = src;
         script.dataset.previewScriptScope = scope;
         script.addEventListener('load', () => resolve(), { once: true });
-        script.addEventListener('error', () => reject(new Error(L10N_TEXT.unknownError)), { once: true });
+        /**
+         * 清除失败的脚本和缓存以允许下次预览重试
+         */
+        script.addEventListener('error', () => {
+            SCRIPT_LOAD_PROMISES.delete(scope);
+            script.remove();
+            reject(new Error(scope === 'mermaidVendor' ? L10N_TEXT.mermaidLibraryLoadFailed : L10N_TEXT.unknownError));
+        }, { once: true });
         document.body.appendChild(script);
     });
     SCRIPT_LOAD_PROMISES.set(scope, loadPromise);
@@ -377,7 +385,7 @@ function resolveCssScopes(fileType) {
  * @param fileType - 当前文件类型
  */
 function applyCssScopes(fileType) {
-    const requiredScopes = resolveCssScopes(fileType || 'markdown');
+    const requiredScopes = fileType ? resolveCssScopes(fileType) : new Set();
     const scopedLinks = document.head.querySelectorAll('link[data-preview-css-scope]');
     scopedLinks.forEach(link => {
         if (!(link instanceof HTMLLinkElement)) {
@@ -422,14 +430,10 @@ window.addEventListener('message', event => {
             showLoading();
             break;
         case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToHeading:
-            if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.scrollToHeading) {
-                PreviewMarkdown.scrollToHeading(normalizeOptionalString(message.headingId));
-            }
+            scrollToHeading(normalizeOptionalString(message.headingId));
             break;
         case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.getVisibleHeading:
-            if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.reportVisibleHeading) {
-                PreviewMarkdown.reportVisibleHeading();
-            }
+            reportVisibleHeading();
             break;
         case EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.scrollToLine:
             {
@@ -627,7 +631,7 @@ window.addEventListener('blur', () => {
  */
 function updateContent(data) {
     const messageData = (data && typeof data === 'object') ? data : {};
-    const fileType = typeof messageData.fileType === 'string' ? messageData.fileType : 'markdown';
+    const fileType = typeof messageData.fileType === 'string' ? messageData.fileType : null;
     const updateSequence = ++latestUpdateSequence;
     void updateContentAfterLoading(messageData, fileType, updateSequence);
 }
@@ -644,30 +648,32 @@ async function updateContentAfterLoading(messageData, fileType, updateSequence) 
         return;
     }
 
+    if (!fileType) {
+        showStatusContent(content, messageData.content);
+        return;
+    }
     try {
         await ensurePreviewScripts(fileType);
     } catch (error) {
         if (updateSequence !== latestUpdateSequence) {
             return;
         }
-        content.classList.remove('is-loading');
-        content.replaceChildren(buildSafeContentFragment(
-            `<div class="error-state"><i class="codicon codicon-error"></i><div>${escapeHtml(getErrorMessage(error))}</div></div>`
-        ));
+        if (fileType === 'mermaid') {
+            VSCODE_API.postMessage({
+                type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.mermaidRenderFailed,
+                revision: messageData.revision, version: messageData.version, detail: getErrorMessage(error),
+            });
+        }
+        showStatusContent(content, `<div class="error-state"><i class="codicon codicon-error"></i><div>${escapeHtml(getErrorMessage(error))}</div></div>`);
         return;
     }
     if (updateSequence !== latestUpdateSequence) {
         return;
     }
 
-    if (typeof PreviewCommentTooltip !== 'undefined') PreviewCommentTooltip.hideCommentTooltip(true);
-    if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.cleanupMarkdownSkeletonOutline) {
-        PreviewMarkdown.cleanupMarkdownSkeletonOutline();
-    }
-    if (typeof PreviewMermaid !== 'undefined') PreviewMermaid.teardownMermaidPan();
-    content.classList.remove('is-mermaid-preview');
+    clearPreviewInteractions(content);
     content.classList.remove('is-loading');
-    
+
     // 如果后端传来 baseUri，则在 head 中设置 <base>，使相对路径（如 screenshots/xxx.png）能被解析为 webview 资源
     if (typeof messageData.baseUri === 'string' && messageData.baseUri.length > 0) {
         const safeBaseUri = sanitizeResourceUri(messageData.baseUri);
@@ -699,12 +705,12 @@ async function updateContentAfterLoading(messageData, fileType, updateSequence) 
     if (messageData.clientRender === 'katex') {
         if (typeof PreviewKatex !== 'undefined') { PreviewKatex.renderKatex(); }
     } else if (messageData.clientRender === 'mermaid') {
-        if (typeof PreviewMermaid !== 'undefined') { PreviewMermaid.renderMermaid(); }
+        if (typeof PreviewMermaid !== 'undefined') { PreviewMermaid.renderMermaid(messageData, updateSequence); }
     } else {
         // 常规渲染路径：先触发 KaTeX / Mermaid（Markdown 需要），再触发注册域
         if (currentFileType === 'markdown' || !currentFileType) {
             if (typeof PreviewKatex !== 'undefined') { PreviewKatex.renderKatex(); }
-            if (typeof PreviewMermaid !== 'undefined') { PreviewMermaid.renderMermaid(); }
+            if (typeof PreviewMermaid !== 'undefined') { PreviewMermaid.renderMermaid(messageData, updateSequence); }
         }
         // 触发所有注册域（currentFileType 为空时默认按 markdown 处理）
         PreviewCommon.initDomains(currentFileType || 'markdown', messageData);
@@ -727,6 +733,49 @@ async function updateContentAfterLoading(messageData, fileType, updateSequence) 
     }
 
     syncPreviewFocusState();
+}
+
+/**
+ * 报告当前预览中可见的标题
+ * 计算当前可见锚点并回传给扩展端
+ */
+function reportVisibleHeading() {
+    const content = document.getElementById('content');
+    if (!content) {
+        return;
+    }
+
+    const contentRect = content.getBoundingClientRect();
+    let visibleHeadingId = null;
+
+    // 顶部优先回传 frontmatter，保证「定位到顶部」可稳定落点
+    const frontMatterTable = content.querySelector('#frontmatter');
+    if (frontMatterTable instanceof HTMLElement) {
+        const fmRect = frontMatterTable.getBoundingClientRect();
+        const fmVisibleNearTop = fmRect.bottom >= contentRect.top + 10 && fmRect.top <= contentRect.top + 50;
+        if (content.scrollTop <= 2 || fmVisibleNearTop) {
+            visibleHeadingId = 'frontmatter';
+        }
+    }
+
+    if (!visibleHeadingId) {
+        const headings = content.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');
+        let visibleHeading = null;
+        for (const heading of headings) {
+            const rect = heading.getBoundingClientRect();
+            if (rect.top <= contentRect.top + 50) {
+                visibleHeading = heading;
+            } else {
+                break;
+            }
+        }
+        visibleHeadingId = visibleHeading ? visibleHeading.id : null;
+    }
+
+    VSCODE_API.postMessage({
+        type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.visibleHeading,
+        headingId: visibleHeadingId
+    });
 }
 
 /**
@@ -826,13 +875,44 @@ function applyZoom() {
 }
 
 /**
+ * 释放上一份预览挂载在内容区之外的浮层和拖拽状态
+ * @param content - 当前 Webview 的内容区
+ */
+function clearPreviewInteractions(content) {
+    if (typeof PreviewCommentTooltip !== 'undefined') PreviewCommentTooltip.hideCommentTooltip(true);
+    if (typeof PreviewMarkdown !== 'undefined' && PreviewMarkdown.cleanupMarkdownSkeletonOutline) {
+        PreviewMarkdown.cleanupMarkdownSkeletonOutline();
+    }
+    if (typeof PreviewMermaid !== 'undefined') PreviewMermaid.teardownMermaidPan();
+    content.classList.remove('is-mermaid-preview');
+    if (typeof PreviewTable !== 'undefined') PreviewTable.resetTableDrag();
+}
+
+/**
+ * 使用公共样式立即显示空状态或错误信息
+ * @param content - 当前 Webview 的内容区
+ * @param html - 宿主或客户端提供的状态提示
+ */
+function showStatusContent(content, html) {
+    clearPreviewInteractions(content);
+    currentFileType = null;
+    currentHeadings = [];
+    applyCssScopes(null);
+    content.classList.remove('is-loading');
+    content.style.zoom = '';
+    content.replaceChildren(buildSafeContentFragment(html));
+}
+
+/**
  * 显示 loading 状态
  * 显示加载状态
  */
 function showLoading() {
     const content = document.getElementById('content');
-    if (typeof PreviewMermaid !== 'undefined') PreviewMermaid.teardownMermaidPan();
-    content.classList.remove('is-mermaid-preview');
+    latestUpdateSequence++;
+    clearPreviewInteractions(content);
+    currentFileType = null;
+    currentHeadings = [];
     content.classList.add('is-loading');
     content.style.zoom = '';
     content.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div></div>';

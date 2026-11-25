@@ -19,11 +19,14 @@ function renderKatex() {
         }
         try {
             const tex = block.getAttribute('data-source') || '';
-            const cleaned = tex
-                .replace(/^\$\$|\$\$$/g, '')
-                .replace(/\\begin\{[^}]+\}/g, '')
-                .replace(/\\end\{[^}]+\}/g, '')
-                .trim();
+            let cleaned = tex.trim();
+            if (cleaned.startsWith('$$') && cleaned.endsWith('$$') && cleaned.length >= 4) {
+                cleaned = cleaned.slice(2, -2).trim();
+            }
+            // 只转换 KaTeX 缺少的外层环境，保留矩阵、分段函数与对齐点
+            cleaned = cleaned.replace(/^\\begin\{(displaymath|math|multline\*?)\}([\s\S]*)\\end\{\1\}$/,
+                (_, environment, body) => environment.startsWith('multline')
+                    ? `\\begin{gathered}${body}\\end{gathered}` : body);
             if (cleaned) {
                 katex.render(cleaned, block, { displayMode: true, throwOnError: true });
             }

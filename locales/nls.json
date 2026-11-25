@@ -42,6 +42,5 @@
   "runtime.unsupportedFileType": "Unsupported file type: {0}",
   "runtime.unterminatedQuotedField": "Unterminated quoted field",
   "runtime.tableRowsTruncated": "Showing the first {0} table rows",
-  "runtime.treeNodesTruncated": "Showing the first {0} data-tree nodes",
-  "runtime.invalidMermaidSyntax": "Invalid Mermaid syntax: unrecognized diagram type"
+  "runtime.treeNodesTruncated": "Showing the first {0} data-tree nodes"
 }

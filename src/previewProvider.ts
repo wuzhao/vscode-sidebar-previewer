@@ -18,6 +18,9 @@ import {
 } from './previewConfig';
 import { escapeHtml } from './utils';
 
+// 定位编辑器后的短时滚动回弹抑制窗口
+const LOCATE_SCROLL_SUPPRESSION_MS = 500;
+
 // 存储编辑器滚动跟随开关状态的全局键
 const FOLLOW_EDITOR_SCROLL_STATE_KEY = 'sidebarPreviewer.followEditorScroll';
 
@@ -57,8 +60,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     private _supportsLocate: boolean = false;
     private _followEditorScroll: boolean = true;
     private _ignoredDocumentVersion: IgnoredDocumentVersion | null = null;
+    private _suppressFollowUntil = 0;
     private _visibleRangesListener?: vscode.Disposable;
     private _viewDisposables: vscode.Disposable[] = [];
+    private _previewRevision = 0;
+    private _previewDocumentVersion = -1;
     private _zoomLevel: number = 100;
     private _lastPreviewDocumentUri: string | null = null;
     private _hasDataTreeHighlight: boolean = false;
@@ -189,12 +195,21 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.webviewReady) {
                     this._webviewReady = true;
                     this._refreshPreviewForActiveEditor();
+                } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.mermaidRenderFailed) {
+                    const document = vscode.window.activeTextEditor?.document;
+                    if (this._currentFileType === 'mermaid' && message.revision === this._previewRevision
+                        && document && document.uri.toString() === this._lastPreviewDocumentUri
+                        && document.version === message.version && typeof message.detail === 'string') {
+                        this._showError(message.detail);
+                    }
                 } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.visibleHeading) {
                     this._handleLocateEditor(message.headingId);
                 } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.visibleLine) {
                     this._handleLocateEditorFromLine(message.line, message.char);
                 } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.toggleCheckbox) {
-                    this._handleToggleCheckbox(message.line, message.checked, message.char);
+                    if (message.revision === this._previewRevision) {
+                        this._handleToggleCheckbox(message.line, message.checked, message.char);
+                    }
                 } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.navigateToLine) {
                     this._navigateToLine(message.line, message.char);
                 } else if (message.type === WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.updateEditorSelection) {
@@ -385,8 +400,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 return;
             }
             this._showLoading();
+            this._suppressFollowUntil = 0;
             this._updatePreview(editor.document);
-            this._scrollToEditorPosition(editor);
         } catch (error) {
             console.error('Sidebar Previewer: Error in refresh preview', error);
         }
@@ -405,7 +420,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         const editor = vscode.window.activeTextEditor;
         if (editor && this._supportsLocate && this._followEditorScroll) {
             this._visibleRangesListener = vscode.window.onDidChangeTextEditorVisibleRanges((e) => {
-                if (e.textEditor === vscode.window.activeTextEditor) {
+                if (e.textEditor === vscode.window.activeTextEditor && Date.now() >= this._suppressFollowUntil) {
                     this._handleEditorScroll(e.visibleRanges);
                 }
             });
@@ -520,28 +535,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * 显示空状态
      */
     private _showEmptyState(): void {
-        this._clearPreviewUpdateTimeout();
-        this._clearLoadingTimeout();
-        this._currentHeadings = [];
-        this._currentFileType = null;
-        this._lastPreviewDocumentUri = null;
-        this._supportsLocate = false;
-        this._updateDataTreeHighlightContext(false);
-        this._updateVisibleRangesListener();
-        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.hasPreview', false);
-        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.supportsLocate', false);
-        vscode.commands.executeCommand('setContext', 'sidebarPreviewer.isDataTree', false);
-        try {
-            if (!this._view) {
-                return;
-            }
-            this._view.webview.postMessage({
-                type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update,
-                content: `<div class="empty-state"><i class="codicon codicon-preview empty-icon"></i><div class="empty-text">${i18n.emptyStateText}</div></div>`
-            });
-        } catch (error) {
-            console.error('Sidebar Previewer: Error in _showEmptyState', error);
-        }
+        this._showStatus(`<div class="empty-state"><i class="codicon codicon-preview empty-icon"></i><div class="empty-text">${i18n.emptyStateText}</div></div>`);
     }
 
     /**
@@ -662,6 +656,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 return;
             }
 
+            if (result.statusOnly) {
+                this._showStatus(result.html);
+                return;
+            }
             const locateSupported = result.supportsLocate;
             this._supportsLocate = locateSupported;
             const dataTree = isDataTreeType(fileType);
@@ -679,6 +677,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             const message: {
                 type: typeof EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update;
                 content: string;
+                revision: number;
+                version: number;
                 headings: HeadingInfo[];
                 fileType: FileType;
                 clientRender: PreviewResult['clientRender'] | null;
@@ -693,6 +693,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             } = {
                 type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update,
                 content: result.html,
+                revision: ++this._previewRevision,
+                version: document.version,
                 headings: result.headings || [],
                 fileType: result.fileType,
                 clientRender: result.clientRender || null,
@@ -721,6 +723,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 // 忽略 baseUri 构造异常，前端仍可渲染绝对路径内容
             }
 
+            this._previewDocumentVersion = document.version;
             this._view.webview.postMessage(message);
         } catch (error) {
             console.error('Sidebar Previewer: Error in _updatePreview', error);
@@ -793,8 +796,18 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
      * @param message - 错误或提示信息
      */
     private _showError(message: string): void {
+        this._showStatus(`<div class="error-state"><i class="codicon codicon-search-stop error-icon"></i><div class="error-text">${i18n.previewError}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`);
+    }
+
+    /**
+     * 显示通用状态页并清除上次预览的定位和工具栏状态
+     * @param content - 预览器生成的空状态或已转义的错误内容
+     */
+    private _showStatus(content: string): void {
         this._clearPreviewUpdateTimeout();
         this._clearLoadingTimeout();
+        this._currentHeadings = [];
+        this._currentFileType = null;
         this._lastPreviewDocumentUri = null;
         this._supportsLocate = false;
         this._updateDataTreeHighlightContext(false);
@@ -806,13 +819,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
             if (!this._view) {
                 return;
             }
-            const errorHtml = `<div class="error-state"><i class="codicon codicon-search-stop error-icon"></i><div class="error-text">${i18n.previewError}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`;
             this._view.webview.postMessage({
                 type: EXTENSION_TO_WEBVIEW_MESSAGE_TYPES.update,
-                content: errorHtml,
+                content,
             });
-        } catch (err) {
-            console.error('Sidebar Previewer: Error in _showError', err);
+        } catch (error) {
+            console.error('Sidebar Previewer: Error in _showStatus', error);
         }
     }
 
@@ -885,11 +897,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
     public locateEditor(): void {
         if (!this._view || !this._supportsLocate) {
             return;
-        }
-        // 暂时移除 visibleRanges 监听器，避免编辑器滚动后又触发预览滚动
-        if (this._visibleRangesListener) {
-            this._visibleRangesListener.dispose();
-            this._visibleRangesListener = undefined;
         }
         if (this._currentFileType === 'csv' || this._currentFileType === 'tsv') {
             this._view.webview.postMessage({
@@ -1019,13 +1026,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
 
         const range = new vscode.Range(line, 0, line, 0);
+        this._suppressFollowUntil = Date.now() + LOCATE_SCROLL_SUPPRESSION_MS;
         editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
         editor.selection = new vscode.Selection(line, 0, line, 0);
-
-        // 延迟恢复 visibleRanges 监听器，等编辑器滚动完毕
-        setTimeout(() => {
-            this._updateVisibleRangesListener();
-        }, 500);
     }
 
     /**
@@ -1042,24 +1045,21 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         const targetChar = typeof char === 'number' && char >= 0 ? char : 0;
 
         const range = new vscode.Range(targetLine, 0, targetLine, 0);
+        this._suppressFollowUntil = Date.now() + LOCATE_SCROLL_SUPPRESSION_MS;
         editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
         editor.selection = new vscode.Selection(targetLine, targetChar, targetLine, targetChar);
-
-        setTimeout(() => {
-            this._updateVisibleRangesListener();
-        }, 500);
     }
 
     /**
      * 处理 checkbox 切换
      * @param line - Markdown 任务标记所在的零基行号
      * @param checked - 需要写入源码的勾选状态
-     * @param character - 表格 Task List 标记在当前行中的起始字符
+     * @param character - 普通列表或表格任务标记在当前行中的起始字符
      */
     private async _handleToggleCheckbox(
         line: number,
         checked: boolean,
-        character?: number
+        character: number
     ): Promise<void> {
         const editor = vscode.window.activeTextEditor;
         if (!editor || this._currentFileType !== 'markdown') {
@@ -1067,35 +1067,25 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
 
         const document = editor.document;
-        if (line < 0 || line >= document.lineCount) {
+        if (document.uri.toString() !== this._lastPreviewDocumentUri || document.version !== this._previewDocumentVersion
+            || !Number.isInteger(line) || line < 0 || line >= document.lineCount
+            || !Number.isInteger(character) || character < 0) {
             return;
         }
         const lineText = document.lineAt(line).text;
-
-        let markerStart: number;
-        if (typeof character === 'number' && Number.isInteger(character) && character >= 0) {
-            const marker = lineText.slice(character, character + 3);
-            if (!/^\[[ xX]\]$/.test(marker)) {
-                return;
-            }
-            markerStart = character;
-        } else {
-            markerStart = lineText.search(/\[[ xX]\]/);
-        }
-
-        if (markerStart < 0) {
+        const marker = lineText.slice(character, character + 3);
+        if (!/^\[[ xX]\]$/.test(marker)) {
             return;
         }
-
         const replacement = checked ? '[x]' : '[ ]';
-        if (lineText.slice(markerStart, markerStart + 3) === replacement) {
+        if (marker === replacement) {
             return;
         }
 
         const edit = new vscode.WorkspaceEdit();
         edit.replace(
             document.uri,
-            new vscode.Range(line, markerStart, line, markerStart + 3),
+            new vscode.Range(line, character, line, character + 3),
             replacement
         );
         this._ignoredDocumentVersion = {
@@ -1126,6 +1116,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
         }
         const shouldIgnore = document.version === this._ignoredDocumentVersion.version;
         this._ignoredDocumentVersion = null;
+        if (shouldIgnore) this._previewDocumentVersion = document.version;
         return shouldIgnore;
     }
 
@@ -1279,6 +1270,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider, vscode.Dispo
 <body
     data-preview-config="${escapeHtml(JSON.stringify(runtimeConfig))}"
     data-copy-code="${escapeHtml(i18n.copyCode)}"
+    data-preview-error="${escapeHtml(i18n.previewError)}"
     data-copy-failed="${escapeHtml(i18n.copyFailed)}"
     data-unknown-error="${escapeHtml(i18n.unknownError)}"
     data-mermaid-render-timeout="${escapeHtml(i18n.mermaidRenderTimeout)}"

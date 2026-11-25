@@ -64,8 +64,6 @@ const {
     assert.ok(mermaidJs.includes('const effectiveScale = mermaidZoomScale * fitScale;'));
     assert.ok(mermaidJs.includes('function clearMermaidSvgBaseSizeCache(svg)'));
     assert.ok(mermaidJs.includes('clearMermaidSvgBaseSizeCache(svg);'));
-    assert.ok(mermaidJs.includes('function refreshMermaidZoomAfterRender()'));
-    assert.ok(/function refreshMermaidZoomAfterRender\(\)\s*\{[\s\S]*?applyZoom\(\);[\s\S]*?requestAnimationFrame\(\(\) => \{[\s\S]*?applyZoom\(\);/s.test(mermaidJs));
   });
 
   test('Webview rendering uses strict Mermaid mode and blocks active Markdown HTML', () => {
@@ -1294,7 +1292,6 @@ const {
     assert.equal(i18n.includes('AVAILABLE_LOCALES'), false);
     assert.equal(i18n.includes('LOCALE_LOOKUP'), false);
     assert.equal(markdownProvider.includes('tokenizer(src: string, tokens: any)'), false);
-    assert.equal((commonJs.match(/PreviewMermaid\.renderMermaid\(\)/g) || []).length, 2);
     assert.equal(
       (commonJs.match(/function scrollToHeading\(/g) || []).length
         + (markdownJs.match(/function scrollToHeading\(/g) || []).length,
@@ -1338,7 +1335,7 @@ const {
       },
     };
 
-    vm.runInNewContext(`${checkboxBindingSource}\nbindCheckboxEvents();`, context);
+    vm.runInNewContext(`${checkboxBindingSource}\nbindCheckboxEvents(4);`, context);
     context.checkboxHandler({
       target: {
         checked: true,
@@ -1351,14 +1348,14 @@ const {
     assert.ok(context.selector.includes('.table-task-checkbox[data-line][data-char]'));
     assert.deepEqual(
       { ...context.postedMessage },
-      { type: 'toggleCheckbox', line: 12, char: 27, checked: true }
+      { type: 'toggleCheckbox', revision: 4, line: 12, char: 27, checked: true }
     );
     assert.ok(previewProvider.includes(
       'this._handleToggleCheckbox(message.line, message.checked, message.char);'
     ));
     assert.ok(previewProvider.includes('const marker = lineText.slice(character, character + 3);'));
     assert.ok(previewProvider.includes(
-      'new vscode.Range(line, markerStart, line, markerStart + 3)'
+      'new vscode.Range(line, character, line, character + 3)'
     ));
   });
 
@@ -1371,7 +1368,7 @@ const {
     );
     const updateSource = markdownJs.slice(
       markdownJs.indexOf('function updateMarkdownTableCheckboxSource(checkbox)'),
-      markdownJs.indexOf('function bindCheckboxEvents()')
+      markdownJs.indexOf('function bindCheckboxEvents(')
     );
     let tableDataAttribute = JSON.stringify({
       source: '| Task | Done |\n| --- | --- |\n| Login | - [ ] |',

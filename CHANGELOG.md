@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0 - 2026-11-25
+
+- Markdown task checkboxes now update the matching source marker in quotes, nested lists and tables. Nested alerts and colliding heading anchors also render correctly.
+- LaTeX previews preserve matrix and alignment environments, handle multiline inline formulas, and support heading navigation when opened first.
+- Fixed source navigation for nested keys with the same name in JSON, YAML and XML.
+- Mermaid validates diagrams in the preview. One invalid diagram in Markdown can display its own error while other diagrams render.
+- Wide CSV/TSV previews and automatic Markdown code highlighting now have rendering limits. Empty and error views open without loading diagram libraries.
+
+～～～
+
+- 修复 Markdown 引用、嵌套列表和表格中复选框的源码写回位置，以及嵌套提示框和标题锚点冲突问题。
+- LaTeX 预览保留矩阵和对齐环境，支持跨行行内公式，首次打开即可按章节双向定位。
+- 修复 JSON、YAML 和 XML 中不同层级的同名键跳转到错误源码行的问题。
+- Mermaid 在预览中校验图表。Markdown 中的错误图块独立显示错误，其他图块仍可渲染。
+- 限制宽表格的预览大小和 Markdown 代码自动高亮的开销。空状态和错误页直接显示，无需加载图表库。
+
 ## 0.4.3 - 2026-08-29
 
 - Fixed Mermaid declaration validation for case variants such as `gitGraph` and enabled strict Mermaid rendering security.

@@ -65,7 +65,7 @@ JSON / JSONL / YAML / TOML / XML
 
 ### Mermaid
 
-- 基本的な構文の事前チェックと、分かりやすいエラーフィードバック
+- Mermaid による図の検証と、図ごとのエラー詳細の表示
 - ズーム時のドラッグによるパン（移動）操作
 
 ### JSON / JSONL / YAML / TOML / XML
@@ -104,9 +104,8 @@ JSON / JSONL / YAML / TOML / XML
 1. リポジトリをクローンする：`git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
 2. プロジェクトフォルダに移動する：`cd vscode-sidebar-previewer`
 3. 依存関係をインストールする：`npm install`
-4. 拡張機能の出力とアセットをビルド（バンドル）する：`npm run package:vsix`
-5. VSIX ファイルをパッケージ化する：`npx @vscode/vsce package`
-6. VS Code で `Extensions: Install from VSIX` を実行し、生成された `sidebar-previewer-<version>.vsix` を選択する
+4. VSIX ファイルをパッケージ化する：`npx @vscode/vsce package`
+5. VS Code で `Extensions: Install from VSIX` を実行し、生成された `sidebar-previewer-<version>.vsix` を選択する
 
 ## 使い方
 

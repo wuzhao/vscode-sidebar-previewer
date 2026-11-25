@@ -1086,27 +1086,6 @@ function bindTableSelection() {
         e.preventDefault(); // prevent text selection
     });
 
-    window.addEventListener('mousemove', (e) => {
-        if (!tableDragState.isDragging) {
-            return;
-        }
-        const cell = e.target.closest && e.target.closest('th[data-start-line], td[data-start-line]');
-        if (cell && tableDragState.currentCell !== cell) {
-            tableDragState.currentCell = cell;
-            tableDragState.wasMultiCellDrag = true;
-            updateTableSelectionVisuals();
-            updateTableSelectionActions();
-        }
-    });
-
-    window.addEventListener('mouseup', () => {
-        if (tableDragState.isDragging) {
-            tableDragState.isDragging = false;
-            applyTableSelectionToEditor();
-            updateTableSelectionActions();
-        }
-    });
-
     const container = getTableScrollContainer(table);
     if (container) {
         container.addEventListener('scroll', () => {
@@ -1114,6 +1093,47 @@ function bindTableSelection() {
         });
     }
 }
+
+/**
+ * 切换预览时释放旧表格单元格及尚未完成的拖拽
+ */
+function resetTableDrag() {
+    if (tableSelectionUi.wrapper) {
+        clearTableCopySuccessTimer(tableSelectionUi.wrapper);
+        tableSelectionUi = {};
+    }
+    tableDragState.isDragging = false;
+    tableDragState.wasMultiCellDrag = false;
+    tableDragState.startCell = null;
+    tableDragState.currentCell = null;
+}
+
+/**
+ * 在表格外继续跟踪一次拖拽选区
+ */
+window.addEventListener('mousemove', (e) => {
+    if (!tableDragState.isDragging) {
+        return;
+    }
+    const cell = e.target.closest && e.target.closest('th[data-start-line], td[data-start-line]');
+    if (cell && tableDragState.currentCell !== cell) {
+        tableDragState.currentCell = cell;
+        tableDragState.wasMultiCellDrag = true;
+        updateTableSelectionVisuals();
+        updateTableSelectionActions();
+    }
+});
+
+/**
+ * 鼠标释放时将选区同步到编辑器
+ */
+window.addEventListener('mouseup', () => {
+    if (tableDragState.isDragging) {
+        tableDragState.isDragging = false;
+        applyTableSelectionToEditor();
+        updateTableSelectionActions();
+    }
+});
 
 /**
  * 获取表格滚动容器并返回结果
@@ -1425,6 +1445,7 @@ function reportVisibleLine() {
 
 // 暴露公共方法
 window.PreviewTable = {
+    resetTableDrag: resetTableDrag,
     bindTableSelection: bindTableSelection,
     bindMarkdownTableCopyActions: bindMarkdownTableCopyActions,
     highlightTableRangeFunc: highlightTableRangeFunc,

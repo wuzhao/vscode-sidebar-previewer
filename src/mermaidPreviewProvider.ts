@@ -1,5 +1,4 @@
 import { PreviewResult } from './fileTypes';
-import { i18n } from './i18n';
 import { escapeHtml } from './utils';
 
 /**
@@ -12,23 +11,6 @@ export class MermaidPreviewProvider {
      * @returns 返回解析后的预览结果
      */
     static parse(content: string): PreviewResult {
-        // 基本语法验证：检查是否以已知的 mermaid 图表类型开头
-        const validStarts = [
-            'graph', 'flowchart', 'sequenceDiagram', 'classDiagram',
-            'stateDiagram', 'erDiagram', 'journey', 'gantt',
-            'pie', 'quadrantChart', 'requirementDiagram', 'gitgraph',
-            'mindmap', 'timeline', 'zenuml', 'sankey', 'xychart',
-            'block', 'packet', 'kanban', 'architecture',
-            '%%', '---'
-        ];
-
-        const firstDirectiveLine = this.findFirstDirectiveLine(content);
-        const normalizedDirectiveLine = firstDirectiveLine.toLowerCase();
-        const isValid = validStarts.some(start => normalizedDirectiveLine.startsWith(start.toLowerCase()));
-        if (!isValid && firstDirectiveLine.length > 0) {
-            throw new Error(i18n.invalidMermaidSyntax);
-        }
-
         // 将 mermaid 源码包装在特殊容器中，由客户端渲染
         const escapedContent = escapeHtml(content);
 
@@ -40,31 +22,5 @@ export class MermaidPreviewProvider {
             supportsLocate: false,
             clientRender: 'mermaid',
         };
-    }
-
-    /**
-     * 查找 Mermaid 内容中首个有效图表声明行
-     * @param content - 待解析的文件内容
-     * @returns 用于语法预检的图表声明文本
-     */
-    private static findFirstDirectiveLine(content: string): string {
-        const lines = content
-            .replace(/^\uFEFF/, '')
-            .split(/\r?\n/)
-            .map(line => line.trim())
-            .filter(line => line.length > 0);
-
-        if (lines.length === 0) {
-            return '';
-        }
-
-        // 允许文件开头有 Mermaid 注释（%%），优先定位后续真实图声明
-        for (const line of lines) {
-            if (!line.startsWith('%%')) {
-                return line;
-            }
-        }
-
-        return lines[0];
     }
 }

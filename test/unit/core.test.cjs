@@ -179,17 +179,12 @@ test('MermaidPreviewProvider supports leading comments before diagram declaratio
   assert.ok(result.html.includes('<pre class="mermaid">'));
 });
 
-test('MermaidPreviewProvider validates first non-comment declaration line', () => {
-  const source = [
-    '%% setup comment',
-    '',
-    'invalidDiagramType',
-  ].join('\n');
-
-  assert.throws(
-    () => MermaidPreviewProvider.parse(source),
-    /Invalid Mermaid syntax: unrecognized diagram type/
-  );
+test('Mermaid 声明由客户端解析，宿主完整保留合法与错误源码', () => {
+  for (const source of ['info', 'C4Context', 'radar-beta', 'invalidDiagramType']) {
+    const result = MermaidPreviewProvider.parse(source);
+    assert.equal(result.clientRender, 'mermaid');
+    assert.ok(result.html.includes('>' + source + '</pre>'));
+  }
 });
 
 test('MarkdownProvider task checkbox line mapping ignores fenced code blocks', () => {
@@ -205,7 +200,7 @@ test('MarkdownProvider task checkbox line mapping ignores fenced code blocks', (
 
   const result = MarkdownProvider.parse(source);
   const lineMatches = Array.from(
-    result.html.matchAll(/<input type="checkbox"(?: checked="")? data-line="(\d+)">/g),
+    result.html.matchAll(/<input type="checkbox"(?: checked="")? data-line="(\d+)" data-char="\d+">/g),
     match => Number(match[1])
   );
 
@@ -222,7 +217,7 @@ test('MarkdownProvider task checkbox line mapping supports ordered task items', 
 
   const result = MarkdownProvider.parse(source);
   const lineMatches = Array.from(
-    result.html.matchAll(/<input type="checkbox"(?: checked="")? data-line="(\d+)">/g),
+    result.html.matchAll(/<input type="checkbox"(?: checked="")? data-line="(\d+)" data-char="\d+">/g),
     match => Number(match[1])
   );
 
@@ -250,7 +245,7 @@ test('MarkdownProvider renders task checkboxes at the start of table cells', () 
       + ' data-line="3" data-char="13" data-source-line="3" data-source-char="13"></td>'
   ));
   assert.ok(result.html.includes('<td>Keep - [x] marker</td>'));
-  assert.ok(result.html.includes('<input type="checkbox" data-line="5">'));
+  assert.ok(result.html.includes('<input type="checkbox" data-line="5" data-char="2">'));
   assert.equal(result.html.includes('table-task-checkbox" disabled'), false);
 });
 
@@ -554,3 +549,109 @@ test('Supported JSON/JSONL/YAML/TOML fixtures parse successfully', () => {
     assert.ok(tableResult.html.includes('5 MB safety limit'));
     assert.ok(treeResult.html.includes('5 MB safety limit'));
   });
+
+test('任务写回只关联正文中的真实列表项', () => {
+  const source = [
+    '---', 'example: |', '    - [ ] same', '---',
+    '    - [ ] same', '', '> - [ ] same', '>   - [x] nested', '', '- [ ] same',
+  ].join('\n');
+  assert.deepEqual(Array.from(MarkdownProvider.parse(source).html.matchAll(/data-line="(\d+)"/g),
+    match => Number(match[1])), [6, 7, 9]);
+});
+
+test('两种文档的标题后缀与原生标题共享唯一空间', () => {
+  for (const titles of [['A', 'A', 'A-1'], ['A-1', 'A', 'A']]) {
+    const md = MarkdownProvider.parse(titles.map(t => '# ' + t).join('\n'));
+    const tex = LatexPreviewProvider.parse(titles.map(t => '\\section{' + t + '}').join('\n'));
+    assert.deepEqual(md.headings.map(h => h.id), tex.headings.map(h => h.id));
+    assert.equal(new Set(md.headings.map(h => h.id)).size, titles.length);
+  }
+});
+
+test('JSON、YAML 和 XML 的父子同名键分别定位到各自的源码行', () => {
+  const examples = [
+    ['json', '{\n  "child": {\n    "id": 1\n  },\n  "id": 2\n}', [2, 4]],
+    ['yaml', 'child:\n  id: 1\nid: 2', [1, 2]],
+    ['xml', '<root>\n  <child>\n    <id>1</id>\n  </child>\n  <id>2</id>\n</root>', [2, 4]],
+    ['json', '{\n "a.b": 1,\n "a": [{"b": 2},\n {"b": 3}],\n "a.b": 4\n}', [4]],
+  ];
+  for (const [type, source, expected] of examples) {
+    const key = source.includes('"a.b"') ? 'a.b' : 'id';
+    assert.deepEqual(extractKeyLines(DatatreePreviewProvider.parse(source, type).html, key), expected, type);
+  }
+});
+
+test('三份 LaTeX 样例中的每个块级公式都通过客户端处理和真实 KaTeX 排版', () => {
+  const katex = require('katex');
+  for (const file of ['latex.tex', 'latex.katex', 'latex.latex']) {
+    const html = LatexPreviewProvider.parse(readSupportedFixture(file)).html;
+    const blocks = Array.from(html.matchAll(/<div class="katex-block"[^>]*>([\s\S]*?)<\/div>/g), ([, raw]) => ({
+      textContent: raw.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&'),
+      getAttribute() { return this.source; }, setAttribute(key, value) { this.source = value; },
+    }));
+    assert.ok(blocks.length > 0);
+    const context = { window: {}, document: { querySelectorAll: q => q === '.katex-block' ? blocks : [] },
+      escapeHtml: String, getErrorMessage: String,
+      katex: { render: (tex, block, options) => { block.output = katex.renderToString(tex, options); } } };
+    vm.runInNewContext(fs.readFileSync(path.join(RESOURCES_JS_DIR, 'katex.js'), 'utf8'), context);
+    context.window.PreviewKatex.renderKatex();
+    for (const block of blocks) assert.ok(block.output, file + ': ' + block.innerHTML);
+  }
+});
+
+test('跨行行内公式保留完整源码，嵌套引用在所属提示框内闭合', () => {
+  const latex = LatexPreviewProvider.parse(readSupportedFixture('latex.latex')).html;
+  assert.match(latex, /class="katex-inline"[^>]*>\\left\\\|[^<]*\\le\s+\\left\([^<]*<\/span>/);
+  const source = '> [!NOTE]\n> first\n>\n> > nested\n>\n> last\n\nafter';
+  const html = MarkdownProvider.parse(source).html;
+  assert.match(html, /<blockquote>\s*<p>nested<\/p>\s*<\/blockquote>\s*<p>last<\/p>\s*<\/div>\s*<p>after<\/p>/);
+});
+
+test('JSONL 的空行、数组下标和含点属性都有独立的源码位置', () => {
+  const source = '{"a.b":0,"a":[{"b":1}]}\n\n{"a":[{"b":2},{"b":3}],"a.b":4}';
+  const html = DatatreePreviewProvider.parse(source, 'jsonl').html;
+  assert.deepEqual(extractKeyLines(html, 'b'), [0, 2, 2]);
+  assert.deepEqual(extractKeyLines(html, 'a.b'), [0, 2]);
+});
+
+test('自动高亮受单块和文档预算约束，超出时保留原始代码文字', t => {
+  const hljs = require('highlight.js');
+  const auto = t.mock.method(hljs, 'highlightAuto', () => ({ value: 'AUTO' }));
+  const code = '<tag>'.repeat(300);
+  const fence = (lang, body) => '~~~' + lang + '\n' + body + '\n~~~';
+  const source = [fence('', code.repeat(2)), ...Array(8).fill(fence('', code)), fence('js', 'const n = 1;')].join('\n');
+  const html = MarkdownProvider.parse(source).html;
+  assert.equal(auto.mock.callCount(), 5);
+  assert.equal((html.match(/AUTO/g) || []).length, 5);
+  assert.ok(html.includes('&lt;tag&gt;'.repeat(600)));
+  assert.ok(html.includes('hljs-keyword'));
+  assert.ok(MarkdownProvider.parse(fence('quoted"name', 'x')).html.includes('language-quoted&quot;name'));
+});
+
+test('宽窄 CSV 行按需补齐，表头或首行超过预算时使用大小提示', t => {
+  const config = require('../../out/previewConfig');
+  const original = config.MAX_RENDERED_HTML_LENGTH;
+  t.after(() => { config.MAX_RENDERED_HTML_LENGTH = original; });
+  config.MAX_RENDERED_HTML_LENGTH = 4096;
+  const result = TablePreviewProvider.parse(['a,b,c', ...Array(30).fill('x')].join('\n'), 'csv');
+  assert.ok(result.html.length <= 4096);
+  const rows = result.html.match(/<tr><td[\s\S]*?<\/tr>/g);
+  assert.ok(rows.length > 0 && rows.length < 30);
+  assert.ok(rows.every(row => (row.match(/data-start-line/g) || []).length === 3));
+  assert.ok(result.html.includes('first ' + rows.length + ' table rows'));
+  for (const source of [Array(90).fill('x').join(','), 'a\n' + 'v'.repeat(4096)]) {
+    const oversized = TablePreviewProvider.parse(source, 'csv');
+    assert.ok(oversized.html.includes('too large'));
+    assert.equal(oversized.supportsLocate, false);
+  }
+  for (const source of ['', '"unclosed']) {
+    assert.equal(TablePreviewProvider.parse(source, 'tsv').supportsLocate, false);
+  }
+});
+
+test('相同的表格示例出现在围栏中时只写回真实表格', () => {
+  const table = ['| status |', '| --- |', '| - [ ] done |'].join('\n');
+  const source = ['~~~md', table, '~~~', '', table].join('\n');
+  const result = MarkdownProvider.parse(source);
+  assert.match(result.html, /class="table-task-checkbox" data-line="8" data-char="4"/);
+});

@@ -536,16 +536,17 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                     let childBoundary = this.constrainBoundaryForJsonContainer(fileType, line, boundaryExclusive, jsonCloseLineLocator);
                     childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                     childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, parentPath, null, line, renderBudget)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, standaloneCursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, fileType === 'json' || fileType === 'jsonl' ? [...parentPath, String(i)] : parentPath, null, line, renderBudget)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemValue)}</div>`;
                 }
             }
         } else if (typeof data === 'object' && data !== null) {
+            // YAML 按键名顺序取行，必须在进入节点时消费才能区分父子同名键
             const entries = Object.entries(data as Record<string, unknown>).map(([key, value]) => ({
                 key,
                 value,
-                line: lineLocator.next(key, parentPath),
+                line: fileType === 'yaml' ? -1 : lineLocator.next(key, parentPath, containerLine),
             }));
 
             for (let i = 0; i < entries.length; i++) {
@@ -553,7 +554,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                     break;
                 }
                 const entry = entries[i];
-                const line = entry.line;
+                const line = fileType === 'yaml' ? lineLocator.next(entry.key, parentPath) : entry.line;
                 const entryPath = [...parentPath, entry.key];
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 const shouldDeferXmlArrayLineComment =
@@ -719,16 +720,17 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                         childBoundary = this.constrainBoundaryForYamlContainer(fileType, line, childBoundary, yamlCloseLineLocator);
                     }
                     childBoundary = this.constrainBoundaryForXmlContainer(fileType, line, childBoundary, xmlCloseLineLocator);
-                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, [], null, line, renderBudget)}</details></div>`;
+                    html += `<div class="tree-item"><details><summary><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: <span class="tree-bracket">${bracket}</span></summary>${this.renderCompoundChildren(itemValue, lineLocator, arrayItemLineLocator, commentLines, cursor, childBoundary, fileType, sourceLines, jsonCloseLineLocator, yamlCloseLineLocator, xmlCloseLineLocator, xmlConsumedLines, fileType === 'json' || fileType === 'jsonl' ? [String(i)] : [], null, line, renderBudget)}</details></div>`;
                 } else {
                     html += `<div class="tree-item"><span class="tree-index"${lineAttr}>${i}</span>${commentIcon}: ${this.renderPrimitive(itemValue)}</div>`;
                 }
             }
         } else if (typeof data === 'object' && data !== null) {
+            // YAML 按键名顺序取行，必须在进入节点时消费才能区分父子同名键
             const entries = Object.entries(data as Record<string, unknown>).map(([key, value]) => ({
                 key,
                 value,
-                line: lineLocator.next(key, []),
+                line: fileType === 'yaml' ? -1 : lineLocator.next(key, []),
             }));
 
             for (let i = 0; i < entries.length; i++) {
@@ -736,7 +738,7 @@ export class DatatreeTreeRenderBase extends DatatreeLocatorAndCommentBase {
                     break;
                 }
                 const entry = entries[i];
-                const line = entry.line;
+                const line = fileType === 'yaml' ? lineLocator.next(entry.key, []) : entry.line;
                 const lineAttr = line >= 0 ? ` data-line="${line}"` : '';
                 const shouldDeferXmlArrayLineComment =
                     fileType === 'xml' &&

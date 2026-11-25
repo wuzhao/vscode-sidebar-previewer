@@ -39,9 +39,10 @@ export class TablePreviewProvider {
         try {
             if (Buffer.byteLength(content, 'utf8') > MAX_PREVIEW_INPUT_BYTES) {
                 return {
+                    statusOnly: true,
                     html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.previewInputTooLarge, String(MAX_PREVIEW_INPUT_BYTES / 1024 / 1024)))}</div></div>`,
                     fileType,
-                    supportsLocate: true,
+                    supportsLocate: false,
                 };
             }
             const delimiter = fileType === 'csv' ? ',' : '\t';
@@ -50,25 +51,28 @@ export class TablePreviewProvider {
 
             if (rows.length === 0) {
                 return {
+                    statusOnly: true,
                     html: `<div class="empty-state"><div class="empty-text">${escapeHtml(i18n.noTabularRows)}</div></div>`,
                     fileType,
-                    supportsLocate: true,
+                    supportsLocate: false,
                 };
             }
 
             const html = this.renderTable(rows, parsedRows.truncated);
 
             return {
-                html,
+                html: html ?? `<div class="error-state"><div class="error-text">${escapeHtml(i18n.previewContentTooLarge)}</div></div>`,
                 fileType,
-                supportsLocate: true,
+                supportsLocate: html !== null,
+                statusOnly: html === null,
             };
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             return {
+                statusOnly: true,
                 html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.parseContentFailed, fileType.toUpperCase()))}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
                 fileType,
-                supportsLocate: true,
+                supportsLocate: false,
             };
         }
     }
@@ -251,62 +255,34 @@ export class TablePreviewProvider {
      * 渲染表格并返回可展示内容
      * @param rows - 首段表格行数据集合
      * @param sourceTruncated - 源文件是否因行数限制被截断
-     * @returns 返回可渲染的表格 HTML
+     * @returns 首段完整表格 HTML，表头或首行超过预算时返回 null
      */
-    private static renderTable(rows: CellData[][], sourceTruncated: boolean): string {
+    private static renderTable(rows: CellData[][], sourceTruncated: boolean): string | null {
         const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
-        if (columnCount === 0) {
-            return `<div class="empty-state"><div class="empty-text">${escapeHtml(i18n.noTabularRows)}</div></div>`;
-        }
-
-        const normalizedRows = rows.map(row => {
-            if (row.length >= columnCount) {
-                return row;
+        const footer = '</tbody></table></div></div>';
+        const notice = (count: number) =>
+            `<div class="preview-truncated">${escapeHtml(i18n.format(i18n.tableRowsTruncated, String(count)))}</div>`;
+        const budget = MAX_RENDERED_HTML_LENGTH - footer.length - notice(rows.length).length;
+        let html = '<div class="table-preview"><div class="table-preview-scroll"><table class="tabular-table"><thead>';
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+            const row = rows[rowIndex];
+            const last = row[row.length - 1];
+            const header = rowIndex === 0;
+            const tag = header ? 'th' : 'td';
+            let rowHtml = `<tr><${tag} class="table-index-column">${header ? '#' : rowIndex}</${tag}>`;
+            const rowEnd = header ? '</tr></thead><tbody>' : '</tr>';
+            for (let col = 0; col < columnCount; col++) {
+                const cell = row[col];
+                const value = cell?.value ?? '';
+                const text = header ? escapeHtml(value || `Column ${col + 1}`) : this.renderCell(value);
+                rowHtml += `<${tag} data-start-line="${cell?.startLine ?? last.endLine}" data-start-char="${cell?.startChar ?? last.endChar}" data-end-line="${cell?.endLine ?? last.endLine}" data-end-char="${cell?.endChar ?? last.endChar}">${text}</${tag}>`;
+                if (html.length + rowHtml.length + rowEnd.length > budget) {
+                    return rowIndex <= 1 ? null : html + footer + notice(rowIndex - 1);
+                }
             }
-            const lastCell = row[row.length - 1];
-            const emptyCells: CellData[] = new Array(columnCount - row.length).fill(null).map(() => ({
-                value: '',
-                startLine: lastCell ? lastCell.endLine : 0,
-                startChar: lastCell ? lastCell.endChar : 0,
-                endLine: lastCell ? lastCell.endLine : 0,
-                endChar: lastCell ? lastCell.endChar : 0
-            }));
-            return [...row, ...emptyCells];
-        });
-
-        const header = normalizedRows[0];
-        const body = normalizedRows.slice(1);
-
-        let html = '<div class="table-preview"><div class="table-preview-scroll"><table class="tabular-table"><thead><tr><th class="table-index-column">#</th>';
-        for (let i = 0; i < header.length; i++) {
-            const cell = header[i];
-            const title = cell.value.length > 0 ? cell.value : `Column ${i + 1}`;
-            html += `<th data-start-line="${cell.startLine}" data-start-char="${cell.startChar}" data-end-line="${cell.endLine}" data-end-char="${cell.endChar}">${escapeHtml(title)}</th>`;
+            html += rowHtml + rowEnd;
         }
-        html += '</tr></thead><tbody>';
-        let renderedBodyRows = 0;
-        let truncated = sourceTruncated;
-
-        for (let rowIndex = 0; rowIndex < body.length; rowIndex++) {
-            const row = body[rowIndex];
-            let rowHtml = `<tr><td class="table-index-column">${rowIndex + 1}</td>`;
-            for (const cell of row) {
-                rowHtml += `<td data-start-line="${cell.startLine}" data-start-char="${cell.startChar}" data-end-line="${cell.endLine}" data-end-char="${cell.endChar}">${this.renderCell(cell.value)}</td>`;
-            }
-            rowHtml += '</tr>';
-            if (html.length + rowHtml.length > MAX_RENDERED_HTML_LENGTH) {
-                truncated = true;
-                break;
-            }
-            html += rowHtml;
-            renderedBodyRows++;
-        }
-
-        html += '</tbody></table></div></div>';
-        if (truncated) {
-            html += `<div class="preview-truncated">${escapeHtml(i18n.format(i18n.tableRowsTruncated, String(renderedBodyRows)))}</div>`;
-        }
-        return html;
+        return html + footer + (sourceTruncated ? notice(rows.length - 1) : '');
     }
 
     /**

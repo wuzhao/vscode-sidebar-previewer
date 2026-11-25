@@ -65,7 +65,7 @@ JSON / JSONL / YAML / TOML / XML
 
 ### Mermaid
 
-- 基礎語法預檢查與錯誤提示
+- 使用 Mermaid 驗證圖表，並顯示各圖表的錯誤詳細資料
 - 放大後支援拖拽平移
 
 ### JSON / JSONL / YAML / TOML / XML
@@ -104,9 +104,8 @@ JSON / JSONL / YAML / TOML / XML
 1. 克隆倉庫：`git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
 2. 進入目錄：`cd vscode-sidebar-previewer`
 3. 安裝依賴：`npm install`
-4. 構建擴充套件產物和靜態資源：`npm run package:vsix`
-5. 打包 VSIX：`npx @vscode/vsce package`
-6. 在 VS Code 中執行 `Extensions: Install from VSIX`，選擇生成的 `sidebar-previewer-<version>.vsix`
+4. 打包 VSIX：`npx @vscode/vsce package`
+5. 在 VS Code 中執行 `Extensions: Install from VSIX`，選擇生成的 `sidebar-previewer-<version>.vsix`
 
 ## 使用方法
 

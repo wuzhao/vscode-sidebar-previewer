@@ -1,8 +1,13 @@
-import { Marked, Renderer, type Tokens } from 'marked';
+import { Marked, Renderer, type Token, type Tokens } from 'marked';
 import hljs from 'highlight.js';
 import * as yaml from 'js-yaml';
 import { HeadingInfo } from './fileTypes';
-import { escapeHtml } from './utils';
+import { escapeHtml, generateHeadingId } from './utils';
+
+// 单个代码块参与自动语言识别的最大字符数
+const MAX_AUTO_HIGHLIGHT_BLOCK_LENGTH = 2048;
+// 单篇 Markdown 允许自动识别的代码字符总数
+const MAX_AUTO_HIGHLIGHT_DOCUMENT_LENGTH = 8192;
 
 // Markdown 表格单元格开头的 Task List 标记
 const MARKDOWN_TABLE_TASK_PATTERN = /^-\s+\[([ xX])\](?:\s+|$)/;
@@ -65,8 +70,7 @@ export class MarkdownProvider {
         const headingSources = this.collectMarkdownHeadingSources(bodyContent, bodyStartLine);
         let headingSourceIndex = 0;
 
-        // 扫描 task list 行号（忽略 fenced code block 内的伪 task）
-        const taskLines = this.collectTaskListLineNumbers(lines);
+        let autoHighlightRemaining = MAX_AUTO_HIGHLIGHT_DOCUMENT_LENGTH;
 
         // 配置 marked
         const renderer = new Renderer();
@@ -75,14 +79,13 @@ export class MarkdownProvider {
         let markdownTableIndex = 0;
         const markdownTableTaskLocations: Array<MarkdownTableTaskLocation | null> = [];
         let markdownTableCellIndex = 0;
-        let markdownTableSearchLine = content.slice(0, content.length - bodyContent.length).split('\n').length - 1;
 
         renderer.checkbox = function (checked: boolean): string {
-            const line = taskLines[taskIndex] ?? -1;
-            taskIndex++;
+            const location = taskLocations[taskIndex++];
             return '<input type="checkbox"'
                 + (checked ? ' checked=""' : '')
-                + ' data-line="' + line + '">';
+                + (location ? ` data-line="${location.line}" data-char="${location.character}"` : ' disabled')
+                + '>';
         };
 
         renderer.listitem = function (text: string, task: boolean, _checked: boolean): string {
@@ -119,6 +122,8 @@ export class MarkdownProvider {
                 + '</table>\n';
         };
 
+        renderer.blockquote = quote => this.renderBlockquote(quote);
+
         let headingIndex = 0;
         renderer.heading = function (text: string, level: number, _raw: string): string {
             const heading = headings[headingIndex++];
@@ -137,10 +142,13 @@ export class MarkdownProvider {
             let highlighted: string;
             if (lang && hljs.getLanguage(lang)) {
                 highlighted = hljs.highlight(code, { language: lang }).value;
-            } else {
+            } else if (code.length > 0 && code.length <= MAX_AUTO_HIGHLIGHT_BLOCK_LENGTH && code.length <= autoHighlightRemaining) {
+                autoHighlightRemaining -= code.length;
                 highlighted = hljs.highlightAuto(code).value;
+            } else {
+                highlighted = escapeHtml(code);
             }
-            const langClass = lang ? ` language-${lang}` : '';
+            const langClass = lang ? ` language-${escapeHtml(lang)}` : '';
             return `<pre><code class="hljs${langClass}">${highlighted}\n</code></pre>\n`;
         };
 
@@ -202,6 +210,7 @@ export class MarkdownProvider {
 
         // 解析 Markdown（不含 front matter），并保留 GFM 表格源码供复制使用
         const markdownTokens = parser.lexer(bodyContent);
+        const { taskLocations, tableLines } = this.collectTaskLocations(markdownTokens, bodyContent, bodyStartLine, lines);
         parser.walkTokens(markdownTokens, token => {
             if (token.type === 'heading') {
                 const headingToken = token as Tokens.Heading;
@@ -219,7 +228,7 @@ export class MarkdownProvider {
                     headingSourceIndex++;
                 }
                 const text = headingToken.text.trim();
-                const id = this.generateHeadingId(text, usedIds);
+                const id = generateHeadingId(text, usedIds);
                 headings.push({
                     level: headingToken.depth,
                     text,
@@ -234,20 +243,13 @@ export class MarkdownProvider {
                 while (tableSourceLines.length > 0 && tableSourceLines[tableSourceLines.length - 1].trim() === '') {
                     tableSourceLines.pop();
                 }
-                const tableStartLine = this.findMarkdownTableStartLine(
-                    lines,
-                    tableSourceLines,
-                    markdownTableSearchLine
-                );
+                const tableStartLine = tableLines.get(tableToken) ?? null;
                 markdownTableTaskLocations.push(...this.collectMarkdownTableTaskLocations(
                     tableToken,
                     lines,
                     tableSourceLines,
                     tableStartLine
                 ));
-                if (tableStartLine !== null) {
-                    markdownTableSearchLine = tableStartLine + tableSourceLines.length;
-                }
                 markdownTableData.push(JSON.stringify({
                     source: tableToken.raw,
                     alignments: tableToken.align,
@@ -255,9 +257,6 @@ export class MarkdownProvider {
             }
         });
         let html = parser.parser(markdownTokens);
-
-        // 转换 GitHub 风格的 alert blockquote
-        html = this.transformGitHubAlerts(html);
 
         // 在正文前插入 front matter 表格
         if (frontMatterHtml) {
@@ -360,35 +359,6 @@ export class MarkdownProvider {
     }
 
     /**
-     * 在 Markdown 文档中定位表格源码的起始行
-     * @param documentLines - Markdown 文档源码行
-     * @param tableSourceLines - 解析器提供的表格源码行
-     * @param searchStartLine - 当前表格的最早搜索行
-     * @returns 表格在文档中的起始行，无法定位时返回 null
-     */
-    private static findMarkdownTableStartLine(
-        documentLines: string[],
-        tableSourceLines: string[],
-        searchStartLine: number
-    ): number | null {
-        if (tableSourceLines.length < 2) {
-            return null;
-        }
-
-        const lastStartLine = documentLines.length - tableSourceLines.length;
-        for (let line = Math.max(0, searchStartLine); line <= lastStartLine; line++) {
-            const matches = tableSourceLines.every((tableLine, index) => (
-                this.getMarkdownTableLineContentOffset(documentLines[line + index], tableLine) !== null
-            ));
-            if (matches) {
-                return line;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * 获取表格源码行在文档行中的字符偏移
      * 支持由引用标记包裹的 Markdown 表格
      * @param documentLine - Markdown 文档中的完整源码行
@@ -444,7 +414,7 @@ export class MarkdownProvider {
                 if (
                     documentLineIndex >= 0
                     && contentOffset !== null
-                    && taskCharacter !== null
+                    && typeof taskCharacter === 'number'
                     && MARKDOWN_TABLE_TASK_PATTERN.test(cell.text)
                 ) {
                     locations.push({
@@ -507,39 +477,54 @@ export class MarkdownProvider {
     }
 
     /**
-     * 收集任务列表复选框在原文中的行号
-     * @param lines - 按行拆分后的源文本
-     * @returns 返回任务复选框对应的行号列表
+     * 沿 Marked 的块引用和列表层级将真实任务项映射回原文标记
+     * @param tokens - Marked 已识别的正文块
+     * @param source - 去除 front matter 的正文
+     * @param firstLine - 正文在文档中的起始行
+     * @param lines - 含原始缩进和引用符的文档行
+     * @returns 列表复选框的源码位置和各个表格块的起始行
      */
-    private static collectTaskListLineNumbers(lines: string[]): number[] {
-        const taskLines: number[] = [];
-        const taskPattern = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]/;
+    private static collectTaskLocations(tokens: Token[], source: string, firstLine: number, lines: string[]) {
+        const taskLocations: Array<{ line: number; character: number } | null> = [];
+        const tableLines = new Map<Tokens.Table, number>();
 
-        let fenceMarker: string | null = null;
-
-        for (let index = 0; index < lines.length; index++) {
-            const line = lines[index];
-            const fenceMatch = line.match(/^\s*([`~]{3,})/);
-
-            if (fenceMatch) {
-                const marker = fenceMatch[1];
-                if (!fenceMarker) {
-                    fenceMarker = marker;
-                    continue;
+        // Marked 会为容器子块去掉列表缩进和引用前缀，但保留换行
+        const visit = (blocks: Token[], text: string, startLine: number) => {
+            let cursor = 0;
+            let line = startLine;
+            for (const block of blocks) {
+                const offset = text.indexOf(block.raw, cursor);
+                if (offset < 0) {
+                    line = -1;
+                } else if (line >= 0) {
+                    line += text.slice(cursor, offset).split('\n').length - 1;
                 }
-
-                if (marker[0] === fenceMarker[0] && marker.length >= fenceMarker.length) {
-                    fenceMarker = null;
-                    continue;
+                if (block.type === 'table' && line >= 0) {
+                    tableLines.set(block as Tokens.Table, line);
+                } else if (block.type === 'blockquote') {
+                    const quote = block as Tokens.Blockquote;
+                    visit(quote.tokens, quote.text, line);
+                } else if (block.type === 'list') {
+                    let itemLine = line;
+                    for (const item of block.items as Tokens.ListItem[]) {
+                        if (item.task) {
+                            const marker = item.raw.split('\n', 1)[0].match(/^\s*(?:[-+*]|\d+[.)])\s+(\[[ xX]\].*)$/);
+                            const original = lines[itemLine] ?? '';
+                            const character = marker ? original.trimEnd().length - marker[1].trimEnd().length : -1;
+                            taskLocations.push(marker && character >= 0 && original.slice(character).trimEnd() === marker[1].trimEnd()
+                                ? { line: itemLine, character } : null);
+                        }
+                        visit(item.tokens, item.text, itemLine);
+                        if (itemLine >= 0) itemLine += item.raw.split('\n').length - 1;
+                    }
                 }
+                if (offset >= 0) cursor = offset + block.raw.length;
+                if (line >= 0) line += block.raw.split('\n').length - 1;
             }
-
-            if (!fenceMarker && taskPattern.test(line)) {
-                taskLines.push(index);
-            }
-        }
-
-        return taskLines;
+        };
+        visit(tokens, source.replace(/\r\n?/g, '\n').replace(/^( *)(\t+)/gm,
+            (_, spaces: string, tabs: string) => spaces + '    '.repeat(tabs.length)), firstLine);
+        return { taskLocations, tableLines };
     }
 
     /**
@@ -561,7 +546,7 @@ export class MarkdownProvider {
         const locationAttributes = location
             ? ` data-line="${location.line}" data-char="${location.character}"`
                 + ` data-source-line="${location.sourceLine}" data-source-char="${location.sourceCharacter}"`
-            : '';
+            : ' disabled';
         const checkbox = '<input type="checkbox" class="table-task-checkbox"'
             + (checked ? ' checked=""' : '')
             + locationAttributes
@@ -653,13 +638,11 @@ export class MarkdownProvider {
     }
 
     /**
-     * 转换 GitHub 风格的 alert blockquote
-     * > [!NOTE]
-     * > Content
-     * @param html - 待转换的 HTML 内容
-     * @returns 返回转换后的提示块 HTML
+     * 根据当前引用块的首段标记渲染 GitHub 提示框并保留嵌套引用
+     * @param quote - Marked 已渲染的单个引用块正文
+     * @returns 带标题的提示框或普通引用块
      */
-    private static transformGitHubAlerts(html: string): string {
+    private static renderBlockquote(quote: string): string {
         const alertTypes: Record<string, { icon: string; label: string }> = {
             'NOTE':      { icon: 'codicon-info',      label: 'Note' },
             'TIP':       { icon: 'codicon-lightbulb',  label: 'Tip' },
@@ -668,50 +651,16 @@ export class MarkdownProvider {
             'CAUTION':   { icon: 'codicon-error',      label: 'Caution' },
         };
 
-        for (const [type, { icon, label }] of Object.entries(alertTypes)) {
-            const typeLower = type.toLowerCase();
-            // 匹配首个段落以 [!TYPE] 开头的 blockquote
-            const regex = new RegExp(
-                `<blockquote>\\s*<p>\\[!${type}\\]\\s*(?:<br>)?\\s*([\\s\\S]*?)</p>([\\s\\S]*?)</blockquote>`,
-                'gi'
-            );
-            html = html.replace(regex, (_match, firstContent, rest) => {
-                const content = firstContent.trim() ? `<p>${firstContent.trim()}</p>` : '';
-                return `<div class="markdown-alert markdown-alert-${typeLower}">`
-                    + `<p class="markdown-alert-title"><i class="codicon ${icon}"></i> ${label}</p>`
-                    + content
-                    + rest
-                    + `</div>`;
-            });
+        const match = quote.match(/^\s*<p>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(?:<br>)?\s*([\s\S]*?)<\/p>/i);
+        if (!match) {
+            return `<blockquote>\n${quote}</blockquote>\n`;
         }
-
-        return html;
-    }
-
-    /**
-     * 生成标题锚点 ID（同名标题自动追加唯一 hex 后缀）
-     * @param text - 待处理的文本内容
-     * @param usedIds - 已占用标题 ID 计数映射
-     * @returns 返回唯一的标题锚点 ID
-     */
-    private static generateHeadingId(text: string, usedIds: Map<string, number>): string {
-        let slug = '';
-        if (text) {
-            slug = text
-                .toLowerCase()
-                .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
-                .replace(/^-|-$/g, '');
-        }
-        if (!slug) {
-            slug = 'heading';
-        }
-        const count = usedIds.get(slug) ?? 0;
-        usedIds.set(slug, count + 1);
-        if (count === 0) {
-            return slug;
-        }
-        // 用递增计数器转 hex 作后缀，保证不重复
-        return `${slug}-${count.toString(16)}`;
+        const type = match[1].toUpperCase();
+        const { icon, label } = alertTypes[type];
+        const first = match[2].trim();
+        return `<div class="markdown-alert markdown-alert-${type.toLowerCase()}">`
+            + `<p class="markdown-alert-title"><i class="codicon ${icon}"></i> ${label}</p>`
+            + (first ? `<p>${first}</p>` : '') + quote.slice(match[0].length) + '</div>\n';
     }
 
     /**

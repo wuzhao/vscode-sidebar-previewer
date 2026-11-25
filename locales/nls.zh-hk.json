@@ -42,6 +42,5 @@
   "runtime.unsupportedFileType": "唔支援嘅檔案類型：{0}",
   "runtime.unterminatedQuotedField": "帶引號嘅欄位未閉合",
   "runtime.tableRowsTruncated": "只顯示頭 {0} 行表格資料",
-  "runtime.treeNodesTruncated": "只顯示頭 {0} 個資料樹節點",
-  "runtime.invalidMermaidSyntax": "Mermaid 語法無效：無法識別圖表類型"
+  "runtime.treeNodesTruncated": "只顯示頭 {0} 個資料樹節點"
 }

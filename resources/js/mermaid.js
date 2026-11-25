@@ -17,77 +17,60 @@ const MERMAID_DRAG_STATE = {
 };
 
 /**
- * 渲染 Mermaid
- * 渲染页面中的 Mermaid 图表节点
+ * 逐块渲染当前预览的图表并将独立文件的错误交给宿主状态页
+ * @param messageData - 含文档版本和宿主刷新序号的更新消息
+ * @param sequence - 当前 Webview 的内容刷新序号
  */
-function renderMermaid() {
-    if (typeof mermaid === 'undefined') {
-        const els = document.querySelectorAll('.mermaid');
-        els.forEach(el => {
-            el.innerHTML = '<div class="render-error-block">'
-                + '<i class="codicon codicon-error"></i> '
-                + escapeHtml(L10N_TEXT.mermaidLibraryLoadFailed)
-                + '</div>';
-        });
-        return;
-    }
-
-    // 检测当前主题
+async function renderMermaid(messageData, sequence) {
+    const elements = document.querySelectorAll('.mermaid');
+    if (elements.length === 0) return;
+    const isStandalone = messageData.fileType === 'mermaid';
     const isDark = document.body.classList.contains('vscode-dark') ||
                    document.body.classList.contains('vscode-high-contrast');
-
     mermaid.initialize({
         startOnLoad: false,
         theme: isDark ? 'dark' : 'default',
         securityLevel: 'strict',
+        suppressErrorRendering: true,
     });
-
-    // 移除 data-processed 属性（允许重新渲染）
-    const elements = document.querySelectorAll('.mermaid');
-    elements.forEach(el => {
-        if (!el.getAttribute('data-source')) {
-            el.setAttribute('data-source', el.textContent);
-        }
-        el.removeAttribute('data-processed');
-    });
-
-    // 使用 mermaid.run() 进行就地渲染
-    const renderPromise = Promise.race([
-        mermaid.run({
-            querySelector: '.mermaid',
-            suppressErrors: false,
-        }),
-        new Promise((_, reject) => {
-            setTimeout(() => reject(new Error(L10N_TEXT.mermaidRenderTimeout)), MERMAID_RENDER_TIMEOUT_MS);
-        })
-    ]);
-
-    renderPromise.then(() => {
-        if (currentFileType !== 'mermaid') {
-            return;
-        }
-        elements.forEach(el => {
-            const svg = el.querySelector('svg');
-            if (svg) {
-                svg.style.display = 'block';
-                svg.style.maxWidth = 'none';
-                clearMermaidSvgBaseSizeCache(svg);
-                getMermaidSvgBaseSize(svg);
+    for (const [index, element] of elements.entries()) {
+        if (sequence !== latestUpdateSequence) return;
+        const source = element.textContent;
+        element.setAttribute('data-source', source);
+        let timer;
+        try {
+            const result = await Promise.race([
+                mermaid.render(`sidebar-mermaid-${sequence}-${index}`, source),
+                new Promise((_, reject) => {
+                    timer = setTimeout(() => reject(new Error(L10N_TEXT.mermaidRenderTimeout)), MERMAID_RENDER_TIMEOUT_MS);
+                }),
+            ]);
+            if (sequence !== latestUpdateSequence) return;
+            element.innerHTML = result.svg;
+            result.bindFunctions?.(element);
+            if (isStandalone) {
+                const svg = element.querySelector('svg');
+                if (svg) {
+                    svg.style.display = 'block';
+                    svg.style.maxWidth = 'none';
+                    clearMermaidSvgBaseSizeCache(svg);
+                    refreshMermaidZoomAfterRender(sequence);
+                }
             }
-        });
-    }).catch(err => {
-        const errorMessage = escapeHtml(getErrorMessage(err));
-        elements.forEach(el => {
-            if (!el.querySelector('svg')) {
-                el.innerHTML = '<div class="render-error-block">'
-                    + '<i class="codicon codicon-error"></i> '
-                    + errorMessage
-                    + '</div>';
+        } catch (error) {
+            if (sequence !== latestUpdateSequence) return;
+            const detail = getErrorMessage(error);
+            if (isStandalone) {
+                VSCODE_API.postMessage({
+                    type: WEBVIEW_TO_EXTENSION_MESSAGE_TYPES.mermaidRenderFailed,
+                    revision: messageData.revision, version: messageData.version, detail,
+                });
             }
-        });
-    }).finally(() => {
-        refreshMermaidZoomAfterRender();
-    });
+            element.innerHTML = `<div class="render-error-block">${escapeHtml(L10N_TEXT.previewError)}<pre>${escapeHtml(detail)}</pre></div>`;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
 }
 
 /**
@@ -101,11 +84,10 @@ function applyMermaidZoom() {
         return;
     }
 
-    bindMermaidPan(container);
-    content.classList.add('is-mermaid-preview');
-
     const svg = container.querySelector('.mermaid svg');
     if (!svg) return;
+    bindMermaidPan(container);
+    content.classList.add('is-mermaid-preview');
 
     const baseSize = getMermaidSvgBaseSize(svg);
     if (!baseSize) return;
@@ -165,12 +147,12 @@ function clearMermaidSvgBaseSizeCache(svg) {
 
 /**
  * 渲染结束后刷新 Mermaid 缩放
- * 通过双阶段刷新等待布局稳定后再应用缩放
+ * @param sequence - 需要在下一帧继续调整缩放的预览序号
  */
-function refreshMermaidZoomAfterRender() {
+function refreshMermaidZoomAfterRender(sequence) {
     applyZoom();
     requestAnimationFrame(() => {
-        applyZoom();
+        if (sequence === latestUpdateSequence) applyZoom();
     });
 }
 

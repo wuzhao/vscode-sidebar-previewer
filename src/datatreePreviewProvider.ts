@@ -20,6 +20,7 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
         try {
             if (Buffer.byteLength(content, 'utf8') > MAX_PREVIEW_INPUT_BYTES) {
                 return {
+                    statusOnly: true,
                     html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.previewInputTooLarge, String(MAX_PREVIEW_INPUT_BYTES / 1024 / 1024)))}</div></div>`,
                     fileType,
                     supportsLocate: false,
@@ -28,8 +29,12 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
             const parsed = this.parseContent(content, fileType);
             const lines = content.split('\n');
             const commentMetadata = this.buildCommentMetadata(lines, fileType);
-            const lineLocator = this.createKeyLineLocator(lines, fileType);
-            const arrayItemLineLocator = this.createArrayItemLineLocator(lines, fileType, parsed);
+            const { lineLocator, arrayItemLineLocator } = fileType === 'xml' ? this.createXmlLocators(lines, parsed) : {
+                lineLocator: fileType === 'json' || fileType === 'jsonl'
+                    ? this.createJsonKeyLocator(content, fileType === 'jsonl')
+                    : this.createKeyLineLocator(lines, fileType),
+                arrayItemLineLocator: this.createArrayItemLineLocator(this.buildArrayItemLineIndex(lines, fileType, parsed)),
+            };
             const jsonCloseLineLocator = fileType === 'json' || fileType === 'jsonl' ? this.createJsonCloseLineLocator(lines) : null;
             const yamlCloseLineLocator = fileType === 'yaml' ? this.createYamlCloseLineLocator(lines) : null;
             const xmlCloseLineLocator = fileType === 'xml' ? this.createXmlCloseLineLocator(lines) : null;
@@ -53,6 +58,7 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
 
             if (wrappedHtml.length > MAX_RENDERED_HTML_LENGTH) {
                 return {
+                    statusOnly: true,
                     html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.previewContentTooLarge)}</div></div>`,
                     fileType,
                     supportsLocate: false,
@@ -67,6 +73,7 @@ export class DatatreePreviewProvider extends DatatreeXmlFileTypeBase {
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             return {
+                statusOnly: true,
                 html: `<div class="error-state"><div class="error-text">${escapeHtml(i18n.format(i18n.parseContentFailed, fileType.toUpperCase()))}</div><pre class="error-detail">${escapeHtml(message)}</pre></div>`,
                 fileType,
                 supportsLocate: false,

@@ -1,5 +1,5 @@
 export interface KeyLineLocator {
-    next(key: string, parentPath?: string[]): number;
+    next(key: string, parentPath?: string[], parentLine?: number | null): number;
 }
 
 export interface ArrayItemLineLocator {

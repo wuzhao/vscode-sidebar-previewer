@@ -8,7 +8,7 @@ Empower your VS Code Activity Bar with real-time rendering, scroll-sync, and zoo
 
 ## Why do you need it?
 
-In the age of AI-driven development, documentation is now a first-class citizen, **processed locally and versioned directly in-repo**. With the secondary sidebar becoming a mainstream hub for AI workflows, conventional previewing feels cramped and clunky. Enter **Sidebar Previewer**: it delivers real-time rendering in your sidebar, allowing you to fluidly switch between coding and previewing, with an added presentation mode to cover your entire workflow.
+In the age of AI-driven development, documentation is now a first-class citizen, **processed locally and versioned directly in-repo**. With the secondary sidebar becoming a mainstream hub for AI workflows, conventional previewing feels cramped and clunky. Enter **Sidebar Previewer**: it delivers real-time rendering in your sidebar, allowing you to fluidly switch between coding and previewing. Displaying an HTTPS image can send a request to the image host.
 
 ## Project Repository
 
@@ -65,7 +65,7 @@ JSON / JSONL / YAML / TOML / XML
 
 ### Mermaid
 
-- Basic syntax precheck with clear error feedback
+- Diagram validation by Mermaid with error details for each diagram
 - Drag-to-pan interaction when zoomed
 
 ### JSON / JSONL / YAML / TOML / XML
@@ -104,9 +104,8 @@ JSON / JSONL / YAML / TOML / XML
 1. Clone the repository: `git clone https://github.com/wuzhao/vscode-sidebar-previewer.git`
 2. Enter the project folder: `cd vscode-sidebar-previewer`
 3. Install dependencies: `npm install`
-4. Build extension output and bundled assets: `npm run package:vsix`
-5. Package the VSIX: `npx @vscode/vsce package`
-6. In VS Code, run `Extensions: Install from VSIX` and select the generated `sidebar-previewer-<version>.vsix`
+4. Package the VSIX: `npx @vscode/vsce package`
+5. In VS Code, run `Extensions: Install from VSIX` and select the generated `sidebar-previewer-<version>.vsix`
 
 ## Usage
 
