@@ -24,6 +24,10 @@ scripts/**
 src/**
 test/**
 
+# RUNTIME LOGS
+nohup.out
+*.log
+
 # AI AGENTS
 .cursorrules
 .clinerules
