@@ -140,7 +140,7 @@ const {
     assert.ok(packageJson.scripts.bundle.includes('--target=node18'));
   });
 
-  test('0.4.3 release metadata and multilingual README badges stay synchronized', () => {
+  test('0.5.0 release metadata and multilingual README badges stay synchronized', () => {
     const repositoryRoot = path.join(__dirname, '..', '..');
     const packageJson = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
     const packageLock = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package-lock.json'), 'utf8'));
@@ -152,15 +152,15 @@ const {
       'docs/i18n/README.ja-JP.md',
     ];
 
-    assert.equal(packageJson.version, '0.4.3');
+    assert.equal(packageJson.version, '0.5.0');
     assert.equal(packageLock.version, packageJson.version);
     assert.equal(packageLock.packages[''].version, packageJson.version);
     readmePaths.forEach(readmePath => {
       const readme = fs.readFileSync(path.join(repositoryRoot, readmePath), 'utf8');
-      assert.ok(readme.includes('version-0.4.3-blue.svg'), `${readmePath} should use the 0.4.3 badge`);
+      assert.ok(readme.includes('version-0.5.0-blue.svg'), `${readmePath} should use the 0.5.0 badge`);
     });
     const changelog = fs.readFileSync(path.join(repositoryRoot, 'CHANGELOG.md'), 'utf8');
-    assert.ok(changelog.includes('## 0.4.3 - 2026-08-29'));
+    assert.ok(changelog.includes('## 0.5.0 - 2026-11-25'));
   });
 
   test('Task D preview zoom resets to 100 when switching files', () => {
